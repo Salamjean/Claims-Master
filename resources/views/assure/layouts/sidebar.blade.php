@@ -147,7 +147,13 @@
                         x-transition:enter="delay-100 transition ease-out duration-200"
                         x-transition:enter-start="opacity-0 -translate-x-2"
                         x-transition:enter-end="opacity-100 translate-x-0">Constats Prêts</span>
-                    <span x-show="sidebarOpen" class="ml-auto px-1.5 py-0.5 text-[9px] font-black bg-blue-500/20 text-blue-400 rounded-md border border-blue-500/10">NOUVEAU</span>
+                    <span x-show="sidebarOpen" class="ml-auto flex items-center gap-1.5">
+                        @if(isset($countConstatsNonRegles) && $countConstatsNonRegles > 0)
+                            <span class="px-2 py-0.5 text-[10px] font-black bg-orange-500 text-white rounded-full shadow-lg shadow-orange-500/30">
+                                {{ $countConstatsNonRegles }}
+                            </span>
+                        @endif
+                    </span>
                 </a>
 
                 {{-- Historique (Top Level) --}}

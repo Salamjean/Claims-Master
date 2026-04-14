@@ -50,6 +50,14 @@
                     </form>
                 @endif
 
+                {{-- Bouton Constat Amiable (Téléchargement) --}}
+                @if($sinistre->constat && $sinistre->constat->methode_redaction === 'Amiable')
+                    <a href="{{ route('assure.sinistres.constat.download', $sinistre->id) }}"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm shadow-emerald-600/20">
+                        <i class="fa-solid fa-file-pdf text-sm"></i> Télécharger le Constat
+                    </a>
+                @endif
+
                 <a href="{{ route('assure.sinistres.historique') }}"
                     class="inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-600 font-semibold rounded-xl text-sm transition-colors border border-slate-200">
                     <i class="fa-solid fa-arrow-left text-sm"></i> Retour

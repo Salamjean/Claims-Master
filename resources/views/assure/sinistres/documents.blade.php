@@ -55,7 +55,8 @@
                                 </div>
                                 <div>
                                     <div class="flex items-center gap-2 mb-1">
-                                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">Sinistre {{ $sinistre->numero_sinistre ?? 'SI-'.$sinistre->id }}</span>
+                                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">Sinistre
+                                            {{ $sinistre->numero_sinistre ?? 'SI-' . $sinistre->id }}</span>
                                         <span class="px-2 py-0.5 rounded text-[10px] font-bold border"
                                             style="background-color: rgba(33, 54, 133, 0.1); color: #213685; border-color: rgba(33, 54, 133, 0.2);">Action
                                             requise</span>

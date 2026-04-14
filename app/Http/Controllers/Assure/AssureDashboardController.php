@@ -83,10 +83,22 @@ class AssureDashboardController extends Controller
 
         $recentActivities = $recentSinistres->concat($recentDocs)->sortByDesc('date')->take(6);
 
+        // Nombre de constats prêts mais non réglés
+        $countConstatsNonRegles = \App\Models\Sinistre::where('user_id', $user->id)
+            ->whereHas('constat', function($q) {
+                $q->where('redaction_validee', true)
+                  ->where(function($query) {
+                      $query->where('statut_paiement', '!=', 'success')
+                            ->orWhereNull('statut_paiement');
+                  });
+            })
+            ->count();
+
         return view('assure.dashboard', compact(
             'user', 'contrats', 'chartLabels', 'chartData', 
             'dernierSinistre', 'pendingDocumentsCount', 
-            'activeContractsCount', 'totalPrimes', 'recentActivities'
+            'activeContractsCount', 'totalPrimes', 'recentActivities',
+            'countConstatsNonRegles'
         ));
     }
 

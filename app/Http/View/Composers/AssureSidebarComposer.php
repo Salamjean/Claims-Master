@@ -44,11 +44,23 @@ class AssureSidebarComposer
             // Total for "Mes Sinistres" parent menu (Everything active/pending)
             $countMesSinistresTotal = $countSuivi + $countEnCours + $countHistoriquePending;
 
+            // Count for "Constats Prêts" but not yet "Réglés"
+            $countConstatsNonRegles = Sinistre::where('user_id', $userId)
+                ->whereHas('constat', function($q) {
+                    $q->where('redaction_validee', true)
+                      ->where(function($query) {
+                          $query->where('statut_paiement', '!=', 'success')
+                                ->orWhereNull('statut_paiement');
+                      });
+                })
+                ->count();
+
             $view->with([
                 'countSuivi' => $countSuivi,
                 'countEnCours' => $countEnCours,
                 'countHistoriquePending' => $countHistoriquePending,
                 'countMesSinistresTotal' => $countMesSinistresTotal,
+                'countConstatsNonRegles' => $countConstatsNonRegles,
             ]);
         }
     }

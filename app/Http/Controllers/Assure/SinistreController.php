@@ -30,7 +30,8 @@ class SinistreController extends Controller
      */
     public function enAttente()
     {
-        $sinistres = Sinistre::where('user_id', auth('user')->id())
+        $sinistres = Sinistre::with('constat')
+            ->where('user_id', auth('user')->id())
             ->whereIn('status', ['en_attente', 'en_cours', 'traite'] )
             ->latest()
             ->get();
@@ -42,7 +43,8 @@ class SinistreController extends Controller
      */
     public function enCours()
     {
-        $sinistres = Sinistre::where('user_id', auth('user')->id())
+        $sinistres = Sinistre::with('constat')
+            ->where('user_id', auth('user')->id())
             ->whereIn('status', ['en_cours', 'traite'])
             ->latest()
             ->get();
@@ -57,7 +59,8 @@ class SinistreController extends Controller
         $tousSinistres = Sinistre::where('user_id', auth('user')->id())->get();
         
         // L'utilisateur souhaite voir "tous ses sinistres traités" dans l'historique
-        $sinistres = Sinistre::where('user_id', auth('user')->id())
+        $sinistres = Sinistre::with('constat')
+            ->where('user_id', auth('user')->id())
             ->whereIn('status', ['traite', 'cloture'])
             ->latest()
             ->get();
@@ -201,6 +204,7 @@ class SinistreController extends Controller
             'description' => $request->description,
             'latitude' => $userLat,
             'longitude' => $userLng,
+            'lieu' => $request->lieu, // Sauvegarder l'adresse textuelle
             'photos' => !empty($photoPaths) ? $photoPaths : null,
             'status' => 'en_attente',
             'assigned_service_id' => $assignedServiceId,
@@ -218,6 +222,40 @@ class SinistreController extends Controller
                 'parent_service_id' => ($u->role === 'agent') ? $u->service_id : $u->id,
             ])->toArray(),
         ]);
+
+        // --- TRAITEMENT CONSTAT AMIABLE ---
+        if ($request->methode_constat === 'Amiable' && $request->filled('amiable_data')) {
+            $data = json_decode($request->amiable_data, true);
+            
+            // Chemins pour les photos (Signatures et Croquis)
+            $croquisPath = null;
+            $sigAPath = null;
+            $sigBPath = null;
+
+            if (!empty($data['croquis'])) {
+                $croquisPath = $this->saveBase64Image($data['croquis'], 'croquis');
+            }
+            if (!empty($data['signature_a'])) {
+                $sigAPath = $this->saveBase64Image($data['signature_a'], 'signature_a');
+            }
+            if (!empty($data['signature_b'])) {
+                $sigBPath = $this->saveBase64Image($data['signature_b'], 'signature_b');
+            }
+
+            \App\Models\Constat::create([
+                'sinistre_id' => $sinistre->id,
+                'assurance_id' => $sinistre->assurance_id,
+                'user_id' => $sinistre->user_id,
+                'status' => 'termine',
+                'description' => $sinistre->description,
+                'lieu' => $sinistre->lieu, // Copier le lieu dans le constat
+                'methode_redaction' => 'Amiable',
+                'redaction_contenu' => $request->amiable_data, // On stocke le JSON brut
+                'croquis' => $croquisPath,
+                'ass1_photo' => $sigAPath,
+                'ass2_photo' => $sigBPath,
+            ]);
+        }
 
         // --- NOUVEAU : Notification à la Compagnie d'Assurance ---
         if ($sinistre->assurance_id) {
@@ -368,6 +406,61 @@ class SinistreController extends Controller
                     if ($session && ($session['payment_status'] === 'succeeded' || $session['payment_status'] === 'completed' || ($session['status'] ?? '') === 'complete')) {
                         $s->constat->update(['statut_paiement' => 'success']);
                         
+                        // --- Crédit du portefeuille de l'agent ---
+                        if ($s->assigned_agent_id) {
+                            $agent = $s->assignedAgent;
+                            if ($agent) {
+                                $amountToCredit = $s->constat->montant_a_payer;
+                                
+                                // Vérifier si un crédit n'a pas déjà été effectué
+                                $exists = \App\Models\WalletTransaction::where('user_id', $agent->id)
+                                    ->where('sinistre_id', $s->id)
+                                    ->where('type', 'credit')
+                                    ->exists();
+                                    
+                                if (!$exists) {
+                                    $agent->increment('wallet_balance', $amountToCredit);
+                                    \App\Models\WalletTransaction::create([
+                                        'user_id'     => $agent->id,
+                                        'sinistre_id' => $s->id,
+                                        'amount'      => $amountToCredit,
+                                        'type'        => 'credit',
+                                        'description' => "Paiement du constat pour le sinistre #{$s->numero_sinistre} (Fallback)",
+                                        'status'      => 'completed',
+                                    ]);
+                                }
+                            }
+                        }
+
+                        // --- Crédit du portefeuille du SERVICE (Unité) ---
+                        if ($s->assigned_service_id) {
+                            $service = $s->service;
+                            if ($service) {
+                                $amountToCredit = $s->constat->montant_a_payer;
+                                
+                                // Vérifier si un crédit n'a pas déjà été effectué
+                                $existsService = \App\Models\WalletTransaction::where('user_id', $service->id)
+                                    ->where('sinistre_id', $s->id)
+                                    ->where('type', 'credit')
+                                    ->exists();
+                                    
+                                if (!$existsService) {
+                                    $service->increment('wallet_balance', $amountToCredit);
+                                    
+                                    $agentName = $s->assignedAgent ? $s->assignedAgent->name : 'un agent';
+                                    
+                                    \App\Models\WalletTransaction::create([
+                                        'user_id'     => $service->id,
+                                        'sinistre_id' => $s->id,
+                                        'amount'      => $amountToCredit,
+                                        'type'        => 'credit',
+                                        'description' => "Paiement du constat (Agent: {$agentName}) pour le sinistre #{$s->numero_sinistre} (Fallback)",
+                                        'status'      => 'completed',
+                                    ]);
+                                }
+                            }
+                        }
+
                         \App\Models\ConstatPayment::updateOrCreate(
                             ['transaction_id' => $s->constat->wave_session_id],
                             [
@@ -382,7 +475,18 @@ class SinistreController extends Controller
             }
         }
 
-        return view('assure.sinistres.constats_prets', compact('sinistres'));
+        // Compteur des constats non réglés (prêts mais non payés)
+        $countConstatsNonRegles = Sinistre::where('user_id', auth('user')->id())
+            ->whereHas('constat', function($q) {
+                $q->where('redaction_validee', true)
+                  ->where(function($query) {
+                      $query->where('statut_paiement', '!=', 'success')
+                            ->orWhereNull('statut_paiement');
+                  });
+            })
+            ->count();
+
+        return view('assure.sinistres.constats_prets', compact('sinistres', 'countConstatsNonRegles'));
     }
 
     /**
@@ -457,6 +561,64 @@ class SinistreController extends Controller
                     
                     $constat->update(['statut_paiement' => 'success']);
                     
+                    // --- Crédit du portefeuille de l'agent ---
+                    $sinistre = $constat->sinistre;
+                    if ($sinistre && $sinistre->assigned_agent_id) {
+                        $agent = $sinistre->assignedAgent;
+                        if ($agent) {
+                            $amountToCredit = $constat->montant_a_payer;
+                            
+                            // Vérifier si un crédit n'a pas déjà été effectué pour ce sinistre
+                            $exists = \App\Models\WalletTransaction::where('user_id', $agent->id)
+                                ->where('sinistre_id', $sinistre->id)
+                                ->where('type', 'credit')
+                                ->exists();
+                                
+                            if (!$exists) {
+                                $agent->increment('wallet_balance', $amountToCredit);
+                                \App\Models\WalletTransaction::create([
+                                    'user_id'     => $agent->id,
+                                    'sinistre_id' => $sinistre->id,
+                                    'amount'      => $amountToCredit,
+                                    'type'        => 'credit',
+                                    'description' => "Paiement du constat pour le sinistre #{$sinistre->numero_sinistre}",
+                                    'status'      => 'completed',
+                                ]);
+                                \Illuminate\Support\Facades\Log::info('Portefeuille agent crédité', ['agent_id' => $agent->id, 'amount' => $amountToCredit]);
+                            }
+                        }
+                    }
+
+                    // --- Crédit du portefeuille du SERVICE (Unité) ---
+                    if ($sinistre && $sinistre->assigned_service_id) {
+                        $service = $sinistre->service;
+                        if ($service) {
+                            $amountToCredit = $constat->montant_a_payer;
+                            
+                            // Vérifier si un crédit n'a pas déjà été effectué pour ce service et ce sinistre
+                            $existsService = \App\Models\WalletTransaction::where('user_id', $service->id)
+                                ->where('sinistre_id', $sinistre->id)
+                                ->where('type', 'credit')
+                                ->exists();
+                                
+                            if (!$existsService) {
+                                $service->increment('wallet_balance', $amountToCredit);
+                                
+                                $agentName = $sinistre->assignedAgent ? $sinistre->assignedAgent->name : 'un agent';
+                                
+                                \App\Models\WalletTransaction::create([
+                                    'user_id'     => $service->id,
+                                    'sinistre_id' => $sinistre->id,
+                                    'amount'      => $amountToCredit,
+                                    'type'        => 'credit',
+                                    'description' => "Paiement du constat (Agent: {$agentName}) pour le sinistre #{$sinistre->numero_sinistre}",
+                                    'status'      => 'completed',
+                                ]);
+                                \Illuminate\Support\Facades\Log::info('Portefeuille service crédité', ['service_id' => $service->id, 'amount' => $amountToCredit]);
+                            }
+                        }
+                    }
+
                     \App\Models\ConstatPayment::updateOrCreate(
                         ['transaction_id' => $waveSessionId],
                         [
@@ -471,7 +633,61 @@ class SinistreController extends Controller
                 }
             }
         }
-
         return response()->json(['status' => 'ok']);
+    }
+
+    /**
+     * Télécharge le constat amiable au format PDF
+     */
+    public function downloadConstat($id)
+    {
+        $sinistre = Sinistre::with('constat')->findOrFail($id);
+        $constat = $sinistre->constat;
+
+        if (!$constat || $constat->methode_redaction !== 'Amiable') {
+            return back()->with('error', 'Aucun constat amiable trouvé pour ce sinistre.');
+        }
+
+        $data = json_decode($constat->redaction_contenu, true);
+        
+        // Note: Nécessite barryvdh/laravel-dompdf
+        try {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.constat_amiable', [
+                'sinistre' => $sinistre,
+                'constat' => $constat,
+                'data' => $data
+            ]);
+            return $pdf->download('constat_amiable_' . ($sinistre->numero_sinistre ?? $sinistre->id) . '.pdf');
+        } catch (\Exception $e) {
+            \Log::error("Erreur génération PDF : " . $e->getMessage());
+            return back()->with('error', 'Erreur lors de la génération du PDF. Assurez-vous que les dépendances sont installées.');
+        }
+    }
+
+    /**
+     * Sauvegarde une image base64 dans le storage
+     */
+    private function saveBase64Image($base64String, $prefix)
+    {
+        try {
+            if (empty($base64String)) return null;
+            
+            $image_parts = explode(";base64,", $base64String);
+            if (count($image_parts) < 2) return null;
+            
+            $image_type_aux = explode("image/", $image_parts[0]);
+            $image_type = $image_type_aux[1] ?? 'png';
+            $image_base64 = base64_decode($image_parts[1]);
+            
+            $fileName = $prefix . '_' . uniqid() . '.' . $image_type;
+            $path = 'constats/' . $fileName;
+            
+            \Storage::disk('public')->put($path, $image_base64);
+            
+            return $path;
+        } catch (\Exception $e) {
+            \Log::error("Erreur sauvegarde image base64 : " . $e->getMessage());
+            return null;
+        }
     }
 }

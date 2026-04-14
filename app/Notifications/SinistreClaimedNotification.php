@@ -52,7 +52,7 @@ class SinistreClaimedNotification extends Notification
      */
     public function toYellika(object $notifiable): string
     {
-        return "CLAIMS MASTER : Bonjour {$notifiable->name}, l'agent {$this->agent->name} a recupere votre declaration #{$this->sinistre->id} et est en route.";
+        return "CLAIMS MASTER : Bonjour {$notifiable->name}, l'agent {$this->agent->name} a recupere votre declaration #{$this->sinistre->numero_sinistre} et est en route.";
     }
 
     /**

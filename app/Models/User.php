@@ -115,4 +115,12 @@ class User extends Authenticatable
     {
         return $this->belongsTo(User::class, 'service_id');
     }
+
+    /**
+     * Transactions du portefeuille de l'agent
+     */
+    public function walletTransactions()
+    {
+        return $this->hasMany(WalletTransaction::class);
+    }
 }

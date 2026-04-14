@@ -31,6 +31,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'force.password' => \App\Http\Middleware\ForcePasswordChange::class,
         ]);
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
-        //
+    ->withExceptions(function (Illuminate\Foundation\Configuration\Exceptions $exceptions): void {
+        $exceptions->render(function (Symfony\Component\ErrorHandler\Error\FatalError $e) {
+            if (str_contains($e->getMessage(), 'Maximum execution time')) {
+                return response()->view('errors.timeout', [
+                    'message' => "Désolé, l'opération a pris trop de temps. Veuillez réessayer ou contacter le support si le problème persiste."
+                ], 504);
+            }
+        });
     })->create();

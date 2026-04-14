@@ -10,6 +10,7 @@ class Constat extends Model
         'sinistre_id',
         'service_id',
         'type_constat',
+        'methode_redaction',
         'lieu',
         'date_heure',
         'description_faits',

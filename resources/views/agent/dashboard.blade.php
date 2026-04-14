@@ -35,32 +35,42 @@
         </div>
 
         {{-- Compteurs --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex items-center gap-5 group hover:border-amber-200 transition-all">
                 <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
                     <i class="fa-solid fa-hourglass-half"></i>
                 </div>
-                <div>
+                <div class="truncate">
                     <p class="text-2xl font-black text-slate-800 leading-none mb-1">{{ $enAttente }}</p>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">En attente</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">En attente</p>
                 </div>
             </div>
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex items-center gap-5 group hover:border-blue-200 transition-all">
                 <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
                     <i class="fa-solid fa-spinner"></i>
                 </div>
-                <div>
+                <div class="truncate">
                     <p class="text-2xl font-black text-slate-800 leading-none mb-1">{{ $enCours }}</p>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Dossiers en cours</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">Dossiers</p>
                 </div>
             </div>
-            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex items-center gap-5 group hover:border-emerald-200 transition-all sm:col-span-2 lg:col-span-1">
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex items-center gap-5 group hover:border-emerald-200 transition-all">
                 <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
                     <i class="fa-solid fa-check-double"></i>
                 </div>
-                <div>
+                <div class="truncate">
                     <p class="text-2xl font-black text-slate-800 leading-none mb-1">{{ $cloture }}</p>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sinistres clôturés</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">Clôturés</p>
+                </div>
+            </div>
+            <div class="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl shadow-lg p-6 flex items-center gap-5 group hover:scale-[1.02] transition-all cursor-pointer overflow-hidden relative" onclick="window.location='{{ route('agent.wallet') }}'">
+                <div class="absolute -right-4 -top-4 w-20 h-20 bg-white/10 rounded-full blur-2xl"></div>
+                <div class="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center text-xl relative z-10">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <div class="relative z-10 truncate">
+                    <p class="text-xl font-black text-white leading-none mb-1">{{ number_format($agent->wallet_balance ?? 0, 0, ',', ' ') }} <span class="text-[10px] opacity-80">F</span></p>
+                    <p class="text-[10px] font-black text-emerald-100 uppercase tracking-widest truncate">Mon Solde</p>
                 </div>
             </div>
         </div>

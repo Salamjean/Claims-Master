@@ -3,7 +3,7 @@
 @section('page-title', 'Détails du constat')
 
 @section('content')
-    <div class="mx-auto space-y-5" style="max-width:1800px;">
+    <div class="mx-auto space-y-5" style="width:100%;">
 
         {{-- En-tête --}}
         <div class="flex items-center justify-between flex-wrap gap-4">

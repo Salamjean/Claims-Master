@@ -74,7 +74,16 @@
                         @foreach($sinistres as $index => $sinistre)
                             <tr class="hover:bg-slate-50/70 transition-colors">
                                 <td class="px-5 py-4">
-                                    <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">{{ $sinistre->numero_sinistre ?? 'SI-'.$sinistre->id }}</span>
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded inline-block w-fit">
+                                            {{ $sinistre->numero_sinistre ?? 'SI-'.$sinistre->id }}
+                                        </span>
+                                        @if($sinistre->constat && $sinistre->constat->methode_redaction === 'Amiable')
+                                            <span class="text-[9px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 uppercase tracking-tighter w-fit">
+                                                <i class="fa-solid fa-bolt-lightning text-[8px]"></i> Amiable
+                                            </span>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td class="px-5 py-4">
                                     <div class="flex items-center gap-2.5">
@@ -86,7 +95,14 @@
                                     </div>
                                 </td>
                                 <td class="px-5 py-4 hidden md:table-cell">
-                                    <p class="text-sm text-slate-500 truncate max-w-[180px]">{{ $sinistre->description ?? '—' }}</p>
+                                    @if($sinistre->lieu)
+                                        <div class="flex items-start gap-1.5 max-w-[180px]">
+                                            <i class="fa-solid fa-location-dot text-red-400 text-[10px] mt-1 shrink-0"></i>
+                                            <p class="text-[11px] font-medium text-slate-500 italic leading-tight">{{ $sinistre->lieu }}</p>
+                                        </div>
+                                    @else
+                                        <p class="text-sm text-slate-500 truncate max-w-[180px]">{{ $sinistre->description ?? '—' }}</p>
+                                    @endif
                                 </td>
                                 <td class="px-5 py-4">
                                     @if($sinistre->service)
@@ -138,10 +154,24 @@
                                                 @endif
                                             </a>
                                         @endif
+                                        @if($sinistre->constat && $sinistre->constat->methode_redaction === 'Amiable')
+                                            <a href="{{ route('assure.sinistres.constat.download', $sinistre->id) }}"
+                                                class="inline-flex items-center justify-center w-8 h-8 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-lg transition-all"
+                                                title="Télécharger le constat">
+                                                <i class="fa-solid fa-file-pdf"></i>
+                                            </a>
+                                        @endif
                                         <a href="{{ route('assure.sinistres.show', $sinistre->id) }}"
                                             class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold rounded-lg transition-colors">
                                             <i class="fa-solid fa-eye text-xs"></i> Détails
                                         </a>
+                                        <!-- @if($sinistre->constat && $sinistre->constat->methode_redaction === 'Amiable')
+                                            <a href="{{ route('assure.sinistres.constat.download', $sinistre->id) }}"
+                                                class="inline-flex items-center justify-center w-8 h-8 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-lg transition-all"
+                                                title="Télécharger le constat">
+                                                <i class="fa-solid fa-file-pdf"></i>
+                                            </a>
+                                        @endif -->
                                         <button type="button" onclick="confirmDelete({{ $sinistre->id }})"
                                             class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold rounded-lg transition-colors border border-red-200">
                                             <i class="fa-solid fa-trash-can text-xs"></i> Supprimer

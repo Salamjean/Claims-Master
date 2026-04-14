@@ -3,7 +3,7 @@
 @section('page-title', 'Historique')
 
 @section('content')
-    <div class="space-y-5 mx-auto" style="max-width:1800px;">
+    <div class="space-y-5 mx-auto" style="width:100%;">
 
         {{-- En-tête --}}
         <div class="flex items-center justify-between flex-wrap gap-4">

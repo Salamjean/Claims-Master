@@ -30,18 +30,23 @@
         </div>
 
         {{-- Compteurs --}}
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-center">
                 <p class="text-3xl font-extrabold text-amber-500">{{ $enAttente }}</p>
-                <p class="text-xs font-semibold text-slate-500 mt-1">En attente</p>
+                <p class="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-widest">En attente</p>
             </div>
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-center">
                 <p class="text-3xl font-extrabold text-blue-500">{{ $enCours }}</p>
-                <p class="text-xs font-semibold text-slate-500 mt-1">En cours</p>
+                <p class="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-widest">En cours</p>
             </div>
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-center">
                 <p class="text-3xl font-extrabold text-emerald-500">{{ $cloture }}</p>
-                <p class="text-xs font-semibold text-slate-500 mt-1">Clôturés</p>
+                <p class="text-xs font-semibold text-slate-500 mt-1 uppercase tracking-widest">Clôturés</p>
+            </div>
+            <div class="bg-slate-900 rounded-2xl border border-white/10 shadow-lg p-5 text-center relative overflow-hidden group cursor-pointer" onclick="window.location='{{ route('gendarmerie.wallet') }}'">
+                <div class="absolute -right-4 -top-4 w-12 h-12 bg-emerald-500/10 rounded-full blur-xl"></div>
+                <p class="text-2xl font-black text-emerald-400 relative z-10">{{ number_format($user->wallet_balance ?? 0, 0, ',', ' ') }} F</p>
+                <p class="text-[10px] font-black text-white/40 mt-1 uppercase tracking-[0.2em] relative z-10">Portefeuille</p>
             </div>
         </div>
 

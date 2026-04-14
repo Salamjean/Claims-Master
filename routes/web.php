@@ -157,6 +157,7 @@ Route::middleware(['auth:user', 'assure'])->prefix('mon-espace')->group(function
         Route::post('/sinistres/upload-doc/{documentAttendu}', [SinistreDocumentController::class, 'upload'])->name('assure.sinistres.upload-doc');
 
         Route::get('/sinistres/{sinistre}', [SinistreController::class, 'show'])->name('assure.sinistres.show');
+        Route::get('/sinistres/{sinistre}/constat/download', [SinistreController::class, 'downloadConstat'])->name('assure.sinistres.constat.download');
         Route::get('/sinistres/{sinistre}/suivi', [SinistreController::class, 'tracking'])->name('assure.sinistres.tracking');
         Route::get('/sinistres/{sinistre}/agent-location', [AgentDashboardController::class, 'getAgentLocation'])->name('assure.sinistres.agent_location');
         Route::delete('/sinistres/{sinistre}', [SinistreController::class, 'destroy'])->name('assure.sinistres.destroy');
@@ -192,6 +193,9 @@ Route::middleware(['auth:user', 'police'])->prefix('police')->group(function () 
         // Profil Police
         Route::get('/profil', [PoliceController::class, 'profile'])->name('police.profile');
         Route::post('/profil', [PoliceController::class, 'updateProfile'])->name('police.profile.update');
+
+        // Portefeuille Police
+        Route::get('/portefeuille', [PoliceController::class, 'wallet'])->name('police.wallet');
     });
     Route::post('/logout', [PoliceController::class, 'logout'])->name('police.logout');
 });
@@ -217,6 +221,9 @@ Route::middleware(['auth:user', 'gendarmerie'])->prefix('gendarmerie')->group(fu
         // Profil Gendarmerie
         Route::get('/profil', [GendarmerieController::class, 'profile'])->name('gendarmerie.profile');
         Route::post('/profil', [GendarmerieController::class, 'updateProfile'])->name('gendarmerie.profile.update');
+
+        // Portefeuille Gendarmerie
+        Route::get('/portefeuille', [GendarmerieController::class, 'wallet'])->name('gendarmerie.wallet');
     });
     Route::post('/logout', [GendarmerieController::class, 'logout'])->name('gendarmerie.logout');
 });
@@ -239,6 +246,7 @@ Route::middleware(['auth:user', 'agent', 'force.password'])->prefix('agent')->gr
     Route::post('/sinistres/{sinistre}/redaction', [AgentDashboardController::class, 'storeRedaction'])->name('agent.sinistres.redaction.store');
     Route::get('/constats-rediges', [AgentDashboardController::class, 'constatsRediges'])->name('agent.constats.rediges');
     Route::post('/sinistres/{sinistre}/constat/mark-recovered', [AgentDashboardController::class, 'markAsRecovered'])->name('agent.constats.mark_recovered');
+    Route::get('/portefeuille', [AgentDashboardController::class, 'wallet'])->name('agent.wallet');
     Route::post('/logout', [AgentDashboardController::class, 'logout'])->name('agent.logout');
 
     // Profil Agent

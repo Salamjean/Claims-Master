@@ -68,9 +68,9 @@ class SinistreDocumentController extends Controller
             $path = $request->file('document_file')->store('sinistres_documents', 'public');
             $soumis->file_path = $path;
 
-            // Appel à l'IA Vision UNIQUEMENT si c'est une image (le PDF demanderait un parsing différent)
+            // Appel à l'IA Vision pour les images et les PDFs
             $mime = $request->file('document_file')->getClientMimeType();
-            if (str_starts_with($mime, 'image/')) {
+            if (str_starts_with($mime, 'image/') || $mime === 'application/pdf') {
                 $aiService = new AIService();
                 $fullPath = storage_path('app/public/' . $path);
 
@@ -83,9 +83,6 @@ class SinistreDocumentController extends Controller
                     $aiStatus = 'pending';
                     $aiFeedback = "L'analyse IA a échoué ou a renvoyé une réponse invalide. Le document sera vérifié manuellement.";
                 }
-            } else {
-                $aiFeedback = "Format PDF détecté. La vérification visuelle par IA passera en manuel.";
-                $aiStatus = 'pending';
             }
         } else {
             // Texte ou Nombre

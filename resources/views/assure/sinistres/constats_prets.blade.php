@@ -22,7 +22,28 @@
     </div>
     @endif
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- @if(isset($countConstatsNonRegles) && $countConstatsNonRegles > 0)
+    <div class="bg-gradient-to-r from-orange-500 to-amber-500 rounded-3xl p-6 text-white shadow-xl shadow-orange-200 border border-orange-400/20 animate-fade-in">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-5 text-center md:text-left">
+                <div class="w-16 h-16 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30 shrink-0">
+                    <i class="fa-solid fa-credit-card text-3xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-black">Paiement en attente</h2>
+                    <p class="text-orange-50/80 font-medium">Vous avez <span class="font-black underline">{{ $countConstatsNonRegles }}</span> {{ $countConstatsNonRegles > 1 ? 'constats' : 'constat' }} prêt(s) qui {{ $countConstatsNonRegles > 1 ? 'nécessitent' : 'nécessite' }} un règlement pour être débloqué(s).</p>
+                </div>
+            </div>
+            <div class="shrink-0">
+                <a href="#constats-grid" class="px-6 py-3 bg-white text-orange-600 font-extrabold rounded-2xl shadow-lg shadow-orange-900/10 block text-center hover:scale-105 transition-transform active:scale-95">
+                    Régler Maintenant
+                </a>
+            </div>
+        </div>
+    </div>
+    @endif -->
+
+    <div id="constats-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @forelse($sinistres as $sinistre)
         <div class="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all duration-300 overflow-hidden group">
             <div class="p-6">

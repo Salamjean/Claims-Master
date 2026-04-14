@@ -88,13 +88,15 @@
 
                         {{-- Information Détection IA --}}
                         <div class="p-5 bg-blue-50 border border-blue-100 rounded-2xl flex gap-4 mt-2">
-                            <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-blue-200">
+                            <div
+                                class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-blue-200">
                                 <i class="fa-solid fa-robot text-xl"></i>
                             </div>
                             <div>
                                 <h4 class="text-sm font-black text-blue-900 uppercase tracking-tight">Détection par IA</h4>
                                 <p class="text-xs text-blue-700 mt-1 leading-relaxed font-medium">
-                                    Inutile de sélectionner votre assureur. Notre IA identifiera automatiquement votre compagnie à partir de l'attestation que vous téléverserez.
+                                    Inutile de sélectionner votre assureur. Notre IA identifiera automatiquement votre
+                                    compagnie à partir de l'attestation que vous téléverserez.
                                 </p>
                             </div>
                         </div>

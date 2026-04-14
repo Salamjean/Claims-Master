@@ -24,6 +24,7 @@ class Sinistre extends Model
         'description',
         'latitude',
         'longitude',
+        'lieu',
         'photos',
         'status',
         'assurance_id',

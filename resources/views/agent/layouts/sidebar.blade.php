@@ -46,6 +46,19 @@
             <span class="nav-label text-xs font-black uppercase tracking-wider">Constats Rédigés</span>
         </a>
 
+        <p class="nav-label text-white/20 text-[10px] uppercase tracking-[0.2em] font-black px-4 mt-8 mb-3 whitespace-nowrap">Finance</p>
+
+        <a href="{{ route('agent.wallet') }}"
+            class="nav-item {{ request()->routeIs('agent.wallet') ? 'active' : '' }}">
+            <span class="nav-icon"><i class="fa-solid fa-wallet text-sm text-emerald-400"></i></span>
+            <span class="nav-label text-xs font-black uppercase tracking-wider">Mon Portefeuille</span>
+            @if(auth('user')->user()->wallet_balance > 0)
+                <span class="ml-auto bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full border border-emerald-500/10">
+                    {{ number_format(auth('user')->user()->wallet_balance, 0, ',', ' ') }}
+                </span>
+            @endif
+        </a>
+
     </nav>
 
     {{-- UTILISATEUR --}}

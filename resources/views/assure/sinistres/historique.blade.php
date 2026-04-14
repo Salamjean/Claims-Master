@@ -54,7 +54,8 @@
                     <i class="fa-solid fa-folder-open text-blue-300 text-3xl"></i>
                 </div>
                 <h3 class="text-lg font-bold text-slate-800 mb-2">Aucun sinistre traité</h3>
-                <p class="text-sm text-slate-500 max-w-sm mx-auto mb-6">Vous n'avez actuellement aucun sinistre traité ou clôturé.</p>
+                <p class="text-sm text-slate-500 max-w-sm mx-auto mb-6">Vous n'avez actuellement aucun sinistre traité ou
+                    clôturé.</p>
                 <a href="{{ route('assure.sinistres.create') }}"
                     class="inline-flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors text-sm shadow-sm">
                     <i class="fa-solid fa-triangle-exclamation"></i> Déclarer un sinistre
@@ -160,6 +161,13 @@
                                                         {{ $sinistre->documentsAttendus()->where('status_client', 'pending')->count() }}
                                                     </span>
                                                 @endif
+                                            </a>
+                                        @endif
+                                        @if($sinistre->constat && $sinistre->constat->methode_redaction === 'Amiable')
+                                            <a href="{{ route('assure.sinistres.constat.download', $sinistre->id) }}"
+                                                class="inline-flex items-center justify-center w-8 h-8 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-lg transition-all"
+                                                title="Télécharger le constat">
+                                                <i class="fa-solid fa-file-pdf"></i>
                                             </a>
                                         @endif
                                         <a href="{{ route('assure.sinistres.show', $sinistre->id) }}"

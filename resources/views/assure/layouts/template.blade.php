@@ -11,8 +11,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -61,10 +60,13 @@
         /* Quand la sidebar est ouverte sur desktop, on décale le contenu */
         @media (min-width: 1024px) {
             .main-content-shifted {
-                margin-left: 288px; /* w-72 */
+                margin-left: 288px;
+                /* w-72 */
             }
+
             .main-content-collapsed {
-                margin-left: 80px; /* w-20 */
+                margin-left: 80px;
+                /* w-20 */
             }
         }
 
@@ -372,16 +374,18 @@
 
 <body>
 
-    <div class="app-wrapper" x-data="{ sidebarOpen: window.innerWidth >= 1024 }" @resize.window="if(window.innerWidth < 1024) sidebarOpen = false">
+    <div class="app-wrapper" x-data="{ sidebarOpen: window.innerWidth >= 1024 }"
+        @resize.window="if(window.innerWidth < 1024) sidebarOpen = false">
         {{-- SIDEBAR --}}
         @include('assure.layouts.sidebar')
 
-        <div class="main-container" :class="window.innerWidth >= 1024 ? (sidebarOpen ? 'main-content-shifted' : 'main-content-collapsed') : ''">
+        <div class="main-container"
+            :class="window.innerWidth >= 1024 ? (sidebarOpen ? 'main-content-shifted' : 'main-content-collapsed') : ''">
             {{-- TOPNAV --}}
             @include('assure.layouts.navbar')
 
             {{-- PAGE CONTENT --}}
-            <div class="page-content">
+            <div class="page-content animate-in">
                 @yield('content')
             </div>
         </div>

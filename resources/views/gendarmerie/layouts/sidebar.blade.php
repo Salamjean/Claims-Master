@@ -51,6 +51,17 @@
             <span class="nav-label text-sm">Agents</span>
         </a>
 
+        <a href="{{ route('gendarmerie.wallet') }}"
+            class="nav-item {{ request()->routeIs('gendarmerie.wallet') ? 'active' : '' }}">
+            <span class="nav-icon"><i class="fa-solid fa-wallet text-sm text-emerald-400"></i></span>
+            <span class="nav-label text-sm">Portefeuille</span>
+            @if(auth('user')->user()->wallet_balance > 0)
+                <span class="ml-auto bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full nav-label">
+                    {{ number_format(auth('user')->user()->wallet_balance, 0, ',', ' ') }}
+                </span>
+            @endif
+        </a>
+
     </nav>
 
     {{-- UTILISATEUR & DECONNEXION --}}

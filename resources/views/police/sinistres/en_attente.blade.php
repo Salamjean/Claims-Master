@@ -3,7 +3,7 @@
 @section('page-title', 'En attente')
 
 @section('content')
-    <div class="space-y-5 mx-auto" style="max-width:1800px;">
+    <div class="space-y-5 mx-auto" style="width:100%;">
 
         {{-- En-tête --}}
         <div class="flex items-center justify-between flex-wrap gap-4">
@@ -45,8 +45,8 @@
                                  Date</th>
                             <th class="text-left px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Agent
                             </th>
-                            <th class="px-5 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Action
-                            </th>
+                            {{-- <th class="px-5 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Action
+                            </th> --}}
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
@@ -96,7 +96,7 @@
                                         <span class="text-xs text-slate-400 font-medium">Aucun agent</span>
                                     @endif
                                 </td>
-                                <td class="px-5 py-3.5 text-right">
+                                {{-- <td class="px-5 py-3.5 text-right">
                                     <div class="flex items-center justify-end gap-2">
                                         <a href="{{ route('police.sinistres.show', $sinistre->id) }}"
                                             class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors">
@@ -114,7 +114,7 @@
                                             {{ $sinistre->constat ? 'Modifier' : 'Faire le constat' }}
                                         </a>
                                     </div>
-                                </td>
+                                </td> --}}
                             </tr>
                         @endforeach
                     </tbody>

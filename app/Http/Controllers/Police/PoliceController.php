@@ -233,4 +233,18 @@ class PoliceController extends Controller
 
         return redirect()->back()->with('success', 'Profil mis à jour avec succès.');
     }
+
+    /**
+     * Affiche le portefeuille de l'unité (Police)
+     */
+    public function wallet()
+    {
+        $user = auth('user')->user();
+        $transactions = \App\Models\WalletTransaction::where('user_id', $user->id)
+            ->with(['sinistre.assignedAgent', 'sinistre.assure'])
+            ->latest()
+            ->paginate(15);
+
+        return view('police.wallet', compact('user', 'transactions'));
+    }
 }

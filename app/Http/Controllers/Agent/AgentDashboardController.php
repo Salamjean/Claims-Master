@@ -418,4 +418,18 @@ class AgentDashboardController extends Controller
 
         return redirect()->back()->with('success', 'Profil mis à jour avec succès.');
     }
+
+    /**
+     * Affiche le portefeuille de l'agent
+     */
+    public function wallet()
+    {
+        $agent = auth('user')->user();
+        $transactions = \App\Models\WalletTransaction::where('user_id', $agent->id)
+            ->with('sinistre')
+            ->latest()
+            ->paginate(15);
+
+        return view('agent.wallet', compact('agent', 'transactions'));
+    }
 }
