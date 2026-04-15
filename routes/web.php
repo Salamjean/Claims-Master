@@ -12,6 +12,7 @@ use App\Http\Controllers\Assure\SinistreController;
 use App\Http\Controllers\Assure\SinistreDocumentController;
 use App\Http\Controllers\Assurance\ExpertController;
 use App\Http\Controllers\Assurance\GarageController;
+use App\Http\Controllers\Assurance\PersonnelController;
 use App\Http\Controllers\Assurance\SinistreController as AssuranceSinistreController;
 use App\Http\Controllers\Agent\AgentDashboardController;
 use App\Http\Controllers\Gendarmerie\GendarmerieController;
@@ -97,6 +98,12 @@ Route::middleware(['auth:user', 'assurance'])->prefix('assurance')->group(functi
     Route::resource('garages', GarageController::class)->names('assurance.garages');
     Route::delete('/assures/{user}', [AssureController::class, 'destroy'])->name('assurance.assures.destroy');
 
+    // Gestion du Personnel
+    Route::get('/personnel', [PersonnelController::class, 'index'])->name('assurance.personnel.index');
+    Route::get('/personnel/ajouter', [PersonnelController::class, 'create'])->name('assurance.personnel.create');
+    Route::post('/personnel', [PersonnelController::class, 'store'])->name('assurance.personnel.store');
+    Route::delete('/personnel/{personnel}', [PersonnelController::class, 'destroy'])->name('assurance.personnel.destroy');
+
     // Gestion des documents requis
     Route::get('/documents-requis', [DocumentRequisController::class, 'index'])->name('assurance.documents-requis.index');
     Route::get('/documents-requis/{type_sinistre}', [DocumentRequisController::class, 'show'])->name('assurance.documents-requis.show');
@@ -104,6 +111,7 @@ Route::middleware(['auth:user', 'assurance'])->prefix('assurance')->group(functi
 
     // Gestion de l'expertise et des sinistres (Review IA)
     Route::get('/sinistres', [AssuranceSinistreController::class, 'index'])->name('assurance.sinistres.index');
+    Route::get('/recherche', [AssuranceSinistreController::class, 'search'])->name('assurance.search');
     Route::get('/sinistres/{sinistre}', [AssuranceSinistreController::class, 'show'])->name('assurance.sinistres.show');
     Route::post('/sinistres/{sinistre}/review-doc/{documentAttendu}', [AssuranceSinistreController::class, 'reviewDoc'])->name('assurance.sinistres.review-doc');
     Route::post('/sinistres/{sinistre}/decision', [AssuranceSinistreController::class, 'decision'])->name('assurance.sinistres.decision');
@@ -169,6 +177,35 @@ Route::middleware(['auth:user', 'assure'])->prefix('mon-espace')->group(function
 
         // Support 24/7
         Route::get('/support', [AssureDashboardController::class, 'support'])->name('assure.support');
+    });
+});
+
+// Les routes de l'espace Personnel (employés assurance)
+use App\Http\Controllers\Personnel\PersonnelDashboardController;
+
+Route::middleware(['auth:user', 'personnel'])->prefix('personnel')->group(function () {
+    Route::post('/logout', [PersonnelDashboardController::class, 'logout'])->name('personnel.logout');
+    Route::middleware(['force.password'])->group(function () {
+        Route::get('/dashboard', [PersonnelDashboardController::class, 'dashboard'])->name('personnel.dashboard');
+
+        // Dossiers sinistres
+        Route::get('/sinistres', [PersonnelDashboardController::class, 'sinistres'])->name('personnel.sinistres.index');
+        Route::get('/mes-dossiers', [PersonnelDashboardController::class, 'mesDossiers'])->name('personnel.mes-dossiers');
+        Route::get('/recherche', [PersonnelDashboardController::class, 'search'])->name('personnel.search');
+        Route::get('/sinistres/{sinistre}', [PersonnelDashboardController::class, 'showSinistre'])->name('personnel.sinistres.show');
+        Route::get('/sinistres/{sinistre}/examiner', [PersonnelDashboardController::class, 'reviewSinistre'])->name('personnel.sinistres.review');
+        Route::post('/sinistres/{sinistre}/review-doc/{documentAttendu}', [PersonnelDashboardController::class, 'reviewDoc'])->name('personnel.sinistres.review-doc');
+        Route::post('/sinistres/{sinistre}/verify-garanties', [PersonnelDashboardController::class, 'verifyGaranties'])->name('personnel.sinistres.verify_garanties');
+        Route::post('/sinistres/{sinistre}/assign-expert-garage', [PersonnelDashboardController::class, 'assignExpertGarage'])->name('personnel.sinistres.assign_expert_garage');
+        Route::post('/sinistres/{sinistre}/decision', [PersonnelDashboardController::class, 'decision'])->name('personnel.sinistres.decision');
+        Route::post('/sinistres/{sinistre}/claim', [PersonnelDashboardController::class, 'claim'])->name('personnel.sinistres.claim');
+        Route::post('/sinistres/{sinistre}/release', [PersonnelDashboardController::class, 'release'])->name('personnel.sinistres.release');
+
+        // Profil & mot de passe
+        Route::get('/profil', [PersonnelDashboardController::class, 'profile'])->name('personnel.profile');
+        Route::post('/profil', [PersonnelDashboardController::class, 'updateProfile'])->name('personnel.profile.update');
+        Route::get('/changer-mot-de-passe', [PersonnelDashboardController::class, 'showChangePassword'])->name('personnel.password.change');
+        Route::post('/changer-mot-de-passe', [PersonnelDashboardController::class, 'updatePassword'])->name('personnel.password.update');
     });
 });
 

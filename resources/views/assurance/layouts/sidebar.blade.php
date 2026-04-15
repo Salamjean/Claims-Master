@@ -23,6 +23,24 @@
             <span class="nav-label text-sm">Tableau de bord</span>
         </a>
 
+        <a href="{{ route('assurance.sinistres.index') }}"
+            class="nav-item {{ request()->routeIs('assurance.sinistres.*') ? 'active bg-white/10 text-white' : '' }}">
+            <span class="nav-icon"><i class="fa-solid fa-folder-open text-sm"></i></span>
+            <span class="nav-label text-sm flex-1">Dossiers Sinistres</span>
+            @if (!empty($countSinistresNonCloturer) && $countSinistresNonCloturer > 0)
+                <span
+                    class="nav-label ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold bg-red-500 text-white leading-none">
+                    {{ $countSinistresNonCloturer > 99 ? '99+' : $countSinistresNonCloturer }}
+                </span>
+            @endif
+        </a>
+
+        <a href="{{ route('assurance.search') }}"
+            class="nav-item {{ request()->routeIs('assurance.search') ? 'active bg-white/10 text-white' : '' }}">
+            <span class="nav-icon"><i class="fa-solid fa-magnifying-glass text-sm"></i></span>
+            <span class="nav-label text-sm">Recherche</span>
+        </a>
+
         {{-- DROPDOWN ASSURES --}}
         <div x-data="{ open: false }">
             <button @click="open = !open" class="nav-item w-full justify-between"
@@ -56,12 +74,6 @@
             </div>
         </div>
 
-        <a href="{{ route('assurance.sinistres.index') }}"
-            class="nav-item {{ request()->routeIs('assurance.sinistres.*') ? 'active bg-white/10 text-white' : '' }}">
-            <span class="nav-icon"><i class="fa-solid fa-folder-open text-sm"></i></span>
-            <span class="nav-label text-sm">Dossiers Sinistres</span>
-        </a>
-
         <a href="{{ route('assurance.experts.index') }}"
             class="nav-item {{ request()->routeIs('assurance.experts.*') ? 'active bg-white/10 text-white' : '' }}">
             <span class="nav-icon"><i class="fa-solid fa-user-tie text-sm"></i></span>
@@ -74,10 +86,41 @@
             <span class="nav-label text-sm">Nos Garages</span>
         </a>
 
-        <div class="my-3 border-t border-white/10"></div>
-        <p class="nav-label text-white/30 text-[10px] uppercase tracking-widest font-semibold px-3 mb-2">Finance</p>
+        {{-- DROPDOWN PERSONNEL --}}
+        <div x-data="{ open: {{ request()->routeIs('assurance.personnel.*') ? 'true' : 'false' }} }">
+            <button @click="open = !open" class="nav-item w-full justify-between"
+                :class="open ? 'bg-white/10 text-white' : ''">
+                <span class="flex items-center gap-3">
+                    <span class="nav-icon"><i class="fa-solid fa-users-gear text-sm"></i></span>
+                    <span class="nav-label text-sm">Personnel</span>
+                </span>
+                <span class="nav-label">
+                    <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300"
+                        :class="open ? 'rotate-180' : ''"></i>
+                </span>
+            </button>
+            <div x-show="open" x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-1"
+                class="ml-8 mt-1 space-y-0.5 nav-label">
+                <a href="{{ route('assurance.personnel.index') }}"
+                    class="nav-item text-xs py-2 px-3 {{ request()->routeIs('assurance.personnel.index') ? 'bg-white/10 text-white' : '' }}">
+                    <span class="nav-icon"><i class="fa-solid fa-list text-xs"></i></span>
+                    <span>Liste du personnel</span>
+                </a>
+                <a href="{{ route('assurance.personnel.create') }}"
+                    class="nav-item text-xs py-2 px-3 {{ request()->routeIs('assurance.personnel.create') ? 'bg-white/10 text-white' : '' }}">
+                    <span class="nav-icon"><i class="fa-solid fa-plus text-xs"></i></span>
+                    <span>Ajouter un membre</span>
+                </a>
+            </div>
+        </div>
 
-        <a href="#" class="nav-item">
+        <!-- <div class="my-3 border-t border-white/10"></div>
+        <p class="nav-label text-white/30 text-[10px] uppercase tracking-widest font-semibold px-3 mb-2">Finance</p> -->
+
+        <!-- <a href="#" class="nav-item">
             <span class="nav-icon"><i class="fa-solid fa-file-invoice-dollar text-sm"></i></span>
             <span class="nav-label text-sm">Paiements</span>
         </a>
@@ -85,7 +128,7 @@
         <a href="#" class="nav-item">
             <span class="nav-icon"><i class="fa-solid fa-chart-bar text-sm"></i></span>
             <span class="nav-label text-sm">Rapports</span>
-        </a>
+        </a> -->
 
         <div class="my-3 border-t border-white/10"></div>
         <p class="nav-label text-white/30 text-[10px] uppercase tracking-widest font-semibold px-3 mb-2">Système</p>
@@ -108,8 +151,9 @@
     <div class="border-t border-white/10 px-4 py-4">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
-                @if(auth('user')->user()->profile_picture)
-                    <img src="{{ asset('storage/' . auth('user')->user()->profile_picture) }}" class="w-full h-full object-cover">
+                @if (auth('user')->user()->profile_picture)
+                    <img src="{{ asset('storage/' . auth('user')->user()->profile_picture) }}"
+                        class="w-full h-full object-cover">
                 @else
                     <span class="text-white text-xs font-bold">
                         {{ strtoupper(substr(auth('user')->user()->name ?? 'A', 0, 1)) }}

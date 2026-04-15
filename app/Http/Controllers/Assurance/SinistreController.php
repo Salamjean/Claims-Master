@@ -20,25 +20,94 @@ class SinistreController extends Controller
         $this->sms = $sms;
     }
     /**
+     * Page de recherche globale côté assurance
+     */
+    public function search(Request $request)
+    {
+        $assuranceId = auth('user')->id();
+
+        $fAssure  = trim($request->get('f_assure', ''));
+        $fType    = trim($request->get('f_type', ''));
+        $fNumero  = trim($request->get('f_numero', ''));
+        $fAgent   = trim($request->get('f_agent', ''));
+        $hasFilter = $fAssure || $fType || $fNumero || $fAgent;
+
+        $resultats = null;
+
+        if ($hasFilter) {
+            $resultats = Sinistre::with(['assure', 'documentsAttendus', 'assignedPersonnel'])
+                ->where('assurance_id', $assuranceId)
+                ->when($fAssure, fn($q) => $q->whereHas(
+                    'assure',
+                    fn($a) =>
+                    $a->where('name', 'like', "%{$fAssure}%")
+                        ->orWhere('prenom', 'like', "%{$fAssure}%")
+                ))
+                ->when($fType,   fn($q) => $q->where('type_sinistre', 'like', "%{$fType}%"))
+                ->when($fNumero, fn($q) => $q->where('numero_sinistre', 'like', "%{$fNumero}%"))
+                ->when($fAgent,  fn($q) => $q->whereHas(
+                    'assignedPersonnel',
+                    fn($p) =>
+                    $p->where('name', 'like', "%{$fAgent}%")
+                        ->orWhere('prenom', 'like', "%{$fAgent}%")
+                ))
+                ->latest()
+                ->paginate(20)
+                ->withQueryString();
+        }
+
+        return view('assurance.sinistres.search', compact(
+            'fAssure',
+            'fType',
+            'fNumero',
+            'fAgent',
+            'hasFilter',
+            'resultats'
+        ));
+    }
+
+    /**
      * Liste des sinistres à examiner ou globaux.
      */
     public function index(Request $request)
     {
+        $fAssure  = trim($request->get('f_assure', ''));
+        $fType    = trim($request->get('f_type', ''));
+        $fNumero  = trim($request->get('f_numero', ''));
+        $fAgent   = trim($request->get('f_agent', ''));
+
         // Seulement les sinistres affectés à cette compagnie d'assurance
-        $query = Sinistre::query()->with('assure')
-            ->where('assurance_id', auth('user')->id());        // Filtre par défaut sur TOUS les sinistres
+        $query = Sinistre::query()->with(['assure', 'documentsAttendus', 'assignedPersonnel'])
+            ->where('assurance_id', auth('user')->id());
+
         if ($request->has('status') && $request->status === 'review') {
             $query->where(function ($q) {
                 $q->where('workflow_step', 'manager_review')
-                  ->orWhere('status', 'traite');
+                    ->orWhere('status', 'traite');
             });
-        } else {
-            // Pas de filtre strict par défaut, on liste tout
         }
 
-        $sinistres = $query->orderBy('created_at', 'desc')->paginate(15);
+        $query
+            ->when($fAssure, fn($q) => $q->whereHas(
+                'assure',
+                fn($a) =>
+                $a->where('name', 'like', "%{$fAssure}%")
+                    ->orWhere('prenom', 'like', "%{$fAssure}%")
+            ))
+            ->when($fType,   fn($q) => $q->where('type_sinistre', 'like', "%{$fType}%"))
+            ->when($fNumero, fn($q) => $q->where('numero_sinistre', 'like', "%{$fNumero}%"))
+            ->when($fAgent,  fn($q) => $q->whereHas(
+                'assignedPersonnel',
+                fn($p) =>
+                $p->where('name', 'like', "%{$fAgent}%")
+                    ->orWhere('prenom', 'like', "%{$fAgent}%")
+            ));
 
-        return view('assurance.sinistres.index', compact('sinistres'));
+        $sinistres = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
+
+        $hasFilter = $fAssure || $fType || $fNumero || $fAgent;
+
+        return view('assurance.sinistres.index', compact('sinistres', 'fAssure', 'fType', 'fNumero', 'fAgent', 'hasFilter'));
     }
 
     /**
@@ -70,7 +139,7 @@ class SinistreController extends Controller
 
         if ($dernierSoumis) {
             $dernierSoumis->manager_override_status = ($request->override_status === 'pending') ? null : $request->override_status;
-            
+
             if ($request->filled('feedback')) {
                 $dernierSoumis->ai_feedback = "Observation du gestionnaire : " . $request->feedback;
             }

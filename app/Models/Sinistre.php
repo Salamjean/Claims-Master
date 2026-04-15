@@ -53,6 +53,8 @@ class Sinistre extends Model
         'nearby_units',
         'agent_start_lat',
         'agent_start_lng',
+        'assigned_personnel_id',
+        'assigned_personnel_at',
     ];
 
     protected $casts = [
@@ -84,27 +86,27 @@ class Sinistre extends Model
                 $sub->whereNotNull('assigned_agent_id')
                     ->where(function ($inner) use ($userIds) {
                         $inner->whereIn('assigned_agent_id', $userIds)
-                              ->orWhereIn('assigned_service_id', $userIds);
+                            ->orWhereIn('assigned_service_id', $userIds);
                     });
             })
-            // CAS 2 : LE SINISTRE EST LIBRE -> Visibilité partagée des 3 localisés
-            ->orWhere(function ($sub) use ($userIds) {
-                $sub->whereNull('assigned_agent_id')
-                    ->where('status', 'en_attente')
-                    ->where(function ($inner) use ($userIds) {
-                        foreach ($userIds as $uid) {
-                            $inner->orWhere('assigned_service_id', $uid)
-                                  ->orWhereJsonContains('nearby_units', [['id' => $uid]])
-                                  ->orWhereJsonContains('nearby_units', [['parent_service_id' => $uid]]);
-                        }
-                    });
-            })
-            // CAS 3 : LE SINISTRE EST ASSIGNÉ À UN POSTE MAIS PAS ENCORE À UN AGENT 
-            // (Scenario où le poste a été localisé n°1 ou assigné par l'admin)
-            ->orWhere(function ($sub) use ($userIds) {
-                $sub->whereNull('assigned_agent_id')
-                    ->whereIn('assigned_service_id', $userIds);
-            });
+                // CAS 2 : LE SINISTRE EST LIBRE -> Visibilité partagée des 3 localisés
+                ->orWhere(function ($sub) use ($userIds) {
+                    $sub->whereNull('assigned_agent_id')
+                        ->where('status', 'en_attente')
+                        ->where(function ($inner) use ($userIds) {
+                            foreach ($userIds as $uid) {
+                                $inner->orWhere('assigned_service_id', $uid)
+                                    ->orWhereJsonContains('nearby_units', [['id' => $uid]])
+                                    ->orWhereJsonContains('nearby_units', [['parent_service_id' => $uid]]);
+                            }
+                        });
+                })
+                // CAS 3 : LE SINISTRE EST ASSIGNÉ À UN POSTE MAIS PAS ENCORE À UN AGENT 
+                // (Scenario où le poste a été localisé n°1 ou assigné par l'admin)
+                ->orWhere(function ($sub) use ($userIds) {
+                    $sub->whereNull('assigned_agent_id')
+                        ->whereIn('assigned_service_id', $userIds);
+                });
         });
     }
 
@@ -151,5 +153,10 @@ class Sinistre extends Model
     public function assignedAgent()
     {
         return $this->belongsTo(User::class, 'assigned_agent_id');
+    }
+
+    public function assignedPersonnel()
+    {
+        return $this->belongsTo(User::class, 'assigned_personnel_id');
     }
 }

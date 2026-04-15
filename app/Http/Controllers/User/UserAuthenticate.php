@@ -200,20 +200,18 @@ class UserAuthenticate extends Controller
             $user = User::where('email', $request->email)->first();
 
             if ($user) {
-                // Mise à jour du mot de passe
+                // Mise à jour du mot de passe et activation du compte
                 $user->email_verified_at = now();
                 $user->password = Hash::make($request->password);
-                $user->update();
+                $user->must_change_password = false;
+                $user->save();
 
-                if ($user) {
-                    $user->must_change_password = false;
-                    $user->update();
-                    
-                    ResetCodePasswordUser::where('email', $user->email)->delete();
-                }
+                ResetCodePasswordUser::where('email', $user->email)->delete();
 
-                $loginRoute = ($user->role === 'assure') ? 'login' : 'portal.login';
-                return redirect()->route($loginRoute)->with('success', 'Compte mis à jour avec succès. Vous pouvez maintenant vous connecter.');
+                // Connexion automatique après activation
+                \Illuminate\Support\Facades\Auth::guard('user')->login($user);
+
+                return $this->redirectBasedOnRole($user)->with('success', 'Compte activé avec succès. Bienvenue sur Claims Master !');
             } else {
                 return redirect()->route('portal.login')->with('error', 'Email inconnu');
             }
@@ -245,10 +243,11 @@ class UserAuthenticate extends Controller
         if ($role === 'police') return redirect()->route('police.dashboard');
         if ($role === 'gendarmerie') return redirect()->route('gendarmerie.dashboard');
         if ($role === 'assure') return redirect()->route('assure.dashboard');
+        if ($role === 'personnel') return redirect()->route('personnel.dashboard');
         if ($role === 'agent') {
             return redirect()->route('agent.dashboard');
         }
-        
+
         return redirect()->route('home');
     }
 
@@ -296,7 +295,7 @@ class UserAuthenticate extends Controller
             if ($isCodeUser || ($isPhoneNumber && $type === 'assure')) {
                 // Recherche par code_user ou téléphone (uniquement pour les assurés)
                 $query = User::where('role', 'assure');
-                
+
                 if ($isCodeUser) {
                     $query->where('code_user', strtoupper($login));
                 } else {
@@ -318,7 +317,6 @@ class UserAuthenticate extends Controller
 
                 \Illuminate\Support\Facades\Auth::guard('user')->login($user);
                 return redirect()->route('assure.dashboard')->with('success', 'Bienvenue sur votre espace assuré.');
-
             } else {
                 // Authentification par email
                 if (!filter_var($login, FILTER_VALIDATE_EMAIL)) {
@@ -339,7 +337,7 @@ class UserAuthenticate extends Controller
                 if ($type === 'assure' && $user->role !== 'assure') {
                     return redirect()->back()->with('error', 'Ce compte n\'est pas un compte assuré.')->withInput();
                 }
-                
+
                 if ($type === 'portal' && $user->role === 'assure') {
                     return redirect()->back()->with('error', 'Les assurés doivent se connecter via l\'interface dédiée.')->withInput();
                 }

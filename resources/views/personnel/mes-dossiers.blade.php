@@ -1,6 +1,7 @@
-@extends('assurance.layouts.template')
+@extends('personnel.layouts.template')
 
-@section('title', 'Gestion des dossiers Claims AI')
+@section('title', 'Mes Dossiers')
+@section('page-title', 'Mes Dossiers')
 
 @section('content')
     <div x-data="{ filterOpen: {{ $hasFilter ? 'true' : 'false' }} }">
@@ -31,11 +32,8 @@
             </div>
 
             {{-- Corps drawer --}}
-            <form method="GET" action="{{ route('assurance.sinistres.index') }}"
+            <form method="GET" action="{{ route('personnel.mes-dossiers') }}"
                 class="flex-1 flex flex-col overflow-y-auto">
-                @if (request('status'))
-                    <input type="hidden" name="status" value="{{ request('status') }}">
-                @endif
                 <div class="flex-1 px-5 py-5 space-y-5">
 
                     <div>
@@ -62,14 +60,6 @@
                             class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#1d3557]/50 focus:ring-2 focus:ring-[#1d3557]/10 transition-all">
                     </div>
 
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
-                            <i class="fa-solid fa-user-tie text-[9px] mr-1 text-[#1d3557]"></i>Agent récupérateur
-                        </label>
-                        <input type="text" name="f_agent" value="{{ $fAgent ?? '' }}" placeholder="Ex : Touré, Bah…"
-                            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#1d3557]/50 focus:ring-2 focus:ring-[#1d3557]/10 transition-all">
-                    </div>
-
                 </div>
 
                 {{-- Footer drawer --}}
@@ -79,7 +69,7 @@
                         <i class="fa-solid fa-magnifying-glass text-xs"></i> Appliquer les filtres
                     </button>
                     @if ($hasFilter)
-                        <a href="{{ route('assurance.sinistres.index', request('status') ? ['status' => request('status')] : []) }}"
+                        <a href="{{ route('personnel.mes-dossiers') }}"
                             class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-red-50 text-red-500 border border-red-100 hover:bg-red-100 transition-colors">
                             <i class="fa-solid fa-xmark text-xs"></i> Effacer les filtres
                         </a>
@@ -91,30 +81,20 @@
         {{-- En-tête --}}
         <div class="flex items-center justify-between mb-6">
             <div>
-                <h1 class="text-xl font-bold text-slate-800">Dossiers Sinistres</h1>
-                <p class="text-sm text-slate-400">Examen et validation des documents (Claims AI)</p>
+                <h1 class="text-xl font-bold text-slate-800">Mes Dossiers</h1>
+                <p class="text-sm text-slate-400">Dossiers que vous avez récupérés pour traitement</p>
             </div>
-            <div class="flex items-center gap-2">
-                <a href="{{ route('assurance.sinistres.index') }}"
-                    class="px-4 py-2 border {{ request('status') !== 'review' ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50' }} rounded-xl text-sm font-semibold transition-all">
-                    Tous
-                </a>
-                <a href="{{ route('assurance.sinistres.index', ['status' => 'review']) }}"
-                    class="px-4 py-2 border {{ request('status') === 'review' ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50' }} rounded-xl text-sm font-semibold transition-all">
-                    En révision
-                </a>
-                <button @click="filterOpen = true"
-                    class="relative inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all
-                        {{ $hasFilter ? 'bg-[#1d3557] text-white border-[#1d3557] shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
-                    <i class="fa-solid fa-sliders text-sm"></i>
-                    Filtres
-                    @if ($hasFilter)
-                        @php $activeCount = (int)!empty($fAssure) + (int)!empty($fType) + (int)!empty($fNumero) + (int)!empty($fAgent); @endphp
-                        <span
-                            class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white text-[#1d3557] text-[10px] font-black">{{ $activeCount }}</span>
-                    @endif
-                </button>
-            </div>
+            <button @click="filterOpen = true"
+                class="relative inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all
+                    {{ $hasFilter ? 'bg-[#1d3557] text-white border-[#1d3557] shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
+                <i class="fa-solid fa-sliders text-sm"></i>
+                Filtres
+                @if ($hasFilter)
+                    @php $activeCount = (int)!empty($fAssure) + (int)!empty($fType) + (int)!empty($fNumero); @endphp
+                    <span
+                        class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white text-[#1d3557] text-[10px] font-black">{{ $activeCount }}</span>
+                @endif
+            </button>
         </div>
 
         {{-- Badges filtres actifs --}}
@@ -139,13 +119,7 @@
                         <i class="fa-solid fa-hashtag text-[9px]"></i> {{ $fNumero }}
                     </span>
                 @endif
-                @if ($fAgent)
-                    <span
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#1d3557]/10 text-[#1d3557] border border-[#1d3557]/15">
-                        <i class="fa-solid fa-user-tie text-[9px]"></i> {{ $fAgent }}
-                    </span>
-                @endif
-                <a href="{{ route('assurance.sinistres.index', request('status') ? ['status' => request('status')] : []) }}"
+                <a href="{{ route('personnel.mes-dossiers') }}"
                     class="text-xs text-red-500 hover:text-red-700 font-semibold ml-1">Tout effacer</a>
             </div>
         @endif
@@ -158,27 +132,21 @@
                         <th class="text-center px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                             Sinistre</th>
                         <th class="text-center px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            Assuré
-                        </th>
+                            Assuré</th>
                         <th class="text-center px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            Statut
-                        </th>
+                            Statut</th>
                         <th class="text-center px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                             Documents</th>
-                        <th class="text-center px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            Avis
+                        <th class="text-center px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Avis
                             Claims AI</th>
-                        <th class="text-center px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            Personnel</th>
-                        <th class="text-center px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                            Date
+                        <th class="text-center px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date
                         </th>
                         <th class="text-center px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                             Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
-                    @forelse($sinistres as $sinistre)
+                    @forelse($mesDossiers as $sinistre)
                         @php
                             $totalDocs = $sinistre->documentsAttendus->count();
                             $fournisDocs = $sinistre->documentsAttendus->where('status_client', 'uploaded')->count();
@@ -186,15 +154,14 @@
                         @endphp
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <td class="px-5 py-4 text-center">
-                                <div class="font-semibold text-slate-800">
-                                    {{ $sinistre->type_sinistre }}</div>
+                                <div class="font-semibold text-slate-800">{{ $sinistre->type_sinistre }}</div>
                                 @if ($sinistre->numero_sinistre)
                                     <div class="text-xs text-slate-400 mt-0.5">{{ $sinistre->numero_sinistre }}</div>
                                 @endif
                             </td>
                             <td class="px-5 py-4 text-center">
                                 <span
-                                    class="font-medium text-slate-700">{{ $sinistre->assure->name . ' ' . $sinistre->assure->prenom ?? 'Inconnu' }}</span>
+                                    class="font-medium text-slate-700">{{ $sinistre->assure->name . ' ' . $sinistre->assure->prenom }}</span>
                             </td>
                             <td class="px-5 py-4 text-center">
                                 @php
@@ -301,7 +268,7 @@
                                 @if (is_array($sinistre->ai_analysis_report) && isset($sinistre->ai_analysis_report['gravity']))
                                     @php $grav = strtolower($sinistre->ai_analysis_report['gravity']); @endphp
                                     <span
-                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold 
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold
                                         {{ $grav === 'high' ? 'bg-red-50 text-red-600 border border-red-100' : ($grav === 'medium' ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100') }}">
                                         Gravité : {{ ucfirst($grav) }}
                                     </span>
@@ -309,124 +276,121 @@
                                     <span class="text-slate-400 text-xs italic">Pas d'analyse</span>
                                 @endif
                             </td>
-                            <td class="px-5 py-4 text-center">
-                                @if ($sinistre->assignedPersonnel)
-                                    <div class="flex flex-col items-center">
-                                        <span
-                                            class="text-xs font-semibold text-slate-700">{{ $sinistre->assignedPersonnel->name }}
-                                            {{ $sinistre->assignedPersonnel->prenom }}</span>
-                                        <span
-                                            class="text-[10px] text-slate-400">{{ $sinistre->assignedPersonnel->code_user }}</span>
-                                    </div>
-                                @else
-                                    <span
-                                        class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-600 border border-amber-100">
-                                        <i class="fa-solid fa-inbox text-[9px]"></i> Pool
-                                    </span>
-                                @endif
-                            </td>
                             <td class="px-5 py-4 text-slate-400 text-xs text-center">
                                 {{ $sinistre->created_at->format('d/m/Y H:i') }}
                             </td>
                             <td class="px-5 py-4">
                                 <div class="flex items-center justify-center gap-2">
-                                    <a href="{{ route('assurance.sinistres.show', $sinistre) }}"
-                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-50 text-primary-700 hover:bg-primary-100 transition-all">
+                                    <a href="{{ route('personnel.sinistres.review', $sinistre) }}"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1d3557]/10 text-[#1d3557] hover:bg-[#1d3557]/20 transition-all">
                                         <i class="fa-solid fa-magnifying-glass text-xs"></i>
                                         Examiner
                                     </a>
+                                    <form action="{{ route('personnel.sinistres.release', $sinistre) }}" method="POST">
+                                        @csrf
+                                        <button type="submit"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-all border border-red-100"
+                                            onclick="return confirm('Remettre ce dossier dans le pool général ?')">
+                                            <i class="fa-solid fa-rotate-left text-xs"></i>
+                                            Libérer
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-5 py-16 text-center text-slate-400">
+                            <td colspan="7" class="px-5 py-16 text-center text-slate-400">
                                 <i class="fa-solid fa-folder-open text-3xl mb-3 block opacity-30"></i>
-                                Aucun dossier sinistre trouvé.
+                                Vous n'avez récupéré aucun dossier pour le moment.<br>
+                                <a href="{{ route('personnel.dashboard') }}"
+                                    class="text-[#457b9d] font-semibold hover:underline mt-2 inline-block text-xs">
+                                    ← Aller au tableau de bord pour récupérer un dossier
+                                </a>
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
 
-            @if ($sinistres->hasPages())
+            @if ($mesDossiers->hasPages())
                 <div class="px-5 py-4 border-t border-slate-100">
-                    {{ $sinistres->links() }}
+                    {{ $mesDossiers->links() }}
                 </div>
             @endif
         </div>
     </div>
-@endsection
 
-@push('scripts')
-    <script>
-        function showDocs(sinistreId, docs) {
-            if (!docs || docs.length === 0) {
+    @push('scripts')
+        <script>
+            function showDocs(sinistreId, docs) {
+                if (!docs || docs.length === 0) {
+                    Swal.fire({
+                        title: 'Documents',
+                        text: 'Aucun document requis.',
+                        icon: 'info',
+                        confirmButtonColor: '#1d3557',
+                        scrollbarPadding: false,
+                        heightAuto: false
+                    });
+                    return;
+                }
+
+                const rows = docs.map(doc => {
+                    const isUploaded = doc.statut === 'uploaded';
+                    const icon = isUploaded ?
+                        '<span style="color:#16a34a;font-size:13px;">&#x2714;</span>' :
+                        '<span style="color:#dc2626;font-size:13px;">&#x2716;</span>';
+                    const badge = isUploaded ?
+                        '<span style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;">Fourni</span>' :
+                        '<span style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;">Manquant</span>';
+                    const requis = doc.requis ?
+                        '<span style="color:#f97316;font-size:10px;font-weight:700;margin-left:4px;">● Requis</span>' :
+                        '';
+
+                    return `<tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:10px 12px;text-align:left;">
+                ${icon}
+                <span style="margin-left:8px;font-size:13px;color:#1e293b;font-weight:600;">${doc.nom}</span>
+                ${requis}
+            </td>
+            <td style="padding:10px 12px;text-align:right;">${badge}</td>
+        </tr>`;
+                }).join('');
+
+                const fournis = docs.filter(d => d.statut === 'uploaded').length;
+                const total = docs.length;
+                const pct = Math.round((fournis / total) * 100);
+                const barColor = fournis === total ? '#16a34a' : '#1d3557';
+
                 Swal.fire({
-                    title: 'Documents',
-                    text: 'Aucun document requis.',
-                    icon: 'info',
+                    title: '<span style="font-size:16px;font-weight:800;color:#1d3557;">📋 Documents du dossier</span>',
+                    html: `
+            <div style="margin-bottom:14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <span style="font-size:12px;color:#64748b;font-weight:600;">${fournis} / ${total} documents fournis</span>
+                    <span style="font-size:12px;font-weight:700;color:${barColor};">${pct}%</span>
+                </div>
+                <div style="height:6px;background:#e2e8f0;border-radius:9999px;overflow:hidden;">
+                    <div style="height:100%;width:${pct}%;background:${barColor};border-radius:9999px;transition:width 0.4s;"></div>
+                </div>
+            </div>
+            <table style="width:100%;border-collapse:collapse;">
+                <tbody>${rows}</tbody>
+            </table>`,
+                    confirmButtonText: 'Fermer',
                     confirmButtonColor: '#1d3557',
+                    width: 520,
                     scrollbarPadding: false,
-                    heightAuto: false
+                    heightAuto: false,
+                    customClass: {
+                        popup: 'text-left'
+                    },
+                    showClass: {
+                        popup: 'animate__animated animate__fadeInDown animate__faster'
+                    },
                 });
-                return;
             }
-
-            const rows = docs.map(doc => {
-                const isUploaded = doc.statut === 'uploaded';
-                const icon = isUploaded ?
-                    '<span style="color:#16a34a;font-size:13px;">&#x2714;</span>' :
-                    '<span style="color:#dc2626;font-size:13px;">&#x2716;</span>';
-                const badge = isUploaded ?
-                    '<span style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;">Fourni</span>' :
-                    '<span style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;">Manquant</span>';
-                const requis = doc.requis ?
-                    '<span style="color:#f97316;font-size:10px;font-weight:700;margin-left:4px;">● Requis</span>' :
-                    '';
-
-                return `<tr style="border-bottom:1px solid #f1f5f9;">
-        <td style="padding:10px 12px;text-align:left;">
-            ${icon}
-            <span style="margin-left:8px;font-size:13px;color:#1e293b;font-weight:600;">${doc.nom}</span>
-            ${requis}
-        </td>
-        <td style="padding:10px 12px;text-align:right;">${badge}</td>
-    </tr>`;
-            }).join('');
-
-            const fournis = docs.filter(d => d.statut === 'uploaded').length;
-            const total = docs.length;
-            const pct = Math.round((fournis / total) * 100);
-            const barColor = fournis === total ? '#16a34a' : '#1d3557';
-
-            Swal.fire({
-                title: '<span style="font-size:16px;font-weight:800;color:#1d3557;">📋 Documents du dossier</span>',
-                html: `
-        <div style="margin-bottom:14px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-                <span style="font-size:12px;color:#64748b;font-weight:600;">${fournis} / ${total} documents fournis</span>
-                <span style="font-size:12px;font-weight:700;color:${barColor};">${pct}%</span>
-            </div>
-            <div style="height:6px;background:#e2e8f0;border-radius:9999px;overflow:hidden;">
-                <div style="height:100%;width:${pct}%;background:${barColor};border-radius:9999px;transition:width 0.4s;"></div>
-            </div>
-        </div>
-        <table style="width:100%;border-collapse:collapse;">
-            <tbody>${rows}</tbody>
-        </table>`,
-                confirmButtonText: 'Fermer',
-                confirmButtonColor: '#1d3557',
-                width: 520,
-                scrollbarPadding: false,
-                heightAuto: false,
-                customClass: {
-                    popup: 'text-left'
-                },
-                showClass: {
-                    popup: 'animate__animated animate__fadeInDown animate__faster'
-                },
-            });
-        }
-    </script>
-@endpush
+        </script>
+    @endpush
+@endsection
