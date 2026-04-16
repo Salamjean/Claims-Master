@@ -17,7 +17,7 @@ class AgentDashboardController extends Controller
     public function dashboard()
     {
         $agent = auth('user')->user();
-        
+
         // Le dashboard montre le POOL GÉNÉRAL (nouveaux sinistres à récupérer)
         $sinistres = Sinistre::whereInvolved($agent->id, $agent->service_id)
             ->whereNull('assigned_agent_id')
@@ -108,10 +108,10 @@ class AgentDashboardController extends Controller
     public function claimSinistre(Request $request, Sinistre $sinistre)
     {
         $agent = auth('user')->user();
-        
+
         // Sécurité : l'agent doit être impliqué (par station ou par proximité)
         abort_unless(Sinistre::where('id', $sinistre->id)->whereInvolved($agent->id, $agent->service_id)->exists(), 403);
-        
+
         // Si déjà attribué à quelqu'un d'autre
         if ($sinistre->assigned_agent_id && $sinistre->assigned_agent_id !== $agent->id) {
             return back()->with('error', 'Ce sinistre est déjà pris en charge par un autre agent.');
@@ -166,7 +166,7 @@ class AgentDashboardController extends Controller
                 $data[$field] = $request->file($field)->store('constats', 'public');
             }
         }
-        
+
         // Gestion du croquis (Photo ou Dessin)
         if ($request->hasFile('croquis_file')) {
             $data['croquis'] = $request->file('croquis_file')->store('constats/croquis', 'public');
@@ -212,7 +212,7 @@ class AgentDashboardController extends Controller
         $agent = auth('user')->user();
         abort_unless(
             $sinistre->assigned_agent_id === $agent->id ||
-            $sinistre->assigned_service_id === $agent->service_id,
+                $sinistre->assigned_service_id === $agent->service_id,
             403
         );
         abort_unless($sinistre->constat && $sinistre->constat->terrain_valide, 403, 'Le constat terrain doit être validé avant la rédaction.');
@@ -230,7 +230,7 @@ class AgentDashboardController extends Controller
         $agent = auth('user')->user();
         abort_unless(
             $sinistre->assigned_agent_id === $agent->id ||
-            $sinistre->assigned_service_id === $agent->service_id,
+                $sinistre->assigned_service_id === $agent->service_id,
             403
         );
 
@@ -272,10 +272,10 @@ class AgentDashboardController extends Controller
         $assure      = $sinistre->assure;
         $numero      = $assure->contact ?? null;
         $serviceName = $sinistre->service->name ?? 'notre agence';
-        
+
         // Suppression des accents pour éviter l'erreur UNICODE de l'API
         $message = "Bonjour {$assure->name}, votre constat de sinistre #{$sinistre->numero_sinistre} est pret. "
-                 . "Connectez-vous sur votre espace pour regler les frais de {$request->montant_a_payer} FCFA et telecharger votre document. Merci.";
+            . "Connectez-vous sur votre espace pour regler les frais de {$request->montant_a_payer} FCFA et telecharger votre document. Merci.";
 
         if ($numero) {
             try {
@@ -317,6 +317,45 @@ class AgentDashboardController extends Controller
     }
 
     /**
+     * Page Statistiques des paiements constats
+     */
+    public function constatsStatistiques()
+    {
+        $agent = auth('user')->user();
+
+        $constats = \App\Models\Constat::with(['sinistre.assure'])
+            ->whereHas('sinistre', function ($q) use ($agent) {
+                $q->where(function ($sub) use ($agent) {
+                    $sub->where('assigned_agent_id', $agent->id)
+                        ->orWhere('assigned_service_id', $agent->service_id);
+                });
+            })
+            ->where('redaction_validee', true)
+            ->latest('redaction_validee_at')
+            ->get();
+
+        $online    = $constats->where('statut_paiement', 'success')->where('agent_unlocked', false);
+        $deblocage = $constats->where('agent_unlocked', true);
+        $pending   = $constats->where('statut_paiement', '!=', 'success');
+
+        $stats = [
+            'total'            => $constats->count(),
+            'online_count'     => $online->count(),
+            'online_montant'   => $online->sum('montant_a_payer'),
+            'deblocage_count'  => $deblocage->count(),
+            'deblocage_montant' => $deblocage->sum('montant_a_payer'),
+            'pending_count'    => $pending->count(),
+        ];
+
+        $history = $constats
+            ->where('statut_paiement', 'success')
+            ->sortByDesc('redaction_validee_at')
+            ->values();
+
+        return view('agent.sinistres.constats_statistiques', compact('stats', 'history'));
+    }
+
+    /**
      * Marque le constat comme ayant été récupéré physiquement par l'assuré
      */
     public function markAsRecovered(Sinistre $sinistre)
@@ -324,7 +363,7 @@ class AgentDashboardController extends Controller
         $agent = auth('user')->user();
         abort_unless(
             $sinistre->assigned_agent_id === $agent->id ||
-            $sinistre->assigned_service_id === $agent->service_id,
+                $sinistre->assigned_service_id === $agent->service_id,
             403
         );
 
@@ -336,6 +375,44 @@ class AgentDashboardController extends Controller
         ]);
 
         return back()->with('success', '✅ Le constat a été marqué comme récupéré par l\'assuré.');
+    }
+
+    /**
+     * Débloque le téléchargement du constat pour l'assuré SANS créditer le portefeuille.
+     * Utilisé quand l'agent choisit de lever la barrière de paiement manuellement.
+     */
+    public function agentUnlockConstat(Sinistre $sinistre)
+    {
+        $agent = auth('user')->user();
+        abort_unless(
+            $sinistre->assigned_agent_id === $agent->id ||
+                $sinistre->assigned_service_id === $agent->service_id,
+            403
+        );
+
+        $constat = $sinistre->constat;
+        abort_unless($constat && $constat->redaction_validee, 403, "Le constat n'est pas encore rédigé.");
+        abort_if($constat->statut_paiement === 'success', 400, 'Ce constat est déjà débloqué.');
+
+        // Marquer comme débloqué par l'agent (pas de crédit wallet)
+        $constat->update([
+            'statut_paiement'  => 'success',
+            'agent_unlocked'   => true,
+            'agent_unlocked_at' => now(),
+            'agent_unlocked_by' => $agent->id,
+        ]);
+
+        // Historique dans wallet_transactions (montant 0, type agent_unlock — aucun crédit)
+        \App\Models\WalletTransaction::create([
+            'user_id'     => $agent->id,
+            'sinistre_id' => $sinistre->id,
+            'amount'      => 0,
+            'type'        => 'agent_unlock',
+            'description' => 'Déblocage manuel agent — constat #' . ($sinistre->numero_sinistre ?? $sinistre->id) . ' (sans paiement assuré)',
+            'status'      => 'completed',
+        ]);
+
+        return back()->with('success', '✅ Téléchargement débloqué pour l\'assuré. Aucun montant crédité.');
     }
 
     public function showConstat(Sinistre $sinistre)

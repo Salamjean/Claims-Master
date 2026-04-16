@@ -282,7 +282,9 @@ Route::middleware(['auth:user', 'agent', 'force.password'])->prefix('agent')->gr
     Route::get('/sinistres/{sinistre}/redaction', [AgentDashboardController::class, 'showRedaction'])->name('agent.sinistres.redaction');
     Route::post('/sinistres/{sinistre}/redaction', [AgentDashboardController::class, 'storeRedaction'])->name('agent.sinistres.redaction.store');
     Route::get('/constats-rediges', [AgentDashboardController::class, 'constatsRediges'])->name('agent.constats.rediges');
+    Route::get('/constats-statistiques', [AgentDashboardController::class, 'constatsStatistiques'])->name('agent.constats.statistiques');
     Route::post('/sinistres/{sinistre}/constat/mark-recovered', [AgentDashboardController::class, 'markAsRecovered'])->name('agent.constats.mark_recovered');
+    Route::post('/sinistres/{sinistre}/constat/agent-unlock', [AgentDashboardController::class, 'agentUnlockConstat'])->name('agent.constats.agent_unlock');
     Route::get('/portefeuille', [AgentDashboardController::class, 'wallet'])->name('agent.wallet');
     Route::post('/logout', [AgentDashboardController::class, 'logout'])->name('agent.logout');
 

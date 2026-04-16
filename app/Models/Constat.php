@@ -44,6 +44,9 @@ class Constat extends Model
         'statut_paiement',
         'montant_a_payer',
         'wave_session_id',
+        'agent_unlocked',
+        'agent_unlocked_at',
+        'agent_unlocked_by',
     ];
 
     protected $casts = [
@@ -51,13 +54,15 @@ class Constat extends Model
         'photos_plus'         => 'array',
         'terrain_valide'      => 'boolean',
         'redaction_validee'   => 'boolean',
-        'redaction_validee_at'=> 'datetime',
+        'redaction_validee_at' => 'datetime',
         'recupere_par_assure' => 'boolean',
         'recupere_at'         => 'datetime',
         'date_livraison'      => 'date',
         'montant_timbres'     => 'integer',
         'montant_livraison'   => 'integer',
         'montant_a_payer'     => 'integer',
+        'agent_unlocked'      => 'boolean',
+        'agent_unlocked_at'   => 'datetime',
     ];
 
     public function sinistre()
