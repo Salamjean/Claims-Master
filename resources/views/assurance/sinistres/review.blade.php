@@ -5,7 +5,17 @@
 @section('content')
     <div class=" mx-auto" style="width:80%">
 
-        {{-- En-tête --}}
+        {{-- Bannière dossier clôturé --}}
+        @if ($sinistre->status === 'cloture')
+            <div
+                class="mb-6 flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-slate-100 border border-slate-200 text-slate-600">
+                <i class="fa-solid fa-lock text-slate-400 text-lg"></i>
+                <div>
+                    <p class="text-sm font-bold text-slate-700">Dossier clôturé &mdash; consultation uniquement</p>
+                    <p class="text-xs text-slate-400">Ce dossier a été clôturé. Aucune action n&rsquo;est possible.</p>
+                </div>
+            </div>
+        @endif
         <div class="flex items-center justify-between mb-8">
             <div>
                 <div class="flex items-center gap-2 text-sm text-slate-400 mb-2">
@@ -14,7 +24,8 @@
                     <i class="fa-solid fa-chevron-right text-xs"></i>
                     <span class="text-slate-600 font-semibold">Examen #{{ $sinistre->id }}</span>
                 </div>
-                <h1 class="text-2xl font-bold text-slate-800">Dossier : {{ str_replace('_', ' ', $sinistre->type_sinistre) }}
+                <h1 class="text-2xl font-bold text-slate-800">Dossier :
+                    {{ str_replace('_', ' ', $sinistre->type_sinistre) }}
                 </h1>
                 <p class="text-slate-500 mt-1">
                     Déclaré le {{ $sinistre->created_at->format('d/m/Y') }} par <span
@@ -103,85 +114,121 @@
                         <i class="fa-solid fa-tasks text-slate-400"></i> Traitement du Dossier
                     </h3>
 
-                    {{-- Vérification Garanties --}}
-                    <div class="mb-6 p-4 border border-slate-200 rounded-xl bg-slate-50">
-                        <h4 class="font-bold text-sm mb-3">1. Vérification des garanties</h4>
+                    @if ($sinistre->status === 'cloture')
+                        {{-- Résumé lecture seule --}}
+                        <div class="space-y-3">
+                            <div class="p-4 border border-slate-200 rounded-xl bg-slate-50 flex items-center gap-3">
+                                @if ($sinistre->est_couvert)
+                                    <i class="fa-solid fa-shield-check text-emerald-500 text-lg"></i>
+                                    <div>
+                                        <p class="text-sm font-bold text-emerald-700">Sinistre couvert</p>
+                                        <p class="text-xs text-slate-400">Garanties vérifiées et validées</p>
+                                    </div>
+                                @else
+                                    <i class="fa-solid fa-shield-xmark text-red-500 text-lg"></i>
+                                    <div>
+                                        <p class="text-sm font-bold text-red-600">Sinistre non couvert</p>
+                                        @if ($sinistre->motif_rejet)
+                                            <p class="text-xs text-slate-500 mt-0.5">{{ $sinistre->motif_rejet }}</p>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                            @if ($sinistre->expert_id || $sinistre->garage_id)
+                                <div class="p-4 border border-slate-200 rounded-xl bg-slate-50 space-y-2">
+                                    @if ($sinistre->expert)
+                                        <p class="text-xs text-slate-500"><span class="font-bold">Expert&nbsp;:</span>
+                                            {{ $sinistre->expert->name }}</p>
+                                    @endif
+                                    @if ($sinistre->garage)
+                                        <p class="text-xs text-slate-500"><span class="font-bold">Garage&nbsp;:</span>
+                                            {{ $sinistre->garage->name }}</p>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    @else
+                        {{-- Vérification Garanties --}}
+                        <div class="mb-6 p-4 border border-slate-200 rounded-xl bg-slate-50">
+                            <h4 class="font-bold text-sm mb-3">1. Vérification des garanties</h4>
+                            @if (in_array($sinistre->workflow_step, [
+                                    'warranty_verified_pending_assignment',
+                                    'expert_garage_assigned',
+                                    'closed_validated',
+                                ]))
+                                <div class="text-sm text-emerald-600 font-semibold mb-2"><i
+                                        class="fa-solid fa-check-circle"></i> Garanties validées, sinistre couvert.</div>
+                            @else
+                                <form action="{{ route('assurance.sinistres.verify_garanties', $sinistre->id) }}"
+                                    method="POST">
+                                    @csrf
+                                    <div class="space-y-3">
+                                        <select name="est_couvert"
+                                            class="w-full h-10 px-3 rounded-lg text-sm border-slate-300 focus:border-primary-500"
+                                            required
+                                            onchange="document.getElementById('rejet_box').classList.toggle('hidden', this.value === '1')">
+                                            <option value="">Le sinistre est-il couvert ?</option>
+                                            <option value="1">Oui, couvert</option>
+                                            <option value="0">Non, rejeté</option>
+                                        </select>
+                                        <div id="rejet_box" class="hidden">
+                                            <textarea name="motif_rejet" class="w-full p-2 h-20 text-sm border-slate-300 rounded-lg"
+                                                placeholder="Motif du rejet..."></textarea>
+                                        </div>
+                                        <button type="submit"
+                                            class="w-full py-2 bg-slate-800 text-white rounded-lg text-sm font-semibold hover:bg-slate-900 transition-colors">Enregistrer
+                                            Décision</button>
+                                    </div>
+                                </form>
+                            @endif
+                        </div>
+
+                        {{-- Mandatement Expert & Garage --}}
                         @if (in_array($sinistre->workflow_step, [
                                 'warranty_verified_pending_assignment',
                                 'expert_garage_assigned',
                                 'closed_validated',
                             ]))
-                            <div class="text-sm text-emerald-600 font-semibold mb-2"><i
-                                    class="fa-solid fa-check-circle"></i> Garanties validées, sinistre couvert.</div>
-                        @else
-                            <form action="{{ route('assurance.sinistres.verify_garanties', $sinistre->id) }}"
-                                method="POST">
-                                @csrf
-                                <div class="space-y-3">
-                                    <select name="est_couvert"
-                                        class="w-full h-10 px-3 rounded-lg text-sm border-slate-300 focus:border-primary-500"
-                                        required
-                                        onchange="document.getElementById('rejet_box').classList.toggle('hidden', this.value === '1')">
-                                        <option value="">Le sinistre est-il couvert ?</option>
-                                        <option value="1">Oui, couvert</option>
-                                        <option value="0">Non, rejeté</option>
-                                    </select>
-                                    <div id="rejet_box" class="hidden">
-                                        <textarea name="motif_rejet" class="w-full p-2 h-20 text-sm border-slate-300 rounded-lg"
-                                            placeholder="Motif du rejet..."></textarea>
+                            <div class="p-4 border border-slate-200 rounded-xl bg-slate-50">
+                                <h4 class="font-bold text-sm mb-3">2. Orientation Expert / Garage</h4>
+                                <form action="{{ route('assurance.sinistres.assign_expert_garage', $sinistre->id) }}"
+                                    method="POST">
+                                    @csrf
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="text-xs text-slate-500 font-semibold mb-1 block">Expert
+                                                Mandaté</label>
+                                            <select name="expert_id"
+                                                class="w-full h-10 px-3 rounded-lg text-sm border-slate-300">
+                                                <option value="">-- Aucun --</option>
+                                                @foreach ($experts as $ex)
+                                                    <option value="{{ $ex->id }}"
+                                                        {{ $sinistre->expert_id == $ex->id ? 'selected' : '' }}>
+                                                        {{ $ex->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-xs text-slate-500 font-semibold mb-1 block">Garage
+                                                Réparateur</label>
+                                            <select name="garage_id"
+                                                class="w-full h-10 px-3 rounded-lg text-sm border-slate-300">
+                                                <option value="">-- Aucun --</option>
+                                                @foreach ($garages as $ga)
+                                                    <option value="{{ $ga->id }}"
+                                                        {{ $sinistre->garage_id == $ga->id ? 'selected' : '' }}>
+                                                        {{ $ga->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <button type="submit"
+                                            class="w-full py-2 bg-primary-600 text-white rounded-lg text-sm font-semibold hover:bg-primary-700 transition-colors">Assigner</button>
                                     </div>
-                                    <button type="submit"
-                                        class="w-full py-2 bg-slate-800 text-white rounded-lg text-sm font-semibold hover:bg-slate-900 transition-colors">Enregistrer
-                                        Décision</button>
-                                </div>
-                            </form>
+                                </form>
+                            </div>
                         @endif
-                    </div>
 
-                    {{-- Mandatement Expert & Garage --}}
-                    @if (in_array($sinistre->workflow_step, [
-                            'warranty_verified_pending_assignment',
-                            'expert_garage_assigned',
-                            'closed_validated',
-                        ]))
-                        <div class="p-4 border border-slate-200 rounded-xl bg-slate-50">
-                            <h4 class="font-bold text-sm mb-3">2. Orientation Expert / Garage</h4>
-                            <form action="{{ route('assurance.sinistres.assign_expert_garage', $sinistre->id) }}"
-                                method="POST">
-                                @csrf
-                                <div class="space-y-3">
-                                    <div>
-                                        <label class="text-xs text-slate-500 font-semibold mb-1 block">Expert
-                                            Mandaté</label>
-                                        <select name="expert_id"
-                                            class="w-full h-10 px-3 rounded-lg text-sm border-slate-300">
-                                            <option value="">-- Aucun --</option>
-                                            @foreach ($experts as $ex)
-                                                <option value="{{ $ex->id }}"
-                                                    {{ $sinistre->expert_id == $ex->id ? 'selected' : '' }}>
-                                                    {{ $ex->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="text-xs text-slate-500 font-semibold mb-1 block">Garage
-                                            Réparateur</label>
-                                        <select name="garage_id"
-                                            class="w-full h-10 px-3 rounded-lg text-sm border-slate-300">
-                                            <option value="">-- Aucun --</option>
-                                            @foreach ($garages as $ga)
-                                                <option value="{{ $ga->id }}"
-                                                    {{ $sinistre->garage_id == $ga->id ? 'selected' : '' }}>
-                                                    {{ $ga->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <button type="submit"
-                                        class="w-full py-2 bg-primary-600 text-white rounded-lg text-sm font-semibold hover:bg-primary-700 transition-colors">Assigner</button>
-                                </div>
-                            </form>
-                        </div>
-                    @endif
+                    @endif {{-- @else cloture --}}
                 </div>
 
                 {{-- Impressions PDF --}}
@@ -197,7 +244,8 @@
                         </a>
 
                         @if ($sinistre->workflow_step == 'expert_garage_assigned' || $sinistre->garage_id)
-                            <a href="{{ route('assurance.sinistres.pdf.prise_en_charge', $sinistre->id) }}" target="_blank"
+                            <a href="{{ route('assurance.sinistres.pdf.prise_en_charge', $sinistre->id) }}"
+                                target="_blank"
                                 class="w-full flex items-center justify-between p-3 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors text-sm font-medium text-slate-700">
                                 <span><i class="fa-solid fa-wrench text-orange-500 mr-2"></i> Bon de Prise en Charge</span>
                                 <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i>
@@ -227,45 +275,49 @@
                             <span
                                 class="text-xs font-bold text-slate-500 uppercase">{{ $sinistre->documentsAttendus->count() }}
                                 requis</span>
-                            <button type="button"
-                                onclick="document.getElementById('add-doc-form').classList.toggle('hidden')"
-                                class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors">
-                                <i class="fa-solid fa-plus"></i> Ajouter un document
-                            </button>
+                            @if ($sinistre->status !== 'cloture')
+                                <button type="button"
+                                    onclick="document.getElementById('add-doc-form').classList.toggle('hidden')"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors">
+                                    <i class="fa-solid fa-plus"></i> Ajouter un document
+                                </button>
+                            @endif
                         </div>
                     </div>
 
                     {{-- Formulaire d'ajout de document --}}
-                    <div id="add-doc-form" class="hidden px-6 py-4 bg-indigo-50 border-b border-indigo-100">
-                        <form action="{{ route('assurance.sinistres.add_document', $sinistre) }}" method="POST"
-                            class="flex flex-wrap items-end gap-3">
-                            @csrf
-                            <div class="flex-1 min-w-[200px]">
-                                <label class="block text-xs font-bold text-slateistre-700 mb-1">Nom du document <span
-                                        class="text-red-500">*</span></label>
-                                <input type="text" name="nom_document" required
-                                    placeholder="Ex: Rapport de police, Certificat médical..."
-                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white">
-                            </div>
-                            <div class="w-36">
-                                <label class="block text-xs font-bold text-slate-700 mb-1">Type de champ</label>
-                                <select name="type_champ"
-                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white">
-                                    <option value="file">Fichier</option>
-                                    <option value="text">Texte</option>
-                                </select>
-                            </div>
-                            <button type="submit"
-                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors">
-                                <i class="fa-solid fa-floppy-disk mr-1"></i> Enregistrer
-                            </button>
-                            <button type="button"
-                                onclick="document.getElementById('add-doc-form').classList.add('hidden')"
-                                class="px-4 py-2 bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 text-xs font-bold rounded-lg transition-colors">
-                                Annuler
-                            </button>
-                        </form>
-                    </div>
+                    @if ($sinistre->status !== 'cloture')
+                        <div id="add-doc-form" class="hidden px-6 py-4 bg-indigo-50 border-b border-indigo-100">
+                            <form action="{{ route('assurance.sinistres.add_document', $sinistre) }}" method="POST"
+                                class="flex flex-wrap items-end gap-3">
+                                @csrf
+                                <div class="flex-1 min-w-[200px]">
+                                    <label class="block text-xs font-bold text-slateistre-700 mb-1">Nom du document <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="text" name="nom_document" required
+                                        placeholder="Ex: Rapport de police, Certificat médical..."
+                                        class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white">
+                                </div>
+                                <div class="w-36">
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Type de champ</label>
+                                    <select name="type_champ"
+                                        class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white">
+                                        <option value="file">Fichier</option>
+                                        <option value="text">Texte</option>
+                                    </select>
+                                </div>
+                                <button type="submit"
+                                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors">
+                                    <i class="fa-solid fa-floppy-disk mr-1"></i> Enregistrer
+                                </button>
+                                <button type="button"
+                                    onclick="document.getElementById('add-doc-form').classList.add('hidden')"
+                                    class="px-4 py-2 bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 text-xs font-bold rounded-lg transition-colors">
+                                    Annuler
+                                </button>
+                            </form>
+                        </div>
+                    @endif {{-- add-doc-form cloture guard --}}
 
                     <div class="divide-y divide-slate-100">
                         @forelse($sinistre->documentsAttendus as $doc)
@@ -340,18 +392,20 @@
                                                 </div>
                                             </div>
                                             {{-- Bouton supprimer le document demandé --}}
-                                            <form id="del-doc-form-{{ $doc->id }}"
-                                                action="{{ route('assurance.sinistres.remove_document', [$sinistre, $doc]) }}"
-                                                method="POST">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="button"
-                                                    onclick="confirmDeleteDoc({{ $doc->id }}, '{{ addslashes($doc->nom_document) }}')"
-                                                    class="ml-3 p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Supprimer ce document">
-                                                    <i class="fa-solid fa-trash-can text-sm"></i>
-                                                </button>
-                                            </form>
+                                            @if ($sinistre->status !== 'cloture')
+                                                <form id="del-doc-form-{{ $doc->id }}"
+                                                    action="{{ route('assurance.sinistres.remove_document', [$sinistre, $doc]) }}"
+                                                    method="POST">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="button"
+                                                        onclick="confirmDeleteDoc({{ $doc->id }}, '{{ addslashes($doc->nom_document) }}')"
+                                                        class="ml-3 p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Supprimer ce document">
+                                                        <i class="fa-solid fa-trash-can text-sm"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
 
                                             @if ($isUploaded)
                                                 <div class="text-right">
@@ -396,35 +450,37 @@
                                                     @endif
                                                 </div>
 
-                                                <form
-                                                    action="{{ route('assurance.sinistres.review-doc', ['sinistre' => $sinistre->id, 'documentAttendu' => $doc->id]) }}"
-                                                    method="POST" class="flex gap-2">
-                                                    @csrf
-                                                    <input type="hidden" name="override_status"
-                                                        id="override_status_{{ $doc->id }}" value="">
+                                                @if ($sinistre->status !== 'cloture')
+                                                    <form
+                                                        action="{{ route('assurance.sinistres.review-doc', ['sinistre' => $sinistre->id, 'documentAttendu' => $doc->id]) }}"
+                                                        method="POST" class="flex gap-2">
+                                                        @csrf
+                                                        <input type="hidden" name="override_status"
+                                                            id="override_status_{{ $doc->id }}" value="">
 
-                                                    @if ($managerOverride === 'valid')
-                                                        {{-- Bouton Déverrouiller (quand c'est déjà validé) --}}
-                                                        <button type="button"
-                                                            onclick="document.getElementById('override_status_{{ $doc->id }}').value='pending'; this.form.submit();"
-                                                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
-                                                            <i class="fa-solid fa-unlock mr-1"></i> Déverrouiller
-                                                        </button>
-                                                    @else
-                                                        {{-- Boutons normaux (quand ce n'est pas encore validé) --}}
-                                                        <button type="button"
-                                                            onclick="document.getElementById('override_status_{{ $doc->id }}').value='valid'; this.form.submit();"
-                                                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white border border-slate-200 text-emerald-600 hover:bg-emerald-50">
-                                                            Valider
-                                                        </button>
+                                                        @if ($managerOverride === 'valid')
+                                                            {{-- Bouton Déverrouiller (quand c'est déjà validé) --}}
+                                                            <button type="button"
+                                                                onclick="document.getElementById('override_status_{{ $doc->id }}').value='pending'; this.form.submit();"
+                                                                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 hover:text-slate-900">
+                                                                <i class="fa-solid fa-unlock mr-1"></i> Déverrouiller
+                                                            </button>
+                                                        @else
+                                                            {{-- Boutons normaux (quand ce n'est pas encore validé) --}}
+                                                            <button type="button"
+                                                                onclick="document.getElementById('override_status_{{ $doc->id }}').value='valid'; this.form.submit();"
+                                                                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white border border-slate-200 text-emerald-600 hover:bg-emerald-50">
+                                                                Valider
+                                                            </button>
 
-                                                        <button type="button"
-                                                            onclick="let m = prompt('Motif du rejet (optionnel) :'); if(m !== null) { let f = document.createElement('input'); f.type='hidden'; f.name='feedback'; f.value=m; this.form.appendChild(f); document.getElementById('override_status_{{ $doc->id }}').value='invalid'; this.form.submit(); }"
-                                                            class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all {{ $managerOverride === 'invalid' ? 'bg-red-500 text-white shadow-md shadow-red-500/20 ring-2 ring-red-500/50' : 'bg-white border border-slate-200 text-red-600 hover:bg-red-50' }}">
-                                                            Rejeter
-                                                        </button>
-                                                    @endif
-                                                </form>
+                                                            <button type="button"
+                                                                onclick="let m = prompt('Motif du rejet (optionnel) :'); if(m !== null) { let f = document.createElement('input'); f.type='hidden'; f.name='feedback'; f.value=m; this.form.appendChild(f); document.getElementById('override_status_{{ $doc->id }}').value='invalid'; this.form.submit(); }"
+                                                                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all {{ $managerOverride === 'invalid' ? 'bg-red-500 text-white shadow-md shadow-red-500/20 ring-2 ring-red-500/50' : 'bg-white border border-slate-200 text-red-600 hover:bg-red-50' }}">
+                                                                Rejeter
+                                                            </button>
+                                                        @endif
+                                                    </form>
+                                                @endif
                                             </div>
                                         @endif
 

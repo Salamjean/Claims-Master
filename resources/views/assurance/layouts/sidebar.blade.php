@@ -24,7 +24,7 @@
         </a>
 
         <a href="{{ route('assurance.sinistres.index') }}"
-            class="nav-item {{ request()->routeIs('assurance.sinistres.*') ? 'active bg-white/10 text-white' : '' }}">
+            class="nav-item {{ request()->routeIs('assurance.sinistres.index') || (request()->routeIs('assurance.sinistres.*') && !request()->routeIs('assurance.sinistres.historique')) ? 'active bg-white/10 text-white' : '' }}">
             <span class="nav-icon"><i class="fa-solid fa-folder-open text-sm"></i></span>
             <span class="nav-label text-sm flex-1">Dossiers Sinistres</span>
             @if (!empty($countSinistresNonCloturer) && $countSinistresNonCloturer > 0)
@@ -33,6 +33,12 @@
                     {{ $countSinistresNonCloturer > 99 ? '99+' : $countSinistresNonCloturer }}
                 </span>
             @endif
+        </a>
+
+        <a href="{{ route('assurance.sinistres.historique') }}"
+            class="nav-item {{ request()->routeIs('assurance.sinistres.historique') ? 'active bg-white/10 text-white' : '' }}">
+            <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left text-sm"></i></span>
+            <span class="nav-label text-sm">Historique Dossiers</span>
         </a>
 
         <a href="{{ route('assurance.search') }}"
@@ -131,7 +137,7 @@
         </a> -->
 
         <div class="my-3 border-t border-white/10"></div>
-        <p class="nav-label text-white/30 text-[10px] uppercase tracking-widest font-semibold px-3 mb-2">Finance</p>
+        <p class="nav-label text-white/30 text-[10px] uppercase tracking-widest font-semibold px-3 mb-2">Système</p>
 
         <a href="{{ route('assurance.constats.statistiques') }}"
             class="nav-item {{ request()->routeIs('assurance.constats.statistiques') ? 'active bg-white/10 text-white' : '' }}">
@@ -139,14 +145,14 @@
             <span class="nav-label text-sm">Statistiques Constats</span>
         </a>
 
-        <div class="my-3 border-t border-white/10"></div>
-        <p class="nav-label text-white/30 text-[10px] uppercase tracking-widest font-semibold px-3 mb-2">Système</p>
+        {{-- <div class="my-3 border-t border-white/10"></div>
+        <p class="nav-label text-white/30 text-[10px] uppercase tracking-widest font-semibold px-3 mb-2">Système</p> --}}
 
-        <a href="{{ route('assurance.documents-requis.index') }}"
+        {{-- <a href="{{ route('assurance.documents-requis.index') }}"
             class="nav-item {{ request()->routeIs('assurance.documents-requis.*') ? 'active bg-white/10 text-white' : '' }}">
             <span class="nav-icon"><i class="fa-solid fa-file-circle-check text-sm"></i></span>
             <span class="nav-label text-sm">Documents Requis</span>
-        </a>
+        </a> --}}
 
         <a href="{{ route('assurance.profile') }}"
             class="nav-item {{ request()->routeIs('assurance.profile') ? 'active bg-white/10 text-white' : '' }}">

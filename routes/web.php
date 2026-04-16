@@ -111,6 +111,7 @@ Route::middleware(['auth:user', 'assurance'])->prefix('assurance')->group(functi
 
     // Gestion de l'expertise et des sinistres (Review IA)
     Route::get('/sinistres', [AssuranceSinistreController::class, 'index'])->name('assurance.sinistres.index');
+    Route::get('/sinistres-historique', [AssuranceSinistreController::class, 'historique'])->name('assurance.sinistres.historique');
     Route::get('/recherche', [AssuranceSinistreController::class, 'search'])->name('assurance.search');
     Route::get('/sinistres/{sinistre}', [AssuranceSinistreController::class, 'show'])->name('assurance.sinistres.show');
     Route::post('/sinistres/{sinistre}/review-doc/{documentAttendu}', [AssuranceSinistreController::class, 'reviewDoc'])->name('assurance.sinistres.review-doc');

@@ -140,7 +140,6 @@ class AssureController extends Controller
 
             return redirect()->route('assurance.assures.index')
                 ->with('success', "L'assuré {$user->name} a été inscrit avec succès. Code : {$codeUser}.");
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Erreur inscription assure : ' . $e->getMessage());
@@ -153,7 +152,8 @@ class AssureController extends Controller
     public function show(User $user)
     {
         $user->load('contrats');
-        return view('assurance.assures.show', compact('user'));
+        $sinistres = \App\Models\Sinistre::where('user_id', $user->id)->latest()->get();
+        return view('assurance.assures.show', compact('user', 'sinistres'));
     }
 
     public function destroy(User $user)

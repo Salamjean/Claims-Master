@@ -111,6 +111,52 @@ class SinistreController extends Controller
     }
 
     /**
+     * Historique des dossiers clôturés.
+     */
+    public function historique(Request $request)
+    {
+        $assuranceId = auth('user')->id();
+
+        $fAssure   = trim($request->get('f_assure', ''));
+        $fType     = trim($request->get('f_type', ''));
+        $fNumero   = trim($request->get('f_numero', ''));
+        $fDecision = trim($request->get('f_decision', ''));
+        $fPersonnel = trim($request->get('f_personnel', ''));
+
+        $sinistres = Sinistre::with(['assure', 'assignedPersonnel', 'expert', 'garage'])
+            ->where('assurance_id', $assuranceId)
+            ->where('status', 'cloture')
+            ->when($fAssure, fn($q) => $q->whereHas(
+                'assure',
+                fn($a) => $a->where('name', 'like', "%{$fAssure}%")
+                    ->orWhere('prenom', 'like', "%{$fAssure}%")
+            ))
+            ->when($fType,     fn($q) => $q->where('type_sinistre', 'like', "%{$fType}%"))
+            ->when($fNumero,   fn($q) => $q->where('numero_sinistre', 'like', "%{$fNumero}%"))
+            ->when($fDecision, fn($q) => $q->where('workflow_step', $fDecision))
+            ->when($fPersonnel, fn($q) => $q->whereHas(
+                'assignedPersonnel',
+                fn($p) => $p->where('name', 'like', "%{$fPersonnel}%")
+                    ->orWhere('prenom', 'like', "%{$fPersonnel}%")
+            ))
+            ->orderBy('updated_at', 'desc')
+            ->paginate(20)
+            ->withQueryString();
+
+        $hasFilter = $fAssure || $fType || $fNumero || $fDecision || $fPersonnel;
+
+        return view('assurance.sinistres.historique', compact(
+            'sinistres',
+            'fAssure',
+            'fType',
+            'fNumero',
+            'fDecision',
+            'fPersonnel',
+            'hasFilter'
+        ));
+    }
+
+    /**
      * Afficher les détails du sinistre pour la validation.
      */
     public function show(Sinistre $sinistre)
