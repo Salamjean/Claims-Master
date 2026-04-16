@@ -8,17 +8,60 @@ use Illuminate\Support\Facades\Auth;
 
 class AssuranceDashboard extends Controller
 {
+    public function constatsStatistiques()
+    {
+        $assurance = Auth::user();
+
+        // Tous les constats des sinistres de cette assurance
+        $constats = \App\Models\Constat::with(['sinistre.assure', 'sinistre.assignedAgent'])
+            ->whereHas('sinistre', fn($q) => $q->where('assurance_id', $assurance->id))
+            ->where('redaction_validee', true)
+            ->latest('redaction_validee_at')
+            ->get();
+
+        $online    = $constats->where('statut_paiement', 'success')->where('agent_unlocked', false);
+        $deblocage = $constats->where('agent_unlocked', true);
+        $pending   = $constats->where('statut_paiement', '!=', 'success');
+
+        $stats = [
+            'total'            => $constats->count(),
+            'online_count'     => $online->count(),
+            'online_montant'   => $online->sum('montant_a_payer'),
+            'deblocage_count'  => $deblocage->count(),
+            'deblocage_montant' => $deblocage->sum('montant_a_payer'),
+            'pending_count'    => $pending->count(),
+        ];
+
+        // Historique : constats payés triés du plus récent
+        $history = $constats
+            ->where('statut_paiement', 'success')
+            ->sortByDesc('redaction_validee_at')
+            ->values();
+
+        // Top agents par volume encaissé (en ligne)
+        $topAgents = $online
+            ->groupBy(fn($c) => $c->sinistre->assignedAgent->name ?? 'Inconnu')
+            ->map(fn($group) => [
+                'count'   => $group->count(),
+                'montant' => $group->sum('montant_a_payer'),
+            ])
+            ->sortByDesc('montant')
+            ->take(5);
+
+        return view('assurance.constats_statistiques', compact('stats', 'history', 'topAgents'));
+    }
+
     public function dashboard()
     {
         $user = Auth::user();
-        
+
         // Statistiques de base
         $totalAssures = \App\Models\User::where('assurance_id', $user->id)->where('role', 'assure')->count();
         $totalSinistres = \App\Models\Sinistre::where('assurance_id', $user->id)->count();
         $sinistresEnAttente = \App\Models\Sinistre::where('assurance_id', $user->id)
             ->whereIn('status', ['en_attente', 'en_cours', 'traite'])
             ->count();
-            
+
         // Derniers sinistres
         $recentSinistres = \App\Models\Sinistre::where('assurance_id', $user->id)
             ->with('assure')
@@ -41,8 +84,8 @@ class AssuranceDashboard extends Controller
         }
 
         return view('assurance.dashboard', compact(
-            'totalAssures', 
-            'totalSinistres', 
+            'totalAssures',
+            'totalSinistres',
             'sinistresEnAttente',
             'recentSinistres',
             'chartData'

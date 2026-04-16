@@ -298,4 +298,42 @@ class SinistreController extends Controller
         }
         return view('assurance.sinistres.pdf.bon_sortie', compact('sinistre'));
     }
+
+    /**
+     * Ajouter un nouveau document attendu pour ce sinistre.
+     */
+    public function addDocumentAttendu(Request $request, Sinistre $sinistre)
+    {
+        $request->validate([
+            'nom_document' => 'required|string|max:255',
+            'type_champ'   => 'required|in:file,text',
+        ]);
+
+        // Sécurité : le sinistre appartient bien à cette assurance
+        abort_if($sinistre->assurance_id !== auth('user')->id(), 403);
+
+        SinistreDocumentAttendu::create([
+            'sinistre_id'  => $sinistre->id,
+            'nom_document' => $request->nom_document,
+            'type_champ'   => $request->type_champ,
+            'is_mandatory' => true,
+            'status_client' => 'pending',
+        ]);
+
+        return back()->with('success', 'Document ajouté avec succès.');
+    }
+
+    /**
+     * Supprimer un document attendu de ce sinistre.
+     */
+    public function removeDocumentAttendu(Sinistre $sinistre, SinistreDocumentAttendu $documentAttendu)
+    {
+        // Sécurité : le document appartient bien à ce sinistre
+        abort_if($documentAttendu->sinistre_id !== $sinistre->id, 403);
+        abort_if($sinistre->assurance_id !== auth('user')->id(), 403);
+
+        $documentAttendu->delete();
+
+        return back()->with('success', 'Document supprimé.');
+    }
 }

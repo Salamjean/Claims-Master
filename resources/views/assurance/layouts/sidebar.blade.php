@@ -131,6 +131,15 @@
         </a> -->
 
         <div class="my-3 border-t border-white/10"></div>
+        <p class="nav-label text-white/30 text-[10px] uppercase tracking-widest font-semibold px-3 mb-2">Finance</p>
+
+        <a href="{{ route('assurance.constats.statistiques') }}"
+            class="nav-item {{ request()->routeIs('assurance.constats.statistiques') ? 'active bg-white/10 text-white' : '' }}">
+            <span class="nav-icon"><i class="fa-solid fa-chart-pie text-sm"></i></span>
+            <span class="nav-label text-sm">Statistiques Constats</span>
+        </a>
+
+        <div class="my-3 border-t border-white/10"></div>
         <p class="nav-label text-white/30 text-[10px] uppercase tracking-widest font-semibold px-3 mb-2">Système</p>
 
         <a href="{{ route('assurance.documents-requis.index') }}"

@@ -114,6 +114,8 @@ Route::middleware(['auth:user', 'assurance'])->prefix('assurance')->group(functi
     Route::get('/recherche', [AssuranceSinistreController::class, 'search'])->name('assurance.search');
     Route::get('/sinistres/{sinistre}', [AssuranceSinistreController::class, 'show'])->name('assurance.sinistres.show');
     Route::post('/sinistres/{sinistre}/review-doc/{documentAttendu}', [AssuranceSinistreController::class, 'reviewDoc'])->name('assurance.sinistres.review-doc');
+    Route::post('/sinistres/{sinistre}/add-document', [AssuranceSinistreController::class, 'addDocumentAttendu'])->name('assurance.sinistres.add_document');
+    Route::delete('/sinistres/{sinistre}/remove-document/{documentAttendu}', [AssuranceSinistreController::class, 'removeDocumentAttendu'])->name('assurance.sinistres.remove_document');
     Route::post('/sinistres/{sinistre}/decision', [AssuranceSinistreController::class, 'decision'])->name('assurance.sinistres.decision');
 
     // Nouveaux endpoints pour le workflow défini dans le cahier des charges
@@ -126,6 +128,7 @@ Route::middleware(['auth:user', 'assurance'])->prefix('assurance')->group(functi
     Route::get('/sinistres/{sinistre}/pdf/bon-sortie', [AssuranceSinistreController::class, 'pdfBonSortie'])->name('assurance.sinistres.pdf.bon_sortie');
 
     // Profil Assurance
+    Route::get('/constats-statistiques', [AssuranceDashboard::class, 'constatsStatistiques'])->name('assurance.constats.statistiques');
     Route::get('/profil', [AssuranceDashboard::class, 'profile'])->name('assurance.profile');
     Route::post('/profil', [AssuranceDashboard::class, 'updateProfile'])->name('assurance.profile.update');
     Route::get('/changer-mot-de-passe', [AssuranceDashboard::class, 'showChangePassword'])->name('assurance.password.change');
@@ -195,6 +198,8 @@ Route::middleware(['auth:user', 'personnel'])->prefix('personnel')->group(functi
         Route::get('/sinistres/{sinistre}', [PersonnelDashboardController::class, 'showSinistre'])->name('personnel.sinistres.show');
         Route::get('/sinistres/{sinistre}/examiner', [PersonnelDashboardController::class, 'reviewSinistre'])->name('personnel.sinistres.review');
         Route::post('/sinistres/{sinistre}/review-doc/{documentAttendu}', [PersonnelDashboardController::class, 'reviewDoc'])->name('personnel.sinistres.review-doc');
+        Route::post('/sinistres/{sinistre}/add-document', [PersonnelDashboardController::class, 'addDocumentAttendu'])->name('personnel.sinistres.add_document');
+        Route::delete('/sinistres/{sinistre}/remove-document/{documentAttendu}', [PersonnelDashboardController::class, 'removeDocumentAttendu'])->name('personnel.sinistres.remove_document');
         Route::post('/sinistres/{sinistre}/verify-garanties', [PersonnelDashboardController::class, 'verifyGaranties'])->name('personnel.sinistres.verify_garanties');
         Route::post('/sinistres/{sinistre}/assign-expert-garage', [PersonnelDashboardController::class, 'assignExpertGarage'])->name('personnel.sinistres.assign_expert_garage');
         Route::post('/sinistres/{sinistre}/decision', [PersonnelDashboardController::class, 'decision'])->name('personnel.sinistres.decision');

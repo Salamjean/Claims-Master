@@ -195,9 +195,48 @@
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                     <div class="p-6 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
                         <h2 class="text-lg font-bold text-slate-800">Pièces justificatives</h2>
-                        <span
-                            class="text-xs font-bold text-slate-500 uppercase">{{ $sinistre->documentsAttendus->count() }}
-                            requis</span>
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="text-xs font-bold text-slate-500 uppercase">{{ $sinistre->documentsAttendus->count() }}
+                                requis</span>
+                            <button type="button"
+                                onclick="document.getElementById('add-doc-form-p').classList.toggle('hidden')"
+                                class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors">
+                                <i class="fa-solid fa-plus"></i> Ajouter
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Formulaire d'ajout --}}
+                    <div id="add-doc-form-p" class="hidden px-6 py-4 bg-indigo-50 border-b border-indigo-100">
+                        <form action="{{ route('personnel.sinistres.add_document', $sinistre) }}" method="POST"
+                            class="flex flex-wrap items-end gap-3">
+                            @csrf
+                            <div class="flex-1 min-w-[200px]">
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Nom du document <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" name="nom_document" required
+                                    placeholder="Ex : Rapport de police, Certificat médical..."
+                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white">
+                            </div>
+                            <div class="w-36">
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Type de champ</label>
+                                <select name="type_champ"
+                                    class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white">
+                                    <option value="file">Fichier</option>
+                                    <option value="text">Texte</option>
+                                </select>
+                            </div>
+                            <button type="submit"
+                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors">
+                                <i class="fa-solid fa-floppy-disk mr-1"></i> Enregistrer
+                            </button>
+                            <button type="button"
+                                onclick="document.getElementById('add-doc-form-p').classList.add('hidden')"
+                                class="px-4 py-2 bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 text-xs font-bold rounded-lg transition-colors">
+                                Annuler
+                            </button>
+                        </form>
                     </div>
 
                     <div class="divide-y divide-slate-100">
@@ -231,8 +270,8 @@
                                             @if (in_array(pathinfo($dernierSoumis->file_path, PATHINFO_EXTENSION), ['jpg', 'jpeg', 'png']))
                                                 <a href="{{ Storage::url($dernierSoumis->file_path) }}" target="_blank"
                                                     class="block w-full h-20 rounded shadow-sm overflow-hidden hover:scale-105 transition-transform">
-                                                    <img src="{{ Storage::url($dernierSoumis->file_path) }}" alt="Document"
-                                                        class="w-full h-full object-cover">
+                                                    <img src="{{ Storage::url($dernierSoumis->file_path) }}"
+                                                        alt="Document" class="w-full h-full object-cover">
                                                 </a>
                                                 <a href="{{ Storage::url($dernierSoumis->file_path) }}" target="_blank"
                                                     class="text-[10px] text-[#457b9d] font-bold mt-2 uppercase hover:underline">Voir
@@ -258,7 +297,7 @@
                                     {{-- Détails & Actions --}}
                                     <div class="flex-1 flex flex-col justify-between">
                                         <div class="flex items-start justify-between">
-                                            <div>
+                                            <div class="flex-1">
                                                 <h4 class="font-bold text-slate-800 text-base leading-tight">
                                                     {{ $doc->nom_document }}</h4>
                                                 <div class="text-xs text-slate-500 mt-1">
@@ -269,6 +308,19 @@
                                                     @endif
                                                 </div>
                                             </div>
+                                            {{-- Bouton supprimer --}}
+                                            <form id="del-doc-form-p-{{ $doc->id }}"
+                                                action="{{ route('personnel.sinistres.remove_document', [$sinistre, $doc]) }}"
+                                                method="POST">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="button"
+                                                    onclick="confirmDeleteDocP({{ $doc->id }}, '{{ addslashes($doc->nom_document) }}')"
+                                                    class="ml-3 p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Supprimer ce document">
+                                                    <i class="fa-solid fa-trash-can text-sm"></i>
+                                                </button>
+                                            </form>
                                             @if ($isUploaded)
                                                 <div class="text-right">
                                                     @if ($aiStatus === 'valid')
@@ -395,17 +447,71 @@
         </div>
     </div>
 
+    {{-- Modal de confirmation de suppression de document --}}
+    <div id="del-doc-modal" class="fixed inset-0 z-50 hidden items-center justify-center"
+        style="background:rgba(15,23,42,0.45)">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                    <i class="fa-solid fa-trash-can text-red-500"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-800">Supprimer ce document&nbsp;?</h3>
+            </div>
+            <p class="text-sm text-slate-600 mb-6">
+                Le document <strong id="del-doc-modal-name" class="text-slate-800"></strong>
+                sera définitivement supprimé de la liste des pièces requises.
+            </p>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeDelDocModal()"
+                    class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
+                    Annuler
+                </button>
+                <button type="button" id="del-doc-modal-confirm"
+                    class="px-4 py-2 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-trash-can"></i> Oui, supprimer
+                </button>
+            </div>
+        </div>
+    </div>
     @push('scripts')
         <script>
+            var _delDocPendingId = null;
+
+            function confirmDeleteDocP(docId, docName) {
+                _delDocPendingId = docId;
+                document.getElementById('del-doc-modal-name').textContent = docName;
+                var modal = document.getElementById('del-doc-modal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+
+            function closeDelDocModal() {
+                var modal = document.getElementById('del-doc-modal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                _delDocPendingId = null;
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('del-doc-modal-confirm').addEventListener('click', function() {
+                    if (_delDocPendingId !== null) {
+                        document.getElementById('del-doc-form-p-' + _delDocPendingId).submit();
+                    }
+                });
+                document.getElementById('del-doc-modal').addEventListener('click', function(e) {
+                    if (e.target === this) closeDelDocModal();
+                });
+            });
+
             function confirmCloture(sinistreId) {
                 Swal.fire({
-                    title: 'Clôturer le sinistre ?',
-                    text: "Vous êtes sur le point de valider et clôturer définitivement ce sinistre. Cette action est irréversible.",
+                    title: 'Cl\u00f4turer le sinistre ?',
+                    text: "Vous \u00eates sur le point de valider et cl\u00f4turer d\u00e9finitivement ce sinistre. Cette action est irr\u00e9versible.",
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#059669',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: '<i class="fa-solid fa-check"></i> Oui, clôturer',
+                    confirmButtonText: '<i class="fa-solid fa-check"></i> Oui, cl\u00f4turer',
                     cancelButtonText: 'Annuler',
                     reverseButtons: true
                 }).then((result) => {

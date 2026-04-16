@@ -39,10 +39,11 @@ class PersonnelDashboardController extends Controller
         $sinistresCloturer  = Sinistre::where('assurance_id', $assuranceId)
             ->where('status', 'cloture')->count();
 
-        // Pool général : sinistres non encore récupérés par un personnel
+        // Pool général : sinistres non encore récupérés par un personnel (hors clôturés)
         $pool = Sinistre::with('assure')
             ->where('assurance_id', $assuranceId)
             ->whereNull('assigned_personnel_id')
+            ->where('status', '!=', 'cloture')
             ->latest()
             ->get();
 
@@ -108,6 +109,7 @@ class PersonnelDashboardController extends Controller
         $mesDossiers = Sinistre::with(['assure', 'documentsAttendus'])
             ->where('assurance_id', $assuranceId)
             ->where('assigned_personnel_id', $personnel->id)
+            ->where('status', '!=', 'cloture')
             ->when($fAssure, fn($q) => $q->whereHas(
                 'assure',
                 fn($a) =>
@@ -447,5 +449,44 @@ class PersonnelDashboardController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('portal.login')->with('success', 'Déconnexion réussie.');
+    }
+
+    /**
+     * Ajouter un document attendu pour ce sinistre.
+     */
+    public function addDocumentAttendu(Request $request, Sinistre $sinistre)
+    {
+        $personnel = auth('user')->user();
+        abort_if($sinistre->assurance_id !== $personnel->assurance_id, 403);
+        abort_if($sinistre->assigned_personnel_id !== $personnel->id, 403);
+
+        $request->validate([
+            'nom_document' => 'required|string|max:255',
+            'type_champ'   => 'required|in:file,text',
+        ]);
+
+        SinistreDocumentAttendu::create([
+            'sinistre_id'   => $sinistre->id,
+            'nom_document'  => $request->nom_document,
+            'type_champ'    => $request->type_champ,
+            'is_mandatory'  => true,
+            'status_client' => 'pending',
+        ]);
+
+        return back()->with('success', 'Document ajouté avec succès.');
+    }
+
+    /**
+     * Supprimer un document attendu de ce sinistre.
+     */
+    public function removeDocumentAttendu(Sinistre $sinistre, SinistreDocumentAttendu $documentAttendu)
+    {
+        $personnel = auth('user')->user();
+        abort_if($documentAttendu->sinistre_id !== $sinistre->id, 403);
+        abort_if($sinistre->assurance_id !== $personnel->assurance_id, 403);
+
+        $documentAttendu->delete();
+
+        return back()->with('success', 'Document supprimé.');
     }
 }
