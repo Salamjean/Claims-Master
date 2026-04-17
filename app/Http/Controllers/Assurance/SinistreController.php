@@ -71,10 +71,7 @@ class SinistreController extends Controller
      */
     public function index(Request $request)
     {
-        $fAssure  = trim($request->get('f_assure', ''));
-        $fType    = trim($request->get('f_type', ''));
-        $fNumero  = trim($request->get('f_numero', ''));
-        $fAgent   = trim($request->get('f_agent', ''));
+        $search = trim($request->get('search', ''));
 
         // Seulement les sinistres affectés à cette compagnie d'assurance
         $query = Sinistre::query()->with(['assure', 'documentsAttendus', 'assignedPersonnel'])
@@ -87,27 +84,30 @@ class SinistreController extends Controller
             });
         }
 
-        $query
-            ->when($fAssure, fn($q) => $q->whereHas(
-                'assure',
-                fn($a) =>
-                $a->where('name', 'like', "%{$fAssure}%")
-                    ->orWhere('prenom', 'like', "%{$fAssure}%")
-            ))
-            ->when($fType,   fn($q) => $q->where('type_sinistre', 'like', "%{$fType}%"))
-            ->when($fNumero, fn($q) => $q->where('numero_sinistre', 'like', "%{$fNumero}%"))
-            ->when($fAgent,  fn($q) => $q->whereHas(
-                'assignedPersonnel',
-                fn($p) =>
-                $p->where('name', 'like', "%{$fAgent}%")
-                    ->orWhere('prenom', 'like', "%{$fAgent}%")
-            ));
+        $query->when($search, function ($q) use ($search) {
+            $q->where(function ($sub) use ($search) {
+                $sub->where('type_sinistre', 'like', "%{$search}%")
+                    ->orWhere('numero_sinistre', 'like', "%{$search}%")
+                    ->orWhereHas(
+                        'assure',
+                        fn($a) =>
+                        $a->where('name', 'like', "%{$search}%")
+                            ->orWhere('prenom', 'like', "%{$search}%")
+                    )
+                    ->orWhereHas(
+                        'assignedPersonnel',
+                        fn($p) =>
+                        $p->where('name', 'like', "%{$search}%")
+                            ->orWhere('prenom', 'like', "%{$search}%")
+                    );
+            });
+        });
 
         $sinistres = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
-        $hasFilter = $fAssure || $fType || $fNumero || $fAgent;
+        $hasFilter = (bool) $search;
 
-        return view('assurance.sinistres.index', compact('sinistres', 'fAssure', 'fType', 'fNumero', 'fAgent', 'hasFilter'));
+        return view('assurance.sinistres.index', compact('sinistres', 'search', 'hasFilter'));
     }
 
     /**

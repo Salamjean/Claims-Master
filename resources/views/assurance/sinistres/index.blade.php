@@ -3,90 +3,7 @@
 @section('title', 'Gestion des dossiers Claims AI')
 
 @section('content')
-    <div x-data="{ filterOpen: {{ $hasFilter ? 'true' : 'false' }} }">
-
-        {{-- Backdrop --}}
-        <div x-show="filterOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
-            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click="filterOpen = false"
-            class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40" x-cloak></div>
-
-        {{-- Drawer filtres --}}
-        <div x-show="filterOpen" x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
-            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0"
-            x-transition:leave-end="translate-x-full"
-            class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 flex flex-col" x-cloak>
-
-            {{-- Header drawer --}}
-            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100"
-                style="background: linear-gradient(135deg,#1d3557,#152840)">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-sliders text-white text-sm"></i>
-                    <span class="text-sm font-bold text-white">Filtres de recherche</span>
-                </div>
-                <button @click="filterOpen = false" class="text-white/60 hover:text-white transition-colors">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            {{-- Corps drawer --}}
-            <form method="GET" action="{{ route('assurance.sinistres.index') }}"
-                class="flex-1 flex flex-col overflow-y-auto">
-                @if (request('status'))
-                    <input type="hidden" name="status" value="{{ request('status') }}">
-                @endif
-                <div class="flex-1 px-5 py-5 space-y-5">
-
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
-                            <i class="fa-solid fa-user text-[9px] mr-1 text-[#1d3557]"></i>Nom de l'assuré
-                        </label>
-                        <input type="text" name="f_assure" value="{{ $fAssure ?? '' }}" placeholder="Ex : Diallo, Koné…"
-                            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#1d3557]/50 focus:ring-2 focus:ring-[#1d3557]/10 transition-all">
-                    </div>
-
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
-                            <i class="fa-solid fa-car-burst text-[9px] mr-1 text-[#1d3557]"></i>Type de sinistre
-                        </label>
-                        <input type="text" name="f_type" value="{{ $fType ?? '' }}" placeholder="Ex : accident, vol…"
-                            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#1d3557]/50 focus:ring-2 focus:ring-[#1d3557]/10 transition-all">
-                    </div>
-
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
-                            <i class="fa-solid fa-hashtag text-[9px] mr-1 text-[#1d3557]"></i>Numéro de sinistre
-                        </label>
-                        <input type="text" name="f_numero" value="{{ $fNumero ?? '' }}" placeholder="Ex : SIN-2024-001"
-                            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#1d3557]/50 focus:ring-2 focus:ring-[#1d3557]/10 transition-all">
-                    </div>
-
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
-                            <i class="fa-solid fa-user-tie text-[9px] mr-1 text-[#1d3557]"></i>Agent récupérateur
-                        </label>
-                        <input type="text" name="f_agent" value="{{ $fAgent ?? '' }}" placeholder="Ex : Touré, Bah…"
-                            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#1d3557]/50 focus:ring-2 focus:ring-[#1d3557]/10 transition-all">
-                    </div>
-
-                </div>
-
-                {{-- Footer drawer --}}
-                <div class="px-5 py-4 border-t border-slate-100 space-y-2">
-                    <button type="submit"
-                        class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#1d3557] text-white hover:bg-[#152840] transition-colors shadow-sm">
-                        <i class="fa-solid fa-magnifying-glass text-xs"></i> Appliquer les filtres
-                    </button>
-                    @if ($hasFilter)
-                        <a href="{{ route('assurance.sinistres.index', request('status') ? ['status' => request('status')] : []) }}"
-                            class="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-red-50 text-red-500 border border-red-100 hover:bg-red-100 transition-colors">
-                            <i class="fa-solid fa-xmark text-xs"></i> Effacer les filtres
-                        </a>
-                    @endif
-                </div>
-            </form>
-        </div>
+    <div>
 
         {{-- En-tête --}}
         <div class="flex items-center justify-between mb-6">
@@ -103,52 +20,28 @@
                     class="px-4 py-2 border {{ request('status') === 'review' ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50' }} rounded-xl text-sm font-semibold transition-all">
                     En révision
                 </a>
-                <button @click="filterOpen = true"
-                    class="relative inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-all
-                        {{ $hasFilter ? 'bg-[#1d3557] text-white border-[#1d3557] shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50' }}">
-                    <i class="fa-solid fa-sliders text-sm"></i>
-                    Filtres
-                    @if ($hasFilter)
-                        @php $activeCount = (int)!empty($fAssure) + (int)!empty($fType) + (int)!empty($fNumero) + (int)!empty($fAgent); @endphp
-                        <span
-                            class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white text-[#1d3557] text-[10px] font-black">{{ $activeCount }}</span>
+                <form method="GET" action="{{ route('assurance.sinistres.index') }}" class="flex items-center gap-2">
+                    @if (request('status'))
+                        <input type="hidden" name="status" value="{{ request('status') }}">
                     @endif
-                </button>
+                    <div class="relative">
+                        <button type="submit"
+                            class="absolute inset-y-0 left-3 flex items-center text-slate-400 hover:text-[#1d3557] transition-colors">
+                            <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                        </button>
+                        <input type="text" name="search" id="sinistre-search" value="{{ $search ?? '' }}"
+                            placeholder="Assuré, type, n° sinistre, agent…"
+                            class="pl-9 pr-4 py-2 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#1d3557]/50 focus:ring-2 focus:ring-[#1d3557]/10 transition-all w-72">
+                    </div>
+                    @if ($hasFilter)
+                        <a href="{{ route('assurance.sinistres.index', request('status') ? ['status' => request('status')] : []) }}"
+                            class="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold text-red-500 bg-red-50 border border-red-100 hover:bg-red-100 transition-colors">
+                            <i class="fa-solid fa-xmark"></i>
+                        </a>
+                    @endif
+                </form>
             </div>
         </div>
-
-        {{-- Badges filtres actifs --}}
-        @if ($hasFilter)
-            <div class="flex flex-wrap items-center gap-2 mb-4">
-                <span class="text-xs text-slate-400 font-medium">Filtres actifs :</span>
-                @if ($fAssure)
-                    <span
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#1d3557]/10 text-[#1d3557] border border-[#1d3557]/15">
-                        <i class="fa-solid fa-user text-[9px]"></i> {{ $fAssure }}
-                    </span>
-                @endif
-                @if ($fType)
-                    <span
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#1d3557]/10 text-[#1d3557] border border-[#1d3557]/15">
-                        <i class="fa-solid fa-car-burst text-[9px]"></i> {{ $fType }}
-                    </span>
-                @endif
-                @if ($fNumero)
-                    <span
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#1d3557]/10 text-[#1d3557] border border-[#1d3557]/15">
-                        <i class="fa-solid fa-hashtag text-[9px]"></i> {{ $fNumero }}
-                    </span>
-                @endif
-                @if ($fAgent)
-                    <span
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#1d3557]/10 text-[#1d3557] border border-[#1d3557]/15">
-                        <i class="fa-solid fa-user-tie text-[9px]"></i> {{ $fAgent }}
-                    </span>
-                @endif
-                <a href="{{ route('assurance.sinistres.index', request('status') ? ['status' => request('status')] : []) }}"
-                    class="text-xs text-red-500 hover:text-red-700 font-semibold ml-1">Tout effacer</a>
-            </div>
-        @endif
 
         {{-- Tableau --}}
         <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -360,6 +253,19 @@
 
 @push('scripts')
     <script>
+        // Soumission automatique du champ de recherche (debounce 500ms)
+        (function() {
+            const input = document.getElementById('sinistre-search');
+            if (!input) return;
+            let timer;
+            input.addEventListener('input', function() {
+                clearTimeout(timer);
+                timer = setTimeout(function() {
+                    input.closest('form').submit();
+                }, 500);
+            });
+        })();
+
         function showDocs(sinistreId, docs) {
             if (!docs || docs.length === 0) {
                 Swal.fire({
