@@ -47,4 +47,9 @@ return [
         'sender_id' => env('YELLIKA_SENDER_ID', 'Plateau app'),
     ],
 
+    'wave' => [
+        'api_key'        => env('WAVE_API_KEY'),
+        'webhook_secret' => env('WAVE_WEBHOOK_SECRET'),
+    ],
+
 ];

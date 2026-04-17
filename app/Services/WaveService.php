@@ -13,8 +13,8 @@ class WaveService
 
     public function __construct()
     {
-        $this->apiKey = env('WAVE_API_KEY');
-        $this->webhookSecret = env('WAVE_WEBHOOK_SECRET');
+        $this->apiKey = config('services.wave.api_key', env('WAVE_API_KEY'));
+        $this->webhookSecret = config('services.wave.webhook_secret', env('WAVE_WEBHOOK_SECRET'));
     }
 
     /**
@@ -50,7 +50,10 @@ class WaveService
                 return $response->json();
             }
 
-            Log::error('Erreur API Wave : ' . $response->body());
+            Log::error('Erreur API Wave', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
             return null;
         } catch (\Exception $e) {
             Log::error('Exception API Wave : ' . $e->getMessage());
