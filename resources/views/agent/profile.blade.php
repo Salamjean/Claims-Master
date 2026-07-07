@@ -107,6 +107,16 @@
                             <input type="text" name="contact" value="{{ old('contact', $user->contact) }}"
                                 class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-sm font-semibold text-slate-700">
                         </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 ml-1">GRADE</label>
+                            <input type="text" name="grade" value="{{ old('grade', $user->grade) }}"
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-sm font-semibold text-slate-700" placeholder="Ex: Adjudant-Chef">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-slate-500 ml-1">MATRICULE</label>
+                            <input type="text" name="matricule" value="{{ old('matricule', $user->matricule) }}"
+                                class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none text-sm font-semibold text-slate-700" placeholder="Ex: 7762">
+                        </div>
                         <div class="space-y-2 md:col-span-2">
                             <label class="text-xs font-bold text-slate-500 ml-1">LIEU D'AFFECTATION / ADRESSE</label>
                             <textarea name="adresse" rows="2"

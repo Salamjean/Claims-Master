@@ -47,11 +47,158 @@
                             <p class="text-sm font-semibold text-slate-700">{{ $constat->lieu }}</p>
                         </div>
                         <div class="space-y-1">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date et Heure précises</p>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date et Heure</p>
                             <p class="text-sm font-semibold text-slate-700">{{ $constat->date_heure ? $constat->date_heure->format('d/m/Y à H:i') : '—' }}</p>
                         </div>
                     </div>
                 </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {{-- Véhicule A --}}
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                        <div class="px-5 py-3.5 border-b border-slate-100 bg-blue-600 text-white flex items-center gap-3">
+                            <i class="fa-solid fa-car text-xs"></i>
+                            <h3 class="font-bold text-sm">VÉHICULE A</h3>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-1">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marque & Type</p>
+                                    <p class="text-sm font-semibold text-slate-700">{{ $constat->veh_a_marque ?? '—' }} {{ $constat->veh_a_type ?? '' }}</p>
+                                </div>
+                                <div class="space-y-1">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">État & Pneus</p>
+                                    <p class="text-sm font-semibold text-slate-700">{{ str_replace('_', ' ', $constat->veh_a_etat_general) ?? '—' }} / {{ str_replace('_', ' ', $constat->veh_a_pneumatiques) ?? '—' }}</p>
+                                </div>
+                            </div>
+                            <hr class="border-slate-50">
+                            <div class="space-y-3">
+                                <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Conducteur</p>
+                                <div class="space-y-1">
+                                    <p class="text-sm font-bold text-slate-800">{{ $constat->veh_a_conducteur_nom ?? '—' }}</p>
+                                    <p class="text-xs text-slate-500">Né(e) le {{ $constat->veh_a_conducteur_date_naissance ? $constat->veh_a_conducteur_date_naissance->format('d/m/Y') : '—' }} à {{ $constat->veh_a_conducteur_lieu_naissance ?? '—' }}</p>
+                                    <p class="text-xs text-slate-500">Fils/Fille de {{ $constat->veh_a_conducteur_pere ?? '—' }} et {{ $constat->veh_a_conducteur_mere ?? '—' }}</p>
+                                    <p class="text-xs text-slate-500">Nat: {{ $constat->veh_a_conducteur_nationalite ?? '—' }} | Tél: {{ $constat->veh_a_conducteur_tel ?? '—' }}</p>
+                                    <p class="text-xs text-slate-500">Prof: {{ $constat->veh_a_conducteur_profession ?? '—' }} | Dom: {{ $constat->veh_a_conducteur_domicile ?? '—' }}</p>
+                                </div>
+                            </div>
+                            <hr class="border-slate-50">
+                            <div class="space-y-3">
+                                <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Permis & Assurance</p>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="space-y-1">
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Permis N°</p>
+                                        <p class="text-xs font-semibold text-slate-700">{{ $constat->veh_a_permis_numero ?? '—' }} ({{ $constat->veh_a_permis_categories ?? '—' }})</p>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Valable jusqu'au</p>
+                                        <p class="text-xs font-semibold text-slate-700">{{ $constat->veh_a_permis_validite ? $constat->veh_a_permis_validite->format('d/m/Y') : '—' }}</p>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assurance & Police</p>
+                                    <p class="text-xs font-semibold text-slate-700">{{ $constat->veh_a_assurance_nom ?? '—' }}</p>
+                                    <p class="text-[10px] text-slate-500">Police: {{ $constat->veh_a_police_numero ?? '—' }} | Attest: {{ $constat->veh_a_attestation_numero ?? '—' }}</p>
+                                </div>
+                            </div>
+                            @if($constat->veh_a_degats_materiels)
+                                <div class="pt-2">
+                                    <p class="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Dégâts apparents</p>
+                                    <p class="text-xs text-slate-600 bg-rose-50 p-2 rounded-lg border border-rose-100 mt-1 italic">
+                                        {{ $constat->veh_a_degats_materiels }}
+                                    </p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Véhicule B --}}
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                        <div class="px-5 py-3.5 border-b border-slate-100 bg-rose-600 text-white flex items-center gap-3">
+                            <i class="fa-solid fa-car text-xs"></i>
+                            <h3 class="font-bold text-sm">VÉHICULE B</h3>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-1">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marque & Type</p>
+                                    <p class="text-sm font-semibold text-slate-700">{{ $constat->veh_b_marque ?? '—' }} {{ $constat->veh_b_type ?? '' }}</p>
+                                </div>
+                                <div class="space-y-1">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">État & Pneus</p>
+                                    <p class="text-sm font-semibold text-slate-700">{{ str_replace('_', ' ', $constat->veh_b_etat_general) ?? '—' }} / {{ str_replace('_', ' ', $constat->veh_b_pneumatiques) ?? '—' }}</p>
+                                </div>
+                            </div>
+                            <hr class="border-slate-50">
+                            <div class="space-y-3">
+                                <p class="text-[10px] font-black text-rose-600 uppercase tracking-widest">Conducteur</p>
+                                <div class="space-y-1">
+                                    <p class="text-sm font-bold text-slate-800">{{ $constat->veh_b_conducteur_nom ?? '—' }}</p>
+                                    <p class="text-xs text-slate-500">Né(e) le {{ $constat->veh_b_conducteur_date_naissance ? $constat->veh_b_conducteur_date_naissance->format('d/m/Y') : '—' }} à {{ $constat->veh_b_conducteur_lieu_naissance ?? '—' }}</p>
+                                    <p class="text-xs text-slate-500">Fils/Fille de {{ $constat->veh_b_conducteur_pere ?? '—' }} et {{ $constat->veh_b_conducteur_mere ?? '—' }}</p>
+                                    <p class="text-xs text-slate-500">Nat: {{ $constat->veh_b_conducteur_nationalite ?? '—' }} | Tél: {{ $constat->veh_b_conducteur_tel ?? '—' }}</p>
+                                    <p class="text-xs text-slate-500">Prof: {{ $constat->veh_b_conducteur_profession ?? '—' }} | Dom: {{ $constat->veh_b_conducteur_domicile ?? '—' }}</p>
+                                </div>
+                            </div>
+                            <hr class="border-slate-50">
+                            <div class="space-y-3">
+                                <p class="text-[10px] font-black text-rose-600 uppercase tracking-widest">Permis & Assurance</p>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="space-y-1">
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Permis N°</p>
+                                        <p class="text-xs font-semibold text-slate-700">{{ $constat->veh_b_permis_numero ?? '—' }} ({{ $constat->veh_b_permis_categories ?? '—' }})</p>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Valable jusqu'au</p>
+                                        <p class="text-xs font-semibold text-slate-700">{{ $constat->veh_b_permis_validite ? $constat->veh_b_permis_validite->format('d/m/Y') : '—' }}</p>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assurance & Police</p>
+                                    <p class="text-xs font-semibold text-slate-700">{{ $constat->veh_b_assurance_nom ?? '—' }}</p>
+                                    <p class="text-[10px] text-slate-500">Police: {{ $constat->veh_b_police_numero ?? '—' }} | Attest: {{ $constat->veh_b_attestation_numero ?? '—' }}</p>
+                                </div>
+                            </div>
+                            @if($constat->veh_b_degats_materiels)
+                                <div class="pt-2">
+                                    <p class="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Dégâts apparents</p>
+                                    <p class="text-xs text-slate-600 bg-rose-50 p-2 rounded-lg border border-rose-100 mt-1 italic">
+                                        {{ $constat->veh_b_degats_materiels }}
+                                    </p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Victime --}}
+                @if($constat->victime_nom)
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                        <div class="px-5 py-3.5 border-b border-slate-100 bg-slate-800 text-white flex items-center gap-3">
+                            <i class="fa-solid fa-person-falling-burst text-xs"></i>
+                            <h3 class="font-bold text-sm">VICTIME IDENTIFIÉE</h3>
+                        </div>
+                        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="space-y-2">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Identité</p>
+                                <p class="text-sm font-bold text-slate-800">{{ $constat->victime_nom }}</p>
+                                <p class="text-xs text-slate-500">Né(e) le {{ $constat->victime_date_naissance ? $constat->victime_date_naissance->format('d/m/Y') : '—' }} à {{ $constat->victime_lieu_naissance ?? '—' }}</p>
+                                <p class="text-xs text-slate-500">Nationalité: {{ $constat->victime_nationalite ?? '—' }}</p>
+                            </div>
+                            <div class="space-y-2">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Filiation & Profession</p>
+                                <p class="text-xs text-slate-500">Fils/Fille de {{ $constat->victime_pere ?? '—' }} et {{ $constat->victime_mere ?? '—' }}</p>
+                                <p class="text-xs text-slate-500">Prof: {{ $constat->victime_profession ?? '—' }}</p>
+                                <p class="text-xs text-slate-500">Dom: {{ $constat->victime_domicile ?? '—' }}</p>
+                            </div>
+                            <div class="space-y-2">
+                                <p class="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Blessures & Situation</p>
+                                <p class="text-xs text-slate-700 font-medium">{{ $constat->victime_blessures ?? 'Non précisé' }}</p>
+                                <p class="text-[10px] text-slate-500 mt-2 font-bold uppercase">Situation: {{ $constat->victime_passager_vehicule ? str_replace('_', ' ', $constat->victime_passager_vehicule) : '—' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
 
                 {{-- Corps du constat --}}
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
@@ -107,6 +254,28 @@
                         </div>
                     </div>
                 @endif
+
+                {{-- Informations sur le Fonctionnaire Constatateur --}}
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="px-5 py-3.5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+                        <i class="fa-solid fa-user-tie text-blue-600 text-xs"></i>
+                        <h3 class="font-bold text-slate-800 text-sm">Fonctionnaire Constatateur</h3>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="space-y-1">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nom et Prénoms</p>
+                            <p class="text-sm font-semibold text-slate-700">{{ $constat->agent_nom ?? '—' }}</p>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Grade</p>
+                            <p class="text-sm font-semibold text-slate-700">{{ $constat->agent_grade ?? '—' }}</p>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Matricule</p>
+                            <p class="text-sm font-semibold text-slate-700">{{ $constat->agent_matricule ?? '—' }}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {{-- Colonne Droite : Docs & Agent --}}

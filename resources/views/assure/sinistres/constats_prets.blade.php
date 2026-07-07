@@ -92,15 +92,21 @@
                                 @if ($sinistre->constat->redaction_pdf)
                                     <a href="{{ Storage::url($sinistre->constat->redaction_pdf) }}" target="_blank"
                                         class="flex items-center justify-center gap-3 w-full py-4 bg-red-600 hover:bg-red-700 text-white font-black text-sm rounded-2xl shadow-lg shadow-red-200 transition-all active:scale-95">
-                                        <i class="fa-solid fa-file-pdf"></i> Télécharger le Constat
+                                        <i class="fa-solid fa-file-pdf"></i> Télécharger le Rapport Officiel
                                     </a>
                                 @elseif($sinistre->constat->redaction_contenu)
                                     <button type="button"
                                         onclick="alert('Contenu : {{ addslashes($sinistre->constat->redaction_contenu) }}')"
                                         class="flex items-center justify-center gap-3 w-full py-4 bg-violet-600 hover:bg-violet-700 text-white font-black text-sm rounded-2xl shadow-lg shadow-violet-200 transition-all active:scale-95">
-                                        <i class="fa-solid fa-eye"></i> Voir le Constat
+                                        <i class="fa-solid fa-eye"></i> Voir le Rapport Officiel
                                     </button>
                                 @endif
+
+                                {{-- Nouveau bouton : Télécharger le Constat Terrain --}}
+                                <a href="{{ route('assure.sinistres.constat_terrain.download', $sinistre->id) }}"
+                                    class="flex items-center justify-center gap-3 w-full py-4 bg-slate-800 hover:bg-slate-900 text-white font-black text-sm rounded-2xl shadow-lg shadow-slate-200 transition-all active:scale-95">
+                                    <i class="fa-solid fa-file-invoice"></i> Télécharger le Constat Terrain
+                                </a>
 
                                 <div
                                     class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center gap-2 justify-center">

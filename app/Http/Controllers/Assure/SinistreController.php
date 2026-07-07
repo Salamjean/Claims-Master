@@ -665,6 +665,30 @@ class SinistreController extends Controller
     }
 
     /**
+     * Télécharge le constat terrain au format PDF
+     */
+    public function downloadConstatTerrain($id)
+    {
+        $sinistre = Sinistre::with(['constat', 'service', 'assure', 'assignedAgent'])->findOrFail($id);
+        $constat = $sinistre->constat;
+
+        if (!$constat) {
+            return back()->with('error', 'Aucun constat terrain trouvé pour ce sinistre.');
+        }
+
+        try {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.constat_terrain', [
+                'sinistre' => $sinistre,
+                'constat' => $constat
+            ]);
+            return $pdf->download('constat_terrain_' . ($sinistre->numero_sinistre ?? $sinistre->id) . '.pdf');
+        } catch (\Exception $e) {
+            \Log::error("Erreur génération PDF Constat Terrain : " . $e->getMessage());
+            return back()->with('error', 'Erreur lors de la génération du PDF.');
+        }
+    }
+
+    /**
      * Sauvegarde une image base64 dans le storage
      */
     private function saveBase64Image($base64String, $prefix)

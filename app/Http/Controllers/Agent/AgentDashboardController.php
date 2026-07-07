@@ -472,6 +472,8 @@ class AgentDashboardController extends Controller
             'prenom' => 'nullable|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'contact' => 'nullable|string|max:20',
+            'grade' => 'nullable|string|max:100',
+            'matricule' => 'nullable|string|max:50',
             'adresse' => 'nullable|string|max:500',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'current_password' => 'required|string',
@@ -481,7 +483,7 @@ class AgentDashboardController extends Controller
             return redirect()->back()->withErrors(['current_password' => 'Le mot de passe actuel est incorrect.']);
         }
 
-        $data = $request->only(['name', 'prenom', 'email', 'contact', 'adresse']);
+        $data = $request->only(['name', 'prenom', 'email', 'contact', 'grade', 'matricule', 'adresse']);
 
         if ($request->hasFile('profile_picture')) {
             // Supprimer l'ancienne photo si elle existe

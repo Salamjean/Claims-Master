@@ -170,6 +170,7 @@ Route::middleware(['auth:user', 'assure'])->prefix('mon-espace')->group(function
 
         Route::get('/sinistres/{sinistre}', [SinistreController::class, 'show'])->name('assure.sinistres.show');
         Route::get('/sinistres/{sinistre}/constat/download', [SinistreController::class, 'downloadConstat'])->name('assure.sinistres.constat.download');
+        Route::get('/sinistres/{sinistre}/constat-terrain/download', [SinistreController::class, 'downloadConstatTerrain'])->name('assure.sinistres.constat_terrain.download');
         Route::get('/sinistres/{sinistre}/suivi', [SinistreController::class, 'tracking'])->name('assure.sinistres.tracking');
         Route::get('/sinistres/{sinistre}/agent-location', [AgentDashboardController::class, 'getAgentLocation'])->name('assure.sinistres.agent_location');
         Route::delete('/sinistres/{sinistre}', [SinistreController::class, 'destroy'])->name('assure.sinistres.destroy');

@@ -34,6 +34,8 @@ class User extends Authenticatable
         'email_verified_at',
         'assurance_id',
         'service_id',
+        'grade',
+        'matricule',
     ];
 
     /**

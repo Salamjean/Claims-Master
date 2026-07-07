@@ -48,6 +48,413 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {{-- Véhicule A --}}
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-100 bg-blue-600 text-white flex items-center gap-3">
+                        <i class="fa-solid fa-car"></i>
+                        <h3 class="font-bold">1° - VÉHICULE A</h3>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="label">Marque</label>
+                                <input type="text" name="veh_a_marque" class="input" placeholder="Ex: SUZUKI">
+                            </div>
+                            <div>
+                                <label class="label">Type</label>
+                                <input type="text" name="veh_a_type" class="input" placeholder="Ex: RFL61 (TPV)">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="label">Etat général</label>
+                                <select name="veh_a_etat_general" class="input">
+                                    <option value="">Sélectionner...</option>
+                                    <option value="neuf">Neuf</option>
+                                    <option value="tres_bon">Très bon</option>
+                                    <option value="bon">Bon</option>
+                                    <option value="moyen">Moyen</option>
+                                    <option value="passable">Passable</option>
+                                    <option value="mediocre">Médiocre</option>
+                                    <option value="mauvais">Mauvais</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="label">Pneumatiques</label>
+                                <select name="veh_a_pneumatiques" class="input">
+                                    <option value="">Sélectionner...</option>
+                                    <option value="gravures_apparentes">Gravures très apparentes</option>
+                                    <option value="etat_moyen">État moyen</option>
+                                    <option value="pneus_lisses">Pneus lisses</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 pt-4 border-t border-slate-50">
+                            <h4 class="text-xs font-black text-blue-600 uppercase tracking-widest">Conducteur</h4>
+                            <div>
+                                <label class="label">Nom et Prénoms</label>
+                                <input type="text" name="veh_a_conducteur_nom" class="input">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="label">Né(e) le</label>
+                                    <input type="date" name="veh_a_conducteur_date_naissance" class="input">
+                                </div>
+                                <div>
+                                    <label class="label">À (Lieu)</label>
+                                    <input type="text" name="veh_a_conducteur_lieu_naissance" class="input">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="label">Fils/Fille de (Père)</label>
+                                    <input type="text" name="veh_a_conducteur_pere" class="input">
+                                </div>
+                                <div>
+                                    <label class="label">Et de (Mère)</label>
+                                    <input type="text" name="veh_a_conducteur_mere" class="input">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="label">Nationalité</label>
+                                    <input type="text" name="veh_a_conducteur_nationalite" class="input">
+                                </div>
+                                <div>
+                                    <label class="label">Tél</label>
+                                    <input type="text" name="veh_a_conducteur_tel" class="input">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="label">Profession</label>
+                                    <input type="text" name="veh_a_conducteur_profession" class="input">
+                                </div>
+                                <div>
+                                    <label class="label">Domicile</label>
+                                    <input type="text" name="veh_a_conducteur_domicile" class="input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 pt-4 border-t border-slate-50">
+                            <h4 class="text-xs font-black text-blue-600 uppercase tracking-widest">Permis de conduire</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="label">N° de permis</label>
+                                    <input type="text" name="veh_a_permis_numero" class="input">
+                                </div>
+                                <div>
+                                    <label class="label">Délivré le</label>
+                                    <input type="date" name="veh_a_permis_date" class="input">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="label">À (Lieu)</label>
+                                    <input type="text" name="veh_a_permis_lieu" class="input">
+                                </div>
+                                <div>
+                                    <label class="label">Catégories</label>
+                                    <input type="text" name="veh_a_permis_categories" class="input" placeholder="Ex: ABCDE">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="label">Valable jusqu'au</label>
+                                <input type="date" name="veh_a_permis_validite" class="input">
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 pt-4 border-t border-slate-50">
+                            <h4 class="text-xs font-black text-blue-600 uppercase tracking-widest">Propriétaire & Assurance</h4>
+                            <div>
+                                <label class="label">Propriétaire (Nom/Société)</label>
+                                <input type="text" name="veh_a_proprietaire_nom" class="input">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="label">Boîte Postale</label>
+                                    <input type="text" name="veh_a_proprietaire_bp" class="input">
+                                </div>
+                                <div>
+                                    <label class="label">Tél</label>
+                                    <input type="text" name="veh_a_proprietaire_tel" class="input">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="label">Assurance (Cie)</label>
+                                <input type="text" name="veh_a_assurance_nom" class="input">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="label">Valable du</label>
+                                    <input type="date" name="veh_a_assurance_debut" class="input">
+                                </div>
+                                <div>
+                                    <label class="label">Au</label>
+                                    <input type="date" name="veh_a_assurance_fin" class="input">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="label">Police N°</label>
+                                    <input type="text" name="veh_a_police_numero" class="input">
+                                </div>
+                                <div>
+                                    <label class="label">Attestation N°</label>
+                                    <input type="text" name="veh_a_attestation_numero" class="input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 pt-4 border-t border-slate-50">
+                            <h4 class="text-xs font-black text-blue-600 uppercase tracking-widest">Dégâts</h4>
+                            <div>
+                                <label class="label">Dégâts apparents</label>
+                                <textarea name="veh_a_degats_materiels" rows="2" class="input" placeholder="Ex: Pare chocs avant, aile droite..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Véhicule B --}}
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="px-5 py-4 border-b border-slate-100 bg-rose-600 text-white flex items-center gap-3">
+                        <i class="fa-solid fa-car"></i>
+                        <h3 class="font-bold">2° - VÉHICULE B</h3>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="label">Marque</label>
+                                <input type="text" name="veh_b_marque" class="input" placeholder="Ex: TOYOTA">
+                            </div>
+                            <div>
+                                <label class="label">Type</label>
+                                <input type="text" name="veh_b_type" class="input" placeholder="Ex: EZ28EX (VP)">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="label">Etat général</label>
+                                <select name="veh_b_etat_general" class="input">
+                                    <option value="">Sélectionner...</option>
+                                    <option value="neuf">Neuf</option>
+                                    <option value="tres_bon">Très bon</option>
+                                    <option value="bon">Bon</option>
+                                    <option value="moyen">Moyen</option>
+                                    <option value="passable">Passable</option>
+                                    <option value="mediocre">Médiocre</option>
+                                    <option value="mauvais">Mauvais</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="label">Pneumatiques</label>
+                                <select name="veh_b_pneumatiques" class="input">
+                                    <option value="">Sélectionner...</option>
+                                    <option value="gravures_apparentes">Gravures très apparentes</option>
+                                    <option value="etat_moyen">État moyen</option>
+                                    <option value="pneus_lisses">Pneus lisses</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 pt-4 border-t border-slate-50">
+                            <h4 class="text-xs font-black text-rose-600 uppercase tracking-widest">Conducteur</h4>
+                            <div>
+                                <label class="label">Nom et Prénoms</label>
+                                <input type="text" name="veh_b_conducteur_nom" class="input">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label class="label">Né(e) le</label>
+                                    <input type="date" name="veh_b_conducteur_date_naissance" class="input">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="label">À (Lieu)</label>
+                                    <input type="text" name="veh_b_conducteur_lieu_naissance" class="input">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label class="label">Fils/Fille de (Père)</label>
+                                    <input type="text" name="veh_b_conducteur_pere" class="input">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="label">Et de (Mère)</label>
+                                    <input type="text" name="veh_b_conducteur_mere" class="input">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label class="label">Nationalité</label>
+                                    <input type="text" name="veh_b_conducteur_nationalite" class="input">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="label">Tél</label>
+                                    <input type="text" name="veh_b_conducteur_tel" class="input">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label class="label">Profession</label>
+                                    <input type="text" name="veh_b_conducteur_profession" class="input">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="label">Domicile</label>
+                                    <input type="text" name="veh_b_conducteur_domicile" class="input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 pt-4 border-t border-slate-50">
+                            <h4 class="text-xs font-black text-rose-600 uppercase tracking-widest">Permis de conduire</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="label">N° de permis</label>
+                                    <input type="text" name="veh_b_permis_numero" class="input">
+                                </div>
+                                <div>
+                                    <label class="label">Délivré le</label>
+                                    <input type="date" name="veh_b_permis_date" class="input">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="label">À (Lieu)</label>
+                                    <input type="text" name="veh_b_permis_lieu" class="input">
+                                </div>
+                                <div>
+                                    <label class="label">Catégories</label>
+                                    <input type="text" name="veh_b_permis_categories" class="input" placeholder="Ex: B">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="label">Valable jusqu'au</label>
+                                <input type="date" name="veh_b_permis_validite" class="input">
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 pt-4 border-t border-slate-50">
+                            <h4 class="text-xs font-black text-rose-600 uppercase tracking-widest">Propriétaire & Assurance</h4>
+                            <div>
+                                <label class="label">Propriétaire (Nom/Société)</label>
+                                <input type="text" name="veh_b_proprietaire_nom" class="input">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="label">Boîte Postale</label>
+                                    <input type="text" name="veh_b_proprietaire_bp" class="input">
+                                </div>
+                                <div>
+                                    <label class="label">Tél</label>
+                                    <input type="text" name="veh_b_proprietaire_tel" class="input">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="label">Assurance (Cie)</label>
+                                <input type="text" name="veh_b_assurance_nom" class="input">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="label">Valable du</label>
+                                    <input type="date" name="veh_b_assurance_debut" class="input">
+                                </div>
+                                <div>
+                                    <label class="label">Au</label>
+                                    <input type="date" name="veh_b_assurance_fin" class="input">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="label">Police N°</label>
+                                    <input type="text" name="veh_b_police_numero" class="input">
+                                </div>
+                                <div>
+                                    <label class="label">Attestation N°</label>
+                                    <input type="text" name="veh_b_attestation_numero" class="input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 pt-4 border-t border-slate-50">
+                            <h4 class="text-xs font-black text-rose-600 uppercase tracking-widest">Dégâts</h4>
+                            <div>
+                                <label class="label">Dégâts apparents</label>
+                                <textarea name="veh_b_degats_materiels" rows="2" class="input" placeholder="Ex: Pare chocs avant, aile gauche..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Victime --}}
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-100 bg-slate-800 text-white flex items-center gap-3">
+                    <i class="fa-solid fa-person-falling-burst"></i>
+                    <h3 class="font-bold text-sm">VICTIME (S'il y a lieu)</h3>
+                </div>
+                <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="label">Nom et Prénoms</label>
+                            <input type="text" name="victime_nom" class="input">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="label">Né(e) le</label>
+                                <input type="date" name="victime_date_naissance" class="input">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="label">À (Lieu)</label>
+                                <input type="text" name="victime_lieu_naissance" class="input">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="label">Nationalité</label>
+                            <input type="text" name="victime_nationalite" class="input">
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="label">Fils/Fille de</label>
+                                <input type="text" name="victime_pere" class="input">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="label">Et de</label>
+                                <input type="text" name="victime_mere" class="input">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="label">Profession</label>
+                            <input type="text" name="victime_profession" class="input">
+                        </div>
+                        <div>
+                            <label class="label">Domicile</label>
+                            <input type="text" name="victime_domicile" class="input">
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="label">Nature des blessures</label>
+                            <textarea name="victime_blessures" rows="2" class="input" placeholder="Décrivez les blessures..."></textarea>
+                        </div>
+                        <div>
+                            <label class="label">Passager du véhicule n°</label>
+                            <select name="victime_passager_vehicule" class="input">
+                                <option value="">Non précisé</option>
+                                <option value="vehicule_a">Véhicule A</option>
+                                <option value="vehicule_b">Véhicule B</option>
+                                <option value="non_passager">Non passager (Piéton, etc.)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {{-- Description & Témoins --}}
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                     <div class="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
@@ -60,8 +467,8 @@
                             <textarea name="description_faits" rows="4" class="input" placeholder="Décrivez les faits constatés..." required></textarea>
                         </div>
                         <div>
-                            <label class="label">Témoins / Personnes impliquées</label>
-                            <textarea name="temoins" rows="2" class="input" placeholder="Identité et contact des témoins..."></textarea>
+                            <label class="label">Témoins (Nom, nationalité, parents, profession, domicile, tél)</label>
+                            <textarea name="temoins" rows="4" class="input" placeholder="Informations complètes sur les témoins..."></textarea>
                         </div>
                     </div>
                 </div>
@@ -74,12 +481,12 @@
                     </div>
                     <div class="p-6 space-y-4">
                         <div>
-                            <label class="label">Dommages / Dégâts constatés</label>
+                            <label class="label">Dommages / Dégâts constatés (Général)</label>
                             <textarea name="dommages" rows="4" class="input" placeholder="Inventaire des dommages..." required></textarea>
                         </div>
                         <div>
                             <label class="label">Observations / Mesures prises</label>
-                            <textarea name="observations" rows="2" class="input" placeholder="Mesures de sécurité, verbalisations, etc..."></textarea>
+                            <textarea name="observations" rows="4" class="input" placeholder="Mesures de sécurité, verbalisations, etc..."></textarea>
                         </div>
                     </div>
                 </div>
@@ -140,6 +547,28 @@
                                 <input type="file" name="photos_plus[]" class="input text-xs" accept="image/*">
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Fonctionnaire Constatateur --}}
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+                    <i class="fa-solid fa-user-tie text-blue-600"></i>
+                    <h3 class="font-bold text-slate-800">Fonctionnaire Constatateur</h3>
+                </div>
+                <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="label">Nom et Prénoms</label>
+                        <input type="text" name="agent_nom" class="input" value="{{ auth('user')->user()->name }} {{ auth('user')->user()->prenom }}" required>
+                    </div>
+                    <div>
+                        <label class="label">Grade</label>
+                        <input type="text" name="agent_grade" class="input" value="{{ auth('user')->user()->grade }}" placeholder="Votre grade...">
+                    </div>
+                    <div>
+                        <label class="label">Matricule</label>
+                        <input type="text" name="agent_matricule" class="input" value="{{ auth('user')->user()->matricule }}" placeholder="Votre matricule...">
                     </div>
                 </div>
             </div>

@@ -50,6 +50,14 @@
                     </form>
                 @endif
 
+                {{-- Bouton Constat Terrain (Téléchargement) --}}
+                @if($sinistre->constat)
+                    <a href="{{ route('assure.sinistres.constat_terrain.download', $sinistre->id) }}"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold rounded-xl text-sm transition-colors shadow-sm">
+                        <i class="fa-solid fa-download text-sm"></i> Constat Terrain
+                    </a>
+                @endif
+
                 {{-- Bouton Constat Amiable (Téléchargement) --}}
                 @if($sinistre->constat && $sinistre->constat->methode_redaction === 'Amiable')
                     <a href="{{ route('assure.sinistres.constat.download', $sinistre->id) }}"

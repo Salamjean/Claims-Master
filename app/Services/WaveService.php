@@ -24,7 +24,7 @@ class WaveService
     {
         try {
             $request = Http::withToken($this->apiKey);
-            
+
             // Bypass SSL en local si nécessaire pour cURL error 60
             if (app()->environment('local')) {
                 $request->withoutVerifying();
@@ -68,7 +68,7 @@ class WaveService
     {
         try {
             $request = Http::withToken($this->apiKey);
-            
+
             if (app()->environment('local')) {
                 $request->withoutVerifying();
             }
