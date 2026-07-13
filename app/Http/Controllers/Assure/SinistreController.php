@@ -196,22 +196,25 @@ class SinistreController extends Controller
             }
         }
 
-        // Recherche de l'hôpital/SAMU le plus proche disposant d'une ambulance (Haversine)
-        $nearestHospital = \App\Models\User::where('role', 'hopital')
-            ->where('has_ambulance', true)
-            ->whereNotNull('latitude')
-            ->whereNotNull('longitude')
-            ->select('id', 'name', 'latitude', 'longitude', 'role', 'contact', 'adresse')
-            ->selectRaw("
-                ( 6371 * acos( cos( radians(?) ) *
-                cos( radians( latitude ) )
-                * cos( radians( longitude ) - radians(?)
-                ) + sin( radians(?) ) *
-                sin( radians( latitude ) ) )
-                ) AS distance
-            ", [$userLat, $userLng, $userLat])
-            ->orderBy('distance')
-            ->first();
+        // Recherche de l'hôpital/SAMU le plus proche disposant d'une ambulance (Haversine) - Uniquement si Accident corporel sélectionné
+        $nearestHospital = null;
+        if (in_array('Accident_corporel', $typeSinistreArray)) {
+            $nearestHospital = \App\Models\User::where('role', 'hopital')
+                ->where('has_ambulance', true)
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->select('id', 'name', 'latitude', 'longitude', 'role', 'contact', 'adresse')
+                ->selectRaw("
+                    ( 6371 * acos( cos( radians(?) ) *
+                    cos( radians( latitude ) )
+                    * cos( radians( longitude ) - radians(?)
+                    ) + sin( radians(?) ) *
+                    sin( radians( latitude ) ) )
+                    ) AS distance
+                ", [$userLat, $userLng, $userLat])
+                ->orderBy('distance')
+                ->first();
+        }
 
         // 4. Création du sinistre en base de données
         $sinistre = Sinistre::create([

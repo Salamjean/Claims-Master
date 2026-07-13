@@ -1311,6 +1311,18 @@
                     }
                 }
 
+                function updateHospitalVisibility() {
+                    const corporelCheckbox = document.querySelector('input[name="type_sinistre[]"][value="Accident_corporel"]');
+                    const hospitalWrapper = document.getElementById('nearest-hospital-wrapper');
+                    if (hospitalWrapper) {
+                        if (corporelCheckbox && corporelCheckbox.checked) {
+                            hospitalWrapper.classList.remove('hidden');
+                        } else {
+                            hospitalWrapper.classList.add('hidden');
+                        }
+                    }
+                }
+
                 function checkFormValidity() {
                     const isGeolocated = inputLat.value !== "" && inputLng.value !== "";
                     const selectedIncidents = Array.from(incidentCheckboxes).filter(cb => cb.checked).map(cb => cb
@@ -1349,6 +1361,9 @@
                             corporelWarning.classList.add('hidden');
                         }
                     }
+
+                    // Toggling visibility of the nearest hospital block
+                    updateHospitalVisibility();
 
                     // LOGIQUE VEHICULE (SweetAlert2)
                     if (isIncidentSelected && !contratIdInput.value) {
@@ -1439,31 +1454,34 @@
                                 if (data.nearest_hospital) {
                                     const h = data.nearest_hospital;
                                     html += `
-                                        <div class="flex items-center gap-2 mt-4 mb-3">
-                                            <div class="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
-                                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">SAMU / Hôpital avec ambulance</p>
-                                        </div>
-                                        <div class="flex items-center justify-between p-3 rounded-2xl bg-rose-50/50 border border-rose-100 shadow-sm animate-in">
-                                            <div class="flex items-center gap-3 w-[80%]">
-                                                <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-sm shadow-sm shrink-0">
-                                                    <i class="fa-solid fa-truck-medical"></i>
-                                                </div>
-                                                <div class="overflow-hidden">
-                                                    <h5 class="text-xs font-bold text-slate-800 truncate">${h.name}</h5>
-                                                    <div class="flex items-center gap-1.5 mt-0.5">
-                                                        <span class="px-1.5 py-0.5 rounded-md bg-green-100 text-[8px] font-bold text-green-700 uppercase tracking-tighter">Ambulance</span>
-                                                        <span class="text-[10px] font-bold text-rose-600">${h.distance} km</span>
+                                        <div id="nearest-hospital-wrapper" class="hidden">
+                                            <div class="flex items-center gap-2 mt-4 mb-3">
+                                                <div class="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
+                                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">SAMU / Hôpital avec ambulance</p>
+                                            </div>
+                                            <div class="flex items-center justify-between p-3 rounded-2xl bg-rose-50/50 border border-rose-100 shadow-sm animate-in">
+                                                <div class="flex items-center gap-3 w-[80%]">
+                                                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-sm shadow-sm shrink-0">
+                                                        <i class="fa-solid fa-truck-medical"></i>
+                                                    </div>
+                                                    <div class="overflow-hidden">
+                                                        <h5 class="text-xs font-bold text-slate-800 truncate">${h.name}</h5>
+                                                        <div class="flex items-center gap-1.5 mt-0.5">
+                                                            <span class="px-1.5 py-0.5 rounded-md bg-green-100 text-[8px] font-bold text-green-700 uppercase tracking-tighter">Ambulance</span>
+                                                            <span class="text-[10px] font-bold text-rose-600">${h.distance} km</span>
+                                                        </div>
                                                     </div>
                                                 </div>
+                                                <a href="tel:${h.contact}" class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center hover:bg-rose-200 transition-colors shrink-0">
+                                                    <i class="fa-solid fa-phone text-xs"></i>
+                                                </a>
                                             </div>
-                                            <a href="tel:${h.contact}" class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center hover:bg-rose-200 transition-colors shrink-0">
-                                                <i class="fa-solid fa-phone text-xs"></i>
-                                            </a>
                                         </div>
                                     `;
                                 }
 
                                 listContainer.innerHTML = html;
+                                updateHospitalVisibility();
                             } else {
                                 listContainer.innerHTML =
                                     '<div class="p-4 bg-orange-50 border border-orange-100 rounded-xl text-center"><p class="text-[10px] font-bold text-orange-600 uppercase">Aucun poste trouvé dans cette zone.</p></div>';
