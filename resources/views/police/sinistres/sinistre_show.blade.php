@@ -65,9 +65,20 @@
                                 class="fa-solid fa-triangle-exclamation text-orange-600"></i></div>
                         <h3 class="font-bold text-slate-800 text-sm">Type d'incident</h3>
                     </div>
-                    <div class="p-5 space-y-3">
                         <x-detail label="Type de sinistre" :value="str_replace('_', ' ', $sinistre->type_sinistre)" />
                         <x-detail label="Description" :value="$sinistre->description" />
+                        @if($sinistre->constat && $sinistre->constat->hospital_id)
+                            <div class="border-t border-slate-100 pt-3">
+                                <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Hospitalisation des blessés</p>
+                                <p class="text-sm font-bold text-rose-600 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-house-medical"></i>
+                                    {{ $sinistre->constat->hospital->name }}
+                                    @if($sinistre->constat->hospital->contact)
+                                        <span class="text-xs font-normal text-slate-500">({{ $sinistre->constat->hospital->contact }})</span>
+                                    @endif
+                                </p>
+                            </div>
+                        @endif
                     </div>
                 </div>
 

@@ -115,6 +115,20 @@
                                     </span>
                                 </dd>
                             </div>
+                            @if($sinistre->constat && $sinistre->constat->hospital_id)
+                                <div class="border-t border-slate-50 pt-4 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                                    <dt class="text-xs font-bold text-slate-500 uppercase tracking-wide w-40 shrink-0">
+                                        Hospitalisation des blessés
+                                    </dt>
+                                    <dd class="text-sm text-rose-600 font-bold flex items-center gap-1.5">
+                                        <i class="fa-solid fa-house-medical text-rose-500 mr-1"></i>
+                                        {{ $sinistre->constat->hospital->name }}
+                                        @if($sinistre->constat->hospital->contact)
+                                            <span class="text-xs font-normal text-slate-500">({{ $sinistre->constat->hospital->contact }})</span>
+                                        @endif
+                                    </dd>
+                                </div>
+                            @endif
                         </dl>
                     </div>
                 </div>
@@ -297,6 +311,37 @@
                             <p class="mt-4 text-[9px] text-slate-400 leading-relaxed italic font-medium">
                                 <i class="fa-solid fa-circle-info mr-1 text-blue-400"></i> Ces unités ont été notifiées lors de votre déclaration.
                             </p>
+                        </div>
+                    </div>
+                @endif
+
+                {{-- SAMU / Hôpital le plus proche --}}
+                @if($sinistre->nearestHospital)
+                    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden animate-in"
+                        style="--delay:0.3s">
+                        <div class="p-6">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">SAMU / Hôpital le plus proche (Alerte Ambulance)</h3>
+                            <div class="p-4 rounded-2xl bg-rose-50/50 border border-rose-100 flex items-center justify-between">
+                                <div class="flex items-center gap-3 overflow-hidden">
+                                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                                        <i class="fa-solid fa-truck-medical text-base"></i>
+                                    </div>
+                                    <div class="overflow-hidden">
+                                        <p class="text-xs font-bold text-slate-800 truncate">{{ $sinistre->nearestHospital->name }}</p>
+                                        <p class="text-[10px] text-slate-500 truncate">{{ $sinistre->nearestHospital->adresse }}</p>
+                                        <div class="flex items-center gap-1.5 mt-1">
+                                            <span class="inline-flex items-center px-1.5 py-0.2 rounded-full text-[8px] font-bold bg-green-100 text-green-800 uppercase">
+                                                Ambulance disponible
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                @if($sinistre->nearestHospital->contact)
+                                    <a href="tel:{{ $sinistre->nearestHospital->contact }}" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-rose-600/10 shrink-0">
+                                        <i class="fa-solid fa-phone"></i> Appeler
+                                    </a>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 @endif

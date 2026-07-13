@@ -149,7 +149,8 @@ class AgentDashboardController extends Controller
         abort_unless(Sinistre::where('id', $sinistre->id)->whereInvolved($agent->id, $agent->service_id)->exists(), 403);
         $sinistre->load('assure');
         $isAccident = in_array($sinistre->type_sinistre, ['Accident_matériel', 'Accident_corporel']);
-        return view('agent.sinistres.constat', compact('sinistre', 'isAccident'));
+        $hospitals = \App\Models\User::where('role', 'hopital')->get();
+        return view('agent.sinistres.constat', compact('sinistre', 'isAccident', 'hospitals'));
     }
 
     public function storeConstat(Request $request, Sinistre $sinistre)

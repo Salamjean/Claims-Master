@@ -101,7 +101,8 @@ class GendarmerieController extends Controller
         
         $sinistre->load('assure');
         $isAccident = in_array($sinistre->type_sinistre, ['Accident_matériel', 'Accident_corporel']);
-        return view('gendarmerie.sinistres.constat', compact('sinistre', 'isAccident'));
+        $hospitals = \App\Models\User::where('role', 'hopital')->get();
+        return view('gendarmerie.sinistres.constat', compact('sinistre', 'isAccident', 'hospitals'));
     }
 
     /**

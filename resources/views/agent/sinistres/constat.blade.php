@@ -450,6 +450,15 @@
                                 <option value="non_passager">Non passager (Piéton, etc.)</option>
                             </select>
                         </div>
+                        <div>
+                            <label class="label">Lieu d'hospitalisation / Évacué vers</label>
+                            <select name="hospital_id" class="input">
+                                <option value="">Aucun (Non évacué)</option>
+                                @foreach($hospitals as $hospital)
+                                    <option value="{{ $hospital->id }}">{{ $hospital->name }} @if($hospital->has_ambulance) (Ambulance) @endif</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
