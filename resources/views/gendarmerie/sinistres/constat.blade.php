@@ -452,12 +452,12 @@
                         </div>
                         <div>
                             <label class="label">Lieu d'hospitalisation / Évacué vers</label>
-                            <input list="hospital_list" name="hospital_name" class="input" placeholder="Sélectionnez ou saisissez l'hôpital...">
-                            <datalist id="hospital_list">
+                            <select name="hospital_id" class="input">
+                                <option value="">Aucun (Non évacué)</option>
                                 @foreach($hospitals as $hospital)
-                                    <option value="{{ $hospital['name'] }}">
+                                    <option value="{{ $hospital->id }}">{{ $hospital->name }} @if($hospital->has_ambulance) (Ambulance) @endif</option>
                                 @endforeach
-                            </datalist>
+                            </select>
                         </div>
                     </div>
                 </div>

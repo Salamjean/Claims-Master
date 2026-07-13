@@ -107,8 +107,7 @@ class PoliceController extends Controller
         $sinistre->load('assure');
         $isAccident = in_array($sinistre->type_sinistre, ['Accident_matériel', 'Accident_corporel']);
         
-        $hospitalService = new \App\Services\HospitalService();
-        $hospitals = $hospitalService->getNearbyHospitals($sinistre->latitude ?? 5.3484, $sinistre->longitude ?? -4.0125, 10);
+        $hospitals = \App\Models\User::where('role', 'hopital')->get();
         
         return view('police.sinistres.constat', compact('sinistre', 'isAccident', 'hospitals'));
     }

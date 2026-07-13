@@ -9,7 +9,7 @@ class Constat extends Model
     protected $fillable = [
         'sinistre_id',
         'service_id',
-        'hospital_name',
+        'hospital_id',
         'type_constat',
         'methode_redaction',
         'agent_nom',
@@ -121,5 +121,10 @@ class Constat extends Model
     public function payments()
     {
         return $this->hasMany(ConstatPayment::class);
+    }
+
+    public function hospital()
+    {
+        return $this->belongsTo(User::class, 'hospital_id');
     }
 }

@@ -90,5 +90,34 @@ class UserSeeder extends Seeder
             'email_verified_at' => now(),
             'password' => Hash::make('azertyui'),
         ]);
+
+        // 7. HÔPITAUX / SAMU
+        User::create([
+            'name' => "CHU d'Angré (SAMU)",
+            'prenom' => 'Urgences',
+            'email' => 'chu_angre@gmail.com',
+            'contact' => '22471111',
+            'adresse' => 'Abidjan, CHU d\'Angré',
+            'role' => 'hopital',
+            'has_ambulance' => true,
+            'latitude' => 5.4050, // Proche d'Angré
+            'longitude' => -3.9850,
+            'email_verified_at' => now(),
+            'password' => Hash::make('azertyui'),
+        ]);
+
+        User::create([
+            'name' => 'Clinique Farah',
+            'prenom' => 'Urgences',
+            'email' => 'farah@gmail.com',
+            'contact' => '2722510000',
+            'adresse' => 'Abidjan, Marcory Zone 4',
+            'role' => 'hopital',
+            'has_ambulance' => false,
+            'latitude' => 5.3050,
+            'longitude' => -3.9990,
+            'email_verified_at' => now(),
+            'password' => Hash::make('azertyui'),
+        ]);
     }
 }

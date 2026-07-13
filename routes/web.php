@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminDashboard;
 use App\Http\Controllers\Admin\AssuranceController;
 use App\Http\Controllers\Admin\ServiceConstatController;
+use App\Http\Controllers\Admin\HospitalController;
 use App\Http\Controllers\Assurance\AssuranceDashboard;
 use App\Http\Controllers\Assurance\AssureController;
 use App\Http\Controllers\Assurance\DocumentRequisController;
@@ -77,6 +78,11 @@ Route::middleware(['auth:user', 'admin'])->prefix('admin')->group(function () {
     Route::get('/services', [ServiceConstatController::class, 'index'])->name('admin.services.index');
     Route::get('/services/create', [ServiceConstatController::class, 'create'])->name('admin.services.create');
     Route::post('/services', [ServiceConstatController::class, 'store'])->name('admin.services.store');
+
+    // Gestion des Centres de Santé (Hôpitaux, SAMU, Cliniques)
+    Route::get('/hospitals', [HospitalController::class, 'index'])->name('admin.hospitals.index');
+    Route::get('/hospitals/create', [HospitalController::class, 'create'])->name('admin.hospitals.create');
+    Route::post('/hospitals', [HospitalController::class, 'store'])->name('admin.hospitals.store');
 });
 
 //Les routes de gestion de l'assurance

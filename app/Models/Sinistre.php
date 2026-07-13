@@ -55,10 +55,7 @@ class Sinistre extends Model
         'agent_start_lng',
         'assigned_personnel_id',
         'assigned_personnel_at',
-        'nearest_hospital_name',
-        'nearest_hospital_contact',
-        'nearest_hospital_adresse',
-        'nearest_hospital_distance',
+        'nearest_hospital_id',
     ];
 
     protected $casts = [
@@ -162,5 +159,10 @@ class Sinistre extends Model
     public function assignedPersonnel()
     {
         return $this->belongsTo(User::class, 'assigned_personnel_id');
+    }
+
+    public function nearestHospital()
+    {
+        return $this->belongsTo(User::class, 'nearest_hospital_id');
     }
 }

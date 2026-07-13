@@ -76,7 +76,7 @@ class SinistreController extends Controller
     {
         // Sécurité : l'assuré ne peut voir que ses propres sinistres
         abort_if($sinistre->user_id !== auth('user')->id(), 403);
-        $sinistre->load(['service', 'constat']);
+        $sinistre->load(['service', 'nearestHospital', 'constat.hospital']);
         return view('assure.sinistres.show', compact('sinistre'));
     }
 
@@ -196,10 +196,22 @@ class SinistreController extends Controller
             }
         }
 
-        // Recherche de l'hôpital/SAMU le plus proche disposant d'une ambulance via HospitalService
-        $hospitalService = new HospitalService();
-        $nearbyHospitals = $hospitalService->getNearbyHospitals($userLat, $userLng, 1);
-        $nearestHospital = !empty($nearbyHospitals) ? $nearbyHospitals[0] : null;
+        // Recherche de l'hôpital/SAMU le plus proche disposant d'une ambulance (Haversine)
+        $nearestHospital = \App\Models\User::where('role', 'hopital')
+            ->where('has_ambulance', true)
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->select('id', 'name', 'latitude', 'longitude', 'role', 'contact', 'adresse')
+            ->selectRaw("
+                ( 6371 * acos( cos( radians(?) ) *
+                cos( radians( latitude ) )
+                * cos( radians( longitude ) - radians(?)
+                ) + sin( radians(?) ) *
+                sin( radians( latitude ) ) )
+                ) AS distance
+            ", [$userLat, $userLng, $userLat])
+            ->orderBy('distance')
+            ->first();
 
         // 4. Création du sinistre en base de données
         $sinistre = Sinistre::create([
@@ -218,10 +230,7 @@ class SinistreController extends Controller
             'methode_constat' => $request->methode_constat,
             'assistance_sollicitee' => $request->boolean('assistance_sollicitee'),
             'nom_assisteur' => $request->nom_assisteur,
-            'nearest_hospital_name' => $nearestHospital['name'] ?? null,
-            'nearest_hospital_contact' => $nearestHospital['contact'] ?? null,
-            'nearest_hospital_adresse' => $nearestHospital['adresse'] ?? null,
-            'nearest_hospital_distance' => $nearestHospital['distance'] ?? null,
+            'nearest_hospital_id' => $nearestHospital?->id,
             'nearby_units' => $nearbyUnits->map(fn($u) => [
                 'id' => $u->id,
                 'name' => $u->name,
@@ -369,18 +378,31 @@ class SinistreController extends Controller
             ->take(3)
             ->get();
 
-        $hospitalService = new HospitalService();
-        $nearbyHospitals = $hospitalService->getNearbyHospitals($userLat, $userLng, 1);
-        $nearestHospital = !empty($nearbyHospitals) ? $nearbyHospitals[0] : null;
+        $nearestHospital = \App\Models\User::where('role', 'hopital')
+            ->where('has_ambulance', true)
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->select('id', 'name', 'latitude', 'longitude', 'role', 'contact', 'adresse')
+            ->selectRaw("
+                ( 6371 * acos( cos( radians(?) ) *
+                cos( radians( latitude ) )
+                * cos( radians( longitude ) - radians(?)
+                ) + sin( radians(?) ) *
+                sin( radians( latitude ) ) )
+                ) AS distance
+            ", [$userLat, $userLng, $userLat])
+            ->orderBy('distance')
+            ->first();
 
         return response()->json([
             'status' => 'success',
             'services' => $services,
             'nearest_hospital' => $nearestHospital ? [
-                'name' => $nearestHospital['name'],
-                'distance' => $nearestHospital['distance'],
-                'contact' => $nearestHospital['contact'],
-                'adresse' => $nearestHospital['adresse'],
+                'id' => $nearestHospital->id,
+                'name' => $nearestHospital->name,
+                'distance' => round($nearestHospital->distance, 2),
+                'contact' => $nearestHospital->contact,
+                'adresse' => $nearestHospital->adresse,
             ] : null,
         ]);
     }
