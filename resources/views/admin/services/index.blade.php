@@ -39,7 +39,6 @@
                         <tr class="bg-slate-50 border-b border-slate-100">
                             <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Service</th>
                             <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
-                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Ambulance</th>
                             <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact</th>
                             <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Localisation</th>
                             <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
@@ -51,8 +50,8 @@
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-3">
                                         <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0
-                                            {{ $service->role === 'police' ? 'bg-blue-100 text-blue-600' : ($service->role === 'gendarmerie' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600') }}">
-                                            <i class="fa-solid {{ $service->role === 'police' ? 'fa-building-shield' : ($service->role === 'gendarmerie' ? 'fa-building-columns' : 'fa-house-medical') }}"></i>
+                                            {{ $service->role === 'police' ? 'bg-blue-100 text-blue-600' : 'bg-emerald-100 text-emerald-600' }}">
+                                            <i class="fa-solid {{ $service->role === 'police' ? 'fa-building-shield' : 'fa-building-columns' }}"></i>
                                         </div>
                                         <div>
                                             <p class="font-bold text-slate-800">{{ $service->name }}</p>
@@ -65,29 +64,10 @@
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                             Police
                                         </span>
-                                    @elseif ($service->role === 'gendarmerie')
+                                    @else
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
                                             Gendarmerie
                                         </span>
-                                    @else
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-800">
-                                            SAMU / Hôpital
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4">
-                                    @if ($service->role === 'hopital')
-                                        @if ($service->has_ambulance)
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">
-                                                <i class="fa-solid fa-truck-medical mr-1"></i> Oui
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
-                                                Non
-                                            </span>
-                                        @endif
-                                    @else
-                                        <span class="text-slate-400">—</span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4">

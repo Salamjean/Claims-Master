@@ -115,17 +115,14 @@
                                     </span>
                                 </dd>
                             </div>
-                            @if($sinistre->constat && $sinistre->constat->hospital_id)
+                            @if($sinistre->constat && $sinistre->constat->hospital_name)
                                 <div class="border-t border-slate-50 pt-4 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
                                     <dt class="text-xs font-bold text-slate-500 uppercase tracking-wide w-40 shrink-0">
                                         Hospitalisation des blessés
                                     </dt>
                                     <dd class="text-sm text-rose-600 font-bold flex items-center gap-1.5">
                                         <i class="fa-solid fa-house-medical text-rose-500 mr-1"></i>
-                                        {{ $sinistre->constat->hospital->name }}
-                                        @if($sinistre->constat->hospital->contact)
-                                            <span class="text-xs font-normal text-slate-500">({{ $sinistre->constat->hospital->contact }})</span>
-                                        @endif
+                                        {{ $sinistre->constat->hospital_name }}
                                     </dd>
                                 </div>
                             @endif
@@ -316,7 +313,7 @@
                 @endif
 
                 {{-- SAMU / Hôpital le plus proche --}}
-                @if($sinistre->nearestHospital)
+                @if($sinistre->nearest_hospital_name)
                     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden animate-in"
                         style="--delay:0.3s">
                         <div class="p-6">
@@ -327,17 +324,17 @@
                                         <i class="fa-solid fa-truck-medical text-base"></i>
                                     </div>
                                     <div class="overflow-hidden">
-                                        <p class="text-xs font-bold text-slate-800 truncate">{{ $sinistre->nearestHospital->name }}</p>
-                                        <p class="text-[10px] text-slate-500 truncate">{{ $sinistre->nearestHospital->adresse }}</p>
+                                        <p class="text-xs font-bold text-slate-800 truncate">{{ $sinistre->nearest_hospital_name }}</p>
+                                        <p class="text-[10px] text-slate-500 truncate">{{ $sinistre->nearest_hospital_adresse ?? 'Adresse non spécifiée' }}</p>
                                         <div class="flex items-center gap-1.5 mt-1">
                                             <span class="inline-flex items-center px-1.5 py-0.2 rounded-full text-[8px] font-bold bg-green-100 text-green-800 uppercase">
-                                                Ambulance disponible
+                                                Ambulance @if($sinistre->nearest_hospital_distance) ({{ $sinistre->nearest_hospital_distance }} km) @endif
                                             </span>
                                         </div>
                                     </div>
                                 </div>
-                                @if($sinistre->nearestHospital->contact)
-                                    <a href="tel:{{ $sinistre->nearestHospital->contact }}" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-rose-600/10 shrink-0">
+                                @if($sinistre->nearest_hospital_contact && $sinistre->nearest_hospital_contact !== 'N/A')
+                                    <a href="tel:{{ $sinistre->nearest_hospital_contact }}" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-rose-600/10 shrink-0">
                                         <i class="fa-solid fa-phone"></i> Appeler
                                     </a>
                                 @endif

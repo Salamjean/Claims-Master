@@ -21,7 +21,7 @@ class ServiceConstatController extends Controller
      */
     public function index()
     {
-        $services = User::whereIn('role', ['police', 'gendarmerie', 'hopital'])
+        $services = User::whereIn('role', ['police', 'gendarmerie'])
             ->latest()
             ->paginate(15);
 
@@ -43,14 +43,13 @@ class ServiceConstatController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'type_service' => 'required|in:police,gendarmerie,hopital',
+            'type_service' => 'required|in:police,gendarmerie',
             'email' => 'required|string|email|max:255|unique:users',
             'contact' => 'required|string|max:255',
             'commune' => 'nullable|string|max:255',
             'adresse' => 'required|string|max:255',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
-            'has_ambulance' => 'nullable|boolean',
         ], [
             'name.required' => 'Le nom du service est obligatoire.',
             'type_service.required' => 'Veuillez sélectionner le type de service.',
@@ -83,12 +82,11 @@ class ServiceConstatController extends Controller
                 'adresse' => $request->adresse,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
-                'role' => $request->type_service, // 'police' ou 'gendarmerie' ou 'hopital'
+                'role' => $request->type_service, // 'police' ou 'gendarmerie'
                 'code_user' => $codeUser,
                 'password' => Hash::make('default'),
                 'email_verified_at' => null,
                 'must_change_password' => true, // Le service devra changer son mot de passe
-                'has_ambulance' => $request->type_service === 'hopital' && $request->boolean('has_ambulance'),
             ]);
 
             // Génération d'un code d'activation et envoi email

@@ -149,7 +149,10 @@ class AgentDashboardController extends Controller
         abort_unless(Sinistre::where('id', $sinistre->id)->whereInvolved($agent->id, $agent->service_id)->exists(), 403);
         $sinistre->load('assure');
         $isAccident = in_array($sinistre->type_sinistre, ['Accident_matériel', 'Accident_corporel']);
-        $hospitals = \App\Models\User::where('role', 'hopital')->get();
+        
+        $hospitalService = new \App\Services\HospitalService();
+        $hospitals = $hospitalService->getNearbyHospitals($sinistre->latitude ?? 5.3484, $sinistre->longitude ?? -4.0125, 10);
+        
         return view('agent.sinistres.constat', compact('sinistre', 'isAccident', 'hospitals'));
     }
 

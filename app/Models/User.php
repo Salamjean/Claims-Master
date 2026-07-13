@@ -36,7 +36,6 @@ class User extends Authenticatable
         'service_id',
         'grade',
         'matricule',
-        'has_ambulance',
     ];
 
     /**
@@ -60,7 +59,6 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'must_change_password' => 'boolean',
-            'has_ambulance' => 'boolean',
         ];
     }
 

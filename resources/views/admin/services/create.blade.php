@@ -57,24 +57,9 @@
                                     (Commissariat)</option>
                                 <option value="gendarmerie" {{ old('type_service') == 'gendarmerie' ? 'selected' : '' }}>
                                     Gendarmerie Nationale (Brigade)</option>
-                                <option value="hopital" {{ old('type_service') == 'hopital' ? 'selected' : '' }}>
-                                    SAMU / Centre de santé</option>
                             </select>
                             <p class="text-xs text-slate-400 mt-1.5"><i class="fa-solid fa-circle-info mr-1"></i> Ce choix
                                 définit les droits sur la plateforme.</p>
-                        </div>
-                        
-                        {{-- Options conditionnelles pour hôpital (Ambulance) --}}
-                        <div id="ambulance_field_group" class="hidden">
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">Options additionnelles</label>
-                            <div class="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                                <input type="checkbox" name="has_ambulance" id="has_ambulance" value="1" {{ old('has_ambulance') ? 'checked' : '' }}
-                                    class="w-4 h-4 text-primary-600 focus:ring-primary-500 border-slate-300 rounded">
-                                <label for="has_ambulance" class="text-sm text-slate-700 cursor-pointer flex items-center gap-1.5">
-                                    <i class="fa-solid fa-truck-medical text-slate-500 text-xs"></i>
-                                    Dispose d'une ambulance fonctionnelle
-                                </label>
-                            </div>
                         </div>
                     </div>
 
@@ -248,26 +233,5 @@
                     document.getElementById('commune').value = communeStr;
                 }
         }
-
-        // Toggle ambulance field based on type selection
-        document.addEventListener('DOMContentLoaded', function () {
-            const typeServiceSelect = document.getElementById('type_service');
-            const ambulanceFieldGroup = document.getElementById('ambulance_field_group');
-            
-            function toggleAmbulanceField() {
-                if (typeServiceSelect.value === 'hopital') {
-                    ambulanceFieldGroup.classList.remove('hidden');
-                } else {
-                    ambulanceFieldGroup.classList.add('hidden');
-                    const checkbox = document.getElementById('has_ambulance');
-                    if (checkbox) checkbox.checked = false;
-                }
-            }
-
-            if (typeServiceSelect && ambulanceFieldGroup) {
-                typeServiceSelect.addEventListener('change', toggleAmbulanceField);
-                toggleAmbulanceField(); // Run on load
-            }
-        });
     </script>
 @endpush
