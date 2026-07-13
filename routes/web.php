@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminDashboard;
 use App\Http\Controllers\Admin\AssuranceController;
 use App\Http\Controllers\Admin\ServiceConstatController;
 use App\Http\Controllers\Admin\HospitalController;
+use App\Http\Controllers\Hopital\HopitalDashboardController;
 use App\Http\Controllers\Assurance\AssuranceDashboard;
 use App\Http\Controllers\Assurance\AssureController;
 use App\Http\Controllers\Assurance\DocumentRequisController;
@@ -307,3 +308,11 @@ Route::middleware(['auth:user', 'agent', 'force.password'])->prefix('agent')->gr
 });
 // Webhook Wave (Public)
 Route::post('/webhook/wave', [SinistreController::class, 'waveWebhook'])->name('webhook.wave');
+
+// --------------------------------------------------------------------------
+// ESPACE HÔPITAL / SAMU / CLINIQUE
+// --------------------------------------------------------------------------
+Route::middleware(['auth:user', 'hopital', 'force.password'])->prefix('hopital')->group(function () {
+    Route::get('/dashboard', [HopitalDashboardController::class, 'dashboard'])->name('hopital.dashboard');
+    Route::post('/logout', [HopitalDashboardController::class, 'logout'])->name('hopital.logout');
+});

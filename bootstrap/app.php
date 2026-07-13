@@ -12,7 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(function (Illuminate\Http\Request $request) {
-            if ($request->is('admin/*') || $request->is('assurance/*') || $request->is('police/*') || $request->is('gendarmerie/*') || $request->is('personnel/*')) {
+            if ($request->is('admin/*') || $request->is('assurance/*') || $request->is('police/*') || $request->is('gendarmerie/*') || $request->is('personnel/*') || $request->is('hopital/*')) {
                 return route('portal.login');
             }
             return route('login');
@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'gendarmerie' => \App\Http\Middleware\GendarmerieMiddleware::class,
             'agent' => \App\Http\Middleware\AgentMiddleware::class,
             'personnel' => \App\Http\Middleware\PersonnelMiddleware::class,
+            'hopital' => \App\Http\Middleware\HopitalMiddleware::class,
             'force.password' => \App\Http\Middleware\ForcePasswordChange::class,
         ]);
     })

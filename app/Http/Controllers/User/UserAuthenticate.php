@@ -244,6 +244,7 @@ class UserAuthenticate extends Controller
         if ($role === 'gendarmerie') return redirect()->route('gendarmerie.dashboard');
         if ($role === 'assure') return redirect()->route('assure.dashboard');
         if ($role === 'personnel') return redirect()->route('personnel.dashboard');
+        if ($role === 'hopital') return redirect()->route('hopital.dashboard');
         if ($role === 'agent') {
             return redirect()->route('agent.dashboard');
         }
