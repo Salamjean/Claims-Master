@@ -232,6 +232,7 @@
                 if (communeStr) {
                     document.getElementById('commune').value = communeStr;
                 }
+            });
         }
     </script>
 @endpush
