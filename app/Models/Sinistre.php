@@ -56,6 +56,9 @@ class Sinistre extends Model
         'assigned_personnel_id',
         'assigned_personnel_at',
         'nearest_hospital_id',
+        'hospital_status',
+        'hospital_severity',
+        'hospital_notes',
     ];
 
     protected $casts = [

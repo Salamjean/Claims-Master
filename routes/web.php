@@ -314,5 +314,11 @@ Route::post('/webhook/wave', [SinistreController::class, 'waveWebhook'])->name('
 // --------------------------------------------------------------------------
 Route::middleware(['auth:user', 'hopital', 'force.password'])->prefix('hopital')->group(function () {
     Route::get('/dashboard', [HopitalDashboardController::class, 'dashboard'])->name('hopital.dashboard');
+    Route::post('/sinistres/{sinistre}/dispatch-ambulance', [HopitalDashboardController::class, 'dispatchAmbulance'])->name('hopital.sinistres.dispatch');
+    Route::post('/sinistres/{sinistre}/arrive', [HopitalDashboardController::class, 'markArrived'])->name('hopital.sinistres.arrive');
+    Route::post('/sinistres/{sinistre}/complete', [HopitalDashboardController::class, 'completeTreatment'])->name('hopital.sinistres.complete');
+    Route::get('/historique', [HopitalDashboardController::class, 'historique'])->name('hopital.historique');
+    Route::get('/capacite', [HopitalDashboardController::class, 'capacite'])->name('hopital.capacite');
+    Route::post('/capacite', [HopitalDashboardController::class, 'updateCapacite'])->name('hopital.capacite.update');
     Route::post('/logout', [HopitalDashboardController::class, 'logout'])->name('hopital.logout');
 });

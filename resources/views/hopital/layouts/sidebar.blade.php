@@ -23,6 +23,20 @@
             <span class="nav-label text-sm">Tableau de bord</span>
         </a>
 
+        <a href="{{ route('hopital.historique') }}"
+            class="nav-item {{ request()->routeIs('hopital.historique') ? 'active' : '' }}">
+            <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left text-sm"></i></span>
+            <span class="nav-label text-sm">Historique</span>
+        </a>
+
+        <p class="nav-label text-white/30 text-[10px] uppercase tracking-widest font-semibold px-3 mt-4 mb-2">Service</p>
+
+        <a href="{{ route('hopital.capacite') }}"
+            class="nav-item {{ request()->routeIs('hopital.capacite') ? 'active' : '' }}">
+            <span class="nav-icon"><i class="fa-solid fa-ambulance text-sm"></i></span>
+            <span class="nav-label text-sm">Ambulance & Capacité</span>
+        </a>
+
     </nav>
 
     {{-- UTILISATEUR & DECONNEXION --}}

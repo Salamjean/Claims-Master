@@ -32,6 +32,14 @@
             </div>
         </div>
 
+        {{-- Messages d'alerte / Actions success --}}
+        @if (session('success'))
+            <div class="p-4 rounded-xl bg-green-50 border border-green-100 text-green-700 text-sm flex items-center gap-3">
+                <i class="fa-solid fa-circle-check text-base animate-bounce"></i>
+                <span>{{ session('success') }}</span>
+            </div>
+        @endif
+
         {{-- Compteurs --}}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-center flex flex-col justify-center">
@@ -51,15 +59,15 @@
             </div>
         </div>
 
-        {{-- Table des alertes --}}
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        {{-- Table des alertes actives --}}
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden" x-data="{ openModal: false, completeUrl: '' }">
             <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
-                        <i class="fa-solid fa-bell text-sm"></i>
+                    <div class="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600 animate-pulse">
+                        <i class="fa-solid fa-heart-pulse text-sm"></i>
                     </div>
                     <div>
-                        <h2 class="text-sm font-bold text-slate-800">Déclarations et blessés à proximité</h2>
+                        <h2 class="text-sm font-bold text-slate-800 font-sans">Urgences actives nécessitant une prise en charge</h2>
                     </div>
                 </div>
             </div>
@@ -69,18 +77,17 @@
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-100">
                             <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Patient / Assuré</th>
-                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Type de Sinistre</th>
-                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Prise en charge</th>
-                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Statut Sinistre</th>
-                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Date & Heure</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Lieu & GPS</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Statut Médical</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Actions Urgences</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @forelse($sinistres as $sinistre)
                             <tr class="hover:bg-slate-50 transition-colors">
                                 <td class="px-6 py-4">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-xs font-bold">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-xs font-bold shrink-0">
                                             {{ strtoupper(substr($sinistre->assure->name ?? 'P', 0, 1)) }}
                                         </div>
                                         <div>
@@ -89,58 +96,114 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 text-center">
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-700">
-                                        <i class="fa-solid fa-car-burst text-[10px]"></i>
-                                        {{ str_replace('_', ' ', $sinistre->type_sinistre) }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-center">
-                                    @if($sinistre->constat && $sinistre->constat->hospital_id == $user->id)
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-green-50 text-green-700 border border-green-200">
-                                            <i class="fa-solid fa-circle-check text-[10px]"></i>
-                                            Évacué vers vos urgences
-                                        </span>
-                                    @elseif($sinistre->nearest_hospital_id == $user->id)
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                                            <i class="fa-solid fa-location-crosshairs text-[10px]"></i>
-                                            Plus proche désigné
-                                        </span>
-                                    @else
-                                        <span class="text-xs text-slate-400">—</span>
+                                <td class="px-6 py-4">
+                                    <p class="text-xs text-slate-700 font-medium truncate max-w-[200px]" title="{{ $sinistre->lieu }}">{{ $sinistre->lieu ?? 'Lieu non renseigné' }}</p>
+                                    @if($sinistre->latitude && $sinistre->longitude)
+                                        <a href="https://www.google.com/maps/search/?api=1&query={{ $sinistre->latitude }},{{ $sinistre->longitude }}" target="_blank"
+                                            class="text-[10px] text-rose-600 font-bold hover:underline inline-flex items-center gap-1 mt-0.5">
+                                            <i class="fa-solid fa-map-location-dot"></i> Voir itinéraire GPS
+                                        </a>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    @if ($sinistre->status === 'en_attente')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                                            En attente
+                                    @if ($sinistre->hospital_status === 'en_attente')
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-100 animate-pulse">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-600"></span> Alerte reçue
                                         </span>
-                                    @elseif ($sinistre->status === 'en_cours')
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            En cours
+                                    @elseif ($sinistre->hospital_status === 'ambulance_en_route')
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                            <i class="fa-solid fa-truck-medical text-[10px] animate-bounce"></i> Ambulance en route
+                                        </span>
+                                    @elseif ($sinistre->hospital_status === 'arrive')
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                            <i class="fa-solid fa-bed text-[10px]"></i> Patient aux urgences
                                         </span>
                                     @else
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            Traité
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
+                                            Clôturé
                                         </span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-center">
-                                    <span class="text-xs text-slate-500 font-medium">{{ $sinistre->created_at->format('d/m/Y H:i') }}</span>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex justify-end gap-2">
+                                        @if ($sinistre->hospital_status === 'en_attente')
+                                            <form action="{{ route('hopital.sinistres.dispatch', $sinistre->id) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-md shadow-rose-600/10 transition-all flex items-center gap-1.5">
+                                                    <i class="fa-solid fa-truck-medical text-[10px]"></i> Dépêcher ambulance
+                                                </button>
+                                            </form>
+                                        @elseif ($sinistre->hospital_status === 'ambulance_en_route')
+                                            <form action="{{ route('hopital.sinistres.arrive', $sinistre->id) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-md shadow-amber-600/10 transition-all flex items-center gap-1.5">
+                                                    <i class="fa-solid fa-hospital-user text-[10px]"></i> Confirmer arrivée
+                                                </button>
+                                            </form>
+                                        @elseif ($sinistre->hospital_status === 'arrive')
+                                            <button @click="openModal = true; completeUrl = '{{ route('hopital.sinistres.complete', $sinistre->id) }}'" 
+                                                class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-600/10 transition-all flex items-center gap-1.5">
+                                                <i class="fa-solid fa-notes-medical text-[10px]"></i> Saisir Bilan & Clôturer
+                                            </button>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-12 text-center">
+                                <td colspan="4" class="px-6 py-12 text-center">
                                     <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mx-auto mb-3 text-slate-300">
                                         <i class="fa-solid fa-house-medical text-lg"></i>
                                     </div>
-                                    <p class="text-slate-500 font-medium">Aucune déclaration d'accident enregistrée.</p>
+                                    <p class="text-slate-500 font-medium">Aucune urgence active enregistrée actuellement.</p>
+                                    <p class="text-xs text-slate-400 mt-1">Les alertes géolocalisées des assurés s'afficheront ici en temps réel.</p>
                                 </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            {{-- Modal Saisie Bilan Médical --}}
+            <div x-show="openModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4" x-cloak>
+                <div class="bg-white rounded-3xl border border-slate-100 max-w-lg w-full p-6 shadow-2xl transform transition-all" @click.away="openModal = false">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-file-medical text-rose-600 text-lg animate-pulse"></i>
+                            Rapport Bilan Médical Initial
+                        </h3>
+                        <button @click="openModal = false" class="text-slate-400 hover:text-slate-600">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+
+                    <form :action="completeUrl" method="POST" class="space-y-4">
+                        @csrf
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Gravité estimée des victimes <span class="text-red-500">*</span></label>
+                            <select name="hospital_severity" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm" required>
+                                <option value="">Sélectionner...</option>
+                                <option value="leger">Léger (Premiers soins uniquement)</option>
+                                <option value="grave">Grave (Hospitalisation requise)</option>
+                                <option value="deces">Décès constaté</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Observations / Notes médicales</label>
+                            <textarea name="hospital_notes" rows="4" placeholder="Ex: Traumatisme crânien léger, victime consciente..." class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm resize-none"></textarea>
+                        </div>
+
+                        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                            <button type="button" @click="openModal = false" class="px-5 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-slate-50 border border-slate-200 text-xs">
+                                Annuler
+                            </button>
+                            <button type="submit" class="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md shadow-rose-600/10">
+                                Valider & Clôturer la prise en charge
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
