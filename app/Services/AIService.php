@@ -42,7 +42,7 @@ class AIService
             $prompt .= "- 'context' (résumé court)\n";
             $prompt .= "- 'recommended_docs' (tableau de noms).\n";
 
-            $url = $this->baseUrl . '/gemini-2.5-flash:generateContent?key=' . $this->apiKey;
+            $url = $this->baseUrl . '/gemini-1.5-flash:generateContent?key=' . $this->apiKey;
 
             $response = Http::withOptions(['verify' => false])
                 ->timeout(60)
@@ -58,6 +58,8 @@ class AIService
                 $content = $response->json('candidates.0.content.parts.0.text');
                 $decoded = json_decode(trim(preg_replace('/```json\s*|\s*```/', '', $content)), true);
                 return is_array($decoded) ? $decoded : null;
+            } else {
+                Log::error('Gemini API Error in analyzeDeclarationText: ' . $response->body());
             }
         } catch (\Exception $e) {
             Log::error('Gemini Analysis Exception: ' . $e->getMessage());
@@ -175,7 +177,7 @@ class AIService
      */
     protected function callGeminiVisionDetailed(array $contents)
     {
-        $url = $this->baseUrl . '/gemini-2.5-flash:generateContent?key=' . $this->apiKey;
+        $url = $this->baseUrl . '/gemini-1.5-flash:generateContent?key=' . $this->apiKey;
         $maxAttempts = 3;
         $attempt = 0;
 
@@ -191,6 +193,8 @@ class AIService
                     $decoded = json_decode(trim(preg_replace('/```json\s*|\s*```/', '', $content)), true);
                     if (is_array($decoded))
                         return $decoded;
+                } else {
+                    Log::error('Gemini API Error in callGeminiVisionDetailed (Attempt ' . ($attempt+1) . '): ' . $response->body());
                 }
 
                 if ($response->status() === 503 && $attempt < $maxAttempts - 1) {
@@ -212,7 +216,7 @@ class AIService
      */
     protected function callGeminiVision(string $prompt, string $imageData, string $mimeType)
     {
-        $url = $this->baseUrl . '/gemini-2.5-flash:generateContent?key=' . $this->apiKey;
+        $url = $this->baseUrl . '/gemini-1.5-flash:generateContent?key=' . $this->apiKey;
         $maxAttempts = 3;
         $attempt = 0;
 
@@ -228,6 +232,8 @@ class AIService
                     $decoded = json_decode(trim(preg_replace('/```json\s*|\s*```/', '', $content)), true);
                     if (is_array($decoded))
                         return $decoded;
+                } else {
+                    Log::error('Gemini API Error in callGeminiVision (Attempt ' . ($attempt+1) . '): ' . $response->body());
                 }
 
                 if ($response->status() === 503 && $attempt < $maxAttempts - 1) {
@@ -254,7 +260,7 @@ class AIService
 
         try {
             $prompt = "Rédige un message pour demander : " . implode(', ', $requiredDocs) . " pour un sinistre " . $sinistre->type_sinistre;
-            $url = $this->baseUrl . '/gemini-2.5-flash:generateContent?key=' . $this->apiKey;
+            $url = $this->baseUrl . '/gemini-1.5-flash:generateContent?key=' . $this->apiKey;
 
             $response = Http::withOptions(['verify' => false])->timeout(60)->post($url, [
                 'contents' => [['parts' => [['text' => $prompt]]]],
@@ -263,6 +269,8 @@ class AIService
 
             if ($response->successful()) {
                 return trim($response->json('candidates.0.content.parts.0.text'));
+            } else {
+                Log::error('Gemini API Error in generateDocumentRequestMessage: ' . $response->body());
             }
         } catch (\Exception $e) {
             Log::error($e->getMessage());
