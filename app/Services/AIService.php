@@ -42,7 +42,7 @@ class AIService
             $prompt .= "- 'context' (résumé court)\n";
             $prompt .= "- 'recommended_docs' (tableau de noms).\n";
 
-            $url = $this->baseUrl . '/gemini-1.5-flash:generateContent?key=' . $this->apiKey;
+            $url = $this->baseUrl . '/gemini-flash-latest:generateContent?key=' . $this->apiKey;
 
             $response = Http::withOptions(['verify' => false])
                 ->timeout(60)
@@ -177,7 +177,7 @@ class AIService
      */
     protected function callGeminiVisionDetailed(array $contents)
     {
-        $url = $this->baseUrl . '/gemini-1.5-flash:generateContent?key=' . $this->apiKey;
+        $url = $this->baseUrl . '/gemini-flash-latest:generateContent?key=' . $this->apiKey;
         $maxAttempts = 3;
         $attempt = 0;
 
@@ -216,7 +216,7 @@ class AIService
      */
     protected function callGeminiVision(string $prompt, string $imageData, string $mimeType)
     {
-        $url = $this->baseUrl . '/gemini-1.5-flash:generateContent?key=' . $this->apiKey;
+        $url = $this->baseUrl . '/gemini-flash-latest:generateContent?key=' . $this->apiKey;
         $maxAttempts = 3;
         $attempt = 0;
 
@@ -260,7 +260,7 @@ class AIService
 
         try {
             $prompt = "Rédige un message pour demander : " . implode(', ', $requiredDocs) . " pour un sinistre " . $sinistre->type_sinistre;
-            $url = $this->baseUrl . '/gemini-1.5-flash:generateContent?key=' . $this->apiKey;
+            $url = $this->baseUrl . '/gemini-flash-latest:generateContent?key=' . $this->apiKey;
 
             $response = Http::withOptions(['verify' => false])->timeout(60)->post($url, [
                 'contents' => [['parts' => [['text' => $prompt]]]],
