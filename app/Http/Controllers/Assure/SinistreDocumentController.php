@@ -29,6 +29,8 @@ class SinistreDocumentController extends Controller
      */
     public function upload(Request $request, SinistreDocumentAttendu $documentAttendu)
     {
+        set_time_limit(120); // Augmenter le temps limite pour l'analyse IA
+        
         $sinistre = $documentAttendu->sinistre;
         abort_if($sinistre->user_id !== Auth::id(), 403);
 
