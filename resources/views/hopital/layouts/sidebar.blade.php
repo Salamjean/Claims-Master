@@ -4,11 +4,11 @@
     <div class="flex items-center gap-3 px-6 py-5 border-b border-white/10">
         <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
             style="background: linear-gradient(135deg, #f43f5e, #be123c)">
-            <i class="fa-solid fa-house-medical text-white text-base"></i>
+            <i class="fa-solid fa-fire-extinguisher text-white text-base"></i>
         </div>
         <div class="logo-text">
             <p class="text-white font-bold text-sm leading-none">Claims Master</p>
-            <p class="text-rose-300 text-[10px] mt-0.5">Espace Médical</p>
+            <p class="text-rose-300 text-[10px] mt-0.5">Espace Caserne</p>
         </div>
     </div>
 
@@ -33,8 +33,8 @@
 
         <a href="{{ route('hopital.capacite') }}"
             class="nav-item {{ request()->routeIs('hopital.capacite') ? 'active' : '' }}">
-            <span class="nav-icon"><i class="fa-solid fa-ambulance text-sm"></i></span>
-            <span class="nav-label text-sm">Ambulance & Capacité</span>
+            <span class="nav-icon"><i class="fa-solid fa-truck-field text-sm"></i></span>
+            <span class="nav-label text-sm">Secours & Capacité</span>
         </a>
 
     </nav>
@@ -53,8 +53,8 @@
                     @endif
                 </div>
                 <div class="text-left nav-label flex-1 truncate">
-                    <p class="text-white text-sm font-semibold truncate">{{ auth('user')->user()->name ?? 'Clinique' }}</p>
-                    <p class="text-white/50 text-xs truncate">SAMU / Hôpital</p>
+                    <p class="text-white text-sm font-semibold truncate">{{ auth('user')->user()->name ?? 'Caserne' }}</p>
+                    <p class="text-white/50 text-xs truncate">Sapeurs-Pompiers / GSPM</p>
                 </div>
                 <i class="fa-solid fa-ellipsis-vertical text-white/50 nav-label shrink-0"></i>
             </button>

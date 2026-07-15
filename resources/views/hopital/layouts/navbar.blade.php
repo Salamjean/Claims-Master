@@ -9,7 +9,7 @@
 
         {{-- Fil d'Ariane --}}
         <div class="flex items-center gap-2 text-sm text-slate-400">
-            <span>Espace Médical</span>
+            <span>Espace Sapeurs-Pompiers</span>
             <i class="fa-solid fa-angle-right text-xs"></i>
             <span class="text-slate-700 font-medium">@yield('page-title', 'Tableau de bord')</span>
         </div>
@@ -27,8 +27,8 @@
             </div>
             <div class="hidden md:block">
                 <p class="text-xs font-semibold text-slate-700 leading-none">
-                    {{ auth('user')->user()->name ?? 'Clinique' }}</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">{{ auth('user')->user()->email ?? 'Service Urgences' }}</p>
+                    {{ auth('user')->user()->name ?? 'Caserne' }}</p>
+                <p class="text-[10px] text-slate-400 mt-0.5">{{ auth('user')->user()->email ?? 'GSPM / Secours' }}</p>
             </div>
         </div>
     </div>

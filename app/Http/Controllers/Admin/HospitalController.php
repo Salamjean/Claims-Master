@@ -28,7 +28,7 @@ class HospitalController extends Controller
     }
 
     /**
-     * Affiche le formulaire de création d'un centre de santé
+     * Affiche le formulaire de création d'une caserne de sapeurs-pompiers
      */
     public function create()
     {
@@ -50,7 +50,7 @@ class HospitalController extends Controller
             'longitude' => 'nullable|numeric',
             'has_ambulance' => 'nullable|boolean',
         ], [
-            'name.required' => 'Le nom de l\'établissement est obligatoire.',
+            'name.required' => 'Le nom de la caserne est obligatoire.',
             'email.required' => 'L\'adresse email est obligatoire.',
             'email.email' => 'L\'adresse email doit être valide.',
             'email.unique' => 'Cette adresse email est déjà utilisée.',
@@ -100,18 +100,18 @@ class HospitalController extends Controller
                 Notification::route('mail', $user->email)
                     ->notify(new sendEmailAfterUserRegister($code, $user->email));
             } catch (\Exception $e) {
-                Log::error("Erreur lors de l'envoi de l'email d'activation au centre de santé {$user->email} : " . $e->getMessage());
+                Log::error("Erreur lors de l'envoi de l'email d'activation à la caserne de sapeurs-pompiers {$user->email} : " . $e->getMessage());
             }
 
             DB::commit();
 
             return redirect()->route('admin.hospitals.index')
-                ->with('success', 'Le centre de santé a été créé avec succès. Un e-mail d\'activation a été envoyé.');
+                ->with('success', 'La caserne de sapeurs-pompiers a été créée avec succès. Un e-mail d\'activation a été envoyé.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Erreur lors de la création d'un centre de santé : " . $e->getMessage());
-            return back()->with('error', 'Une erreur est survenue lors de la création du centre de santé.')->withInput();
+            Log::error("Erreur lors de la création d'une caserne de sapeurs-pompiers : " . $e->getMessage());
+            return back()->with('error', 'Une erreur est survenue lors de la création de la caserne de sapeurs-pompiers.')->withInput();
         }
     }
 }

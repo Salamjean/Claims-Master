@@ -451,11 +451,11 @@
                             </select>
                         </div>
                         <div>
-                            <label class="label">Lieu d'hospitalisation / Évacué vers</label>
+                            <label class="label">Évacué vers (Caserne de Sapeurs-Pompiers)</label>
                             <select name="hospital_id" class="input">
                                 <option value="">Aucun (Non évacué)</option>
                                 @foreach($hospitals as $hospital)
-                                    <option value="{{ $hospital->id }}">{{ $hospital->name }} @if($hospital->has_ambulance) (Ambulance) @endif</option>
+                                    <option value="{{ $hospital->id }}">{{ $hospital->name }}</option>
                                 @endforeach
                             </select>
                         </div>

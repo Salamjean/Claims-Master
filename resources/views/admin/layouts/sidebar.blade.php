@@ -89,13 +89,13 @@
             </div>
         </div>
 
-        {{-- DROPDOWN Centre de santé --}}
+        {{-- DROPDOWN Sapeurs-pompiers --}}
         <div x-data="{ open: {{ request()->routeIs('admin.hospitals.*') ? 'true' : 'false' }} }">
             <button @click="open = !open" class="nav-item w-full justify-between"
                 :class="open ? 'bg-white/10 text-white' : ''">
                 <span class="flex items-center gap-3">
-                    <span class="nav-icon"><i class="fa-solid fa-house-medical text-sm"></i></span>
-                    <span class="nav-label text-sm">Centres de santé</span>
+                    <span class="nav-icon"><i class="fa-solid fa-fire-extinguisher text-sm"></i></span>
+                    <span class="nav-label text-sm">Sapeurs-pompiers</span>
                 </span>
                 <span class="nav-label">
                     <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300"
@@ -111,12 +111,12 @@
                 <a href="{{ route('admin.hospitals.index') }}"
                     class="nav-item text-xs py-2 px-3 {{ request()->routeIs('admin.hospitals.index') ? 'text-white bg-white/5' : '' }}">
                     <span class="nav-icon"><i class="fa-solid fa-list text-xs"></i></span>
-                    <span>Liste des centres</span>
+                    <span>Liste des casernes</span>
                 </a>
                 <a href="{{ route('admin.hospitals.create') }}"
                     class="nav-item text-xs py-2 px-3 {{ request()->routeIs('admin.hospitals.create') ? 'text-white bg-white/5' : '' }}">
                     <span class="nav-icon"><i class="fa-solid fa-plus text-xs"></i></span>
-                    <span>Ajouter un centre</span>
+                    <span>Ajouter une caserne</span>
                 </a>
             </div>
         </div>

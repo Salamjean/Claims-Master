@@ -67,9 +67,9 @@
                         <x-detail label="Description" :value="$sinistre->description" />
                         @if($sinistre->constat && $sinistre->constat->hospital_id)
                             <div class="border-t border-slate-100 pt-3">
-                                <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Hospitalisation des blessés</p>
+                                <p class="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Évacuation des blessés</p>
                                 <p class="text-sm font-bold text-rose-600 flex items-center gap-1.5">
-                                    <i class="fa-solid fa-house-medical"></i>
+                                    <i class="fa-solid fa-fire-extinguisher"></i>
                                     {{ $sinistre->constat->hospital->name }}
                                     @if($sinistre->constat->hospital->contact)
                                         <span class="text-xs font-normal text-slate-500">({{ $sinistre->constat->hospital->contact }})</span>

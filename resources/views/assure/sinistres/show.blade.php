@@ -118,10 +118,10 @@
                             @if($sinistre->constat && $sinistre->constat->hospital_id)
                                 <div class="border-t border-slate-50 pt-4 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
                                     <dt class="text-xs font-bold text-slate-500 uppercase tracking-wide w-40 shrink-0">
-                                        Hospitalisation des blessés
+                                        Évacuation des blessés
                                     </dt>
                                     <dd class="text-sm text-rose-600 font-bold flex items-center gap-1.5">
-                                        <i class="fa-solid fa-house-medical text-rose-500 mr-1"></i>
+                                        <i class="fa-solid fa-fire-extinguisher text-rose-500 mr-1"></i>
                                         {{ $sinistre->constat->hospital->name }}
                                         @if($sinistre->constat->hospital->contact)
                                             <span class="text-xs font-normal text-slate-500">({{ $sinistre->constat->hospital->contact }})</span>
@@ -315,23 +315,23 @@
                     </div>
                 @endif
 
-                {{-- SAMU / Hôpital le plus proche --}}
+                {{-- Sapeurs-Pompiers les plus proches --}}
                 @if($sinistre->nearestHospital)
                     <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden animate-in"
                         style="--delay:0.3s">
                         <div class="p-6">
-                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">SAMU / Hôpital le plus proche (Alerte Ambulance)</h3>
+                            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Sapeurs-Pompiers les plus proches (Alerte Secours)</h3>
                             <div class="p-4 rounded-2xl bg-rose-50/50 border border-rose-100 flex items-center justify-between">
                                 <div class="flex items-center gap-3 overflow-hidden">
                                     <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                                        <i class="fa-solid fa-truck-medical text-base"></i>
+                                        <i class="fa-solid fa-fire-extinguisher text-base"></i>
                                     </div>
                                     <div class="overflow-hidden">
                                         <p class="text-xs font-bold text-slate-800 truncate">{{ $sinistre->nearestHospital->name }}</p>
                                         <p class="text-[10px] text-slate-500 truncate">{{ $sinistre->nearestHospital->adresse ?? 'Adresse non spécifiée' }}</p>
                                         <div class="flex items-center gap-1.5 mt-1">
                                             <span class="inline-flex items-center px-1.5 py-0.2 rounded-full text-[8px] font-bold bg-green-100 text-green-800 uppercase">
-                                                Ambulance disponible
+                                                Caserne opérationnelle
                                             </span>
                                         </div>
                                     </div>

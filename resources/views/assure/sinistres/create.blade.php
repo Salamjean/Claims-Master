@@ -1457,17 +1457,17 @@
                                         <div id="nearest-hospital-wrapper" class="hidden">
                                             <div class="flex items-center gap-2 mt-4 mb-3">
                                                 <div class="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
-                                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">SAMU / Hôpital avec ambulance</p>
+                                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sapeurs-Pompiers (Secours)</p>
                                             </div>
                                             <div class="flex items-center justify-between p-3 rounded-2xl bg-rose-50/50 border border-rose-100 shadow-sm animate-in">
                                                 <div class="flex items-center gap-3 w-[80%]">
                                                     <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-sm shadow-sm shrink-0">
-                                                        <i class="fa-solid fa-truck-medical"></i>
+                                                        <i class="fa-solid fa-fire-extinguisher"></i>
                                                     </div>
                                                     <div class="overflow-hidden">
                                                         <h5 class="text-xs font-bold text-slate-800 truncate">${h.name}</h5>
                                                         <div class="flex items-center gap-1.5 mt-0.5">
-                                                            <span class="px-1.5 py-0.5 rounded-md bg-green-100 text-[8px] font-bold text-green-700 uppercase tracking-tighter">Ambulance</span>
+                                                            <span class="px-1.5 py-0.5 rounded-md bg-green-100 text-[8px] font-bold text-green-700 uppercase tracking-tighter">Secours</span>
                                                             <span class="text-[10px] font-bold text-rose-600">${h.distance} km</span>
                                                         </div>
                                                     </div>
