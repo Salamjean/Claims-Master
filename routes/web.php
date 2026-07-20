@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\AssuranceController;
 use App\Http\Controllers\Admin\ServiceConstatController;
 use App\Http\Controllers\Admin\HospitalController;
 use App\Http\Controllers\Hopital\HopitalDashboardController;
+use App\Http\Controllers\Hopital\HopitalGroupeController;
+use App\Http\Controllers\Groupe\GroupeDashboardController;
 use App\Http\Controllers\Assurance\AssuranceDashboard;
 use App\Http\Controllers\Assurance\AssureController;
 use App\Http\Controllers\Assurance\DocumentRequisController;
@@ -320,5 +322,25 @@ Route::middleware(['auth:user', 'hopital', 'force.password'])->prefix('hopital')
     Route::get('/historique', [HopitalDashboardController::class, 'historique'])->name('hopital.historique');
     Route::get('/capacite', [HopitalDashboardController::class, 'capacite'])->name('hopital.capacite');
     Route::post('/capacite', [HopitalDashboardController::class, 'updateCapacite'])->name('hopital.capacite.update');
+
+    // Gestion des Groupes
+    Route::get('/groupes', [HopitalGroupeController::class, 'index'])->name('hopital.groupes.index');
+    Route::get('/groupes/create', [HopitalGroupeController::class, 'create'])->name('hopital.groupes.create');
+    Route::post('/groupes', [HopitalGroupeController::class, 'store'])->name('hopital.groupes.store');
+    Route::post('/groupes/{groupe}/resend-activation', [HopitalGroupeController::class, 'resendActivation'])->name('hopital.groupes.resend_activation');
+    Route::delete('/groupes/{groupe}', [HopitalGroupeController::class, 'destroy'])->name('hopital.groupes.destroy');
+
     Route::post('/logout', [HopitalDashboardController::class, 'logout'])->name('hopital.logout');
+});
+
+// --------------------------------------------------------------------------
+// ESPACE GROUPE (SAPEURS-POMPIERS)
+// --------------------------------------------------------------------------
+Route::middleware(['auth:user', 'hopital', 'force.password'])->prefix('groupe')->group(function () {
+    Route::get('/dashboard', [GroupeDashboardController::class, 'dashboard'])->name('groupe.dashboard');
+    Route::get('/statistiques', [GroupeDashboardController::class, 'statistiques'])->name('groupe.statistiques');
+    Route::get('/historique', [GroupeDashboardController::class, 'historique'])->name('groupe.historique');
+    Route::post('/sinistres/{sinistre}/dispatch', [GroupeDashboardController::class, 'dispatchAmbulance'])->name('groupe.sinistres.dispatch');
+    Route::post('/sinistres/{sinistre}/arrive', [GroupeDashboardController::class, 'markArrived'])->name('groupe.sinistres.arrive');
+    Route::post('/logout', [GroupeDashboardController::class, 'logout'])->name('groupe.logout');
 });

@@ -113,6 +113,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Pour le rôle 'hopital' : ses groupes
+     */
+    public function groupes()
+    {
+        return $this->hasMany(User::class, 'service_id')->where('role', 'groupe');
+    }
+
+    /**
      * Pour le rôle 'agent' : le service qui l'a créé
      */
     public function service()

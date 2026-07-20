@@ -17,7 +17,7 @@ class HopitalMiddleware
     {
         $user = auth('user')->user();
         if (auth('user')->check()) {
-            if ($user->role === 'hopital') {
+            if (in_array($user->role, ['hopital', 'groupe'])) {
                 return $next($request);
             }
         }

@@ -84,7 +84,7 @@ class HospitalController extends Controller
                 'password' => Hash::make('default'),
                 'email_verified_at' => null,
                 'must_change_password' => true,
-                'has_ambulance' => $request->boolean('has_ambulance'),
+                'has_ambulance' => true,
             ]);
 
             // Génération d'un code d'activation et envoi email

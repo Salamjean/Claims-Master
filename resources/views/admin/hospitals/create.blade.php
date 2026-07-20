@@ -151,16 +151,7 @@
                                 class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-600/20 focus:border-rose-600 transition-all">
                         </div>
                         
-                        <div>
-                            <label class="relative flex items-center p-3.5 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-all has-[:checked]:border-rose-500 has-[:checked]:bg-rose-50/10">
-                                <input type="checkbox" name="has_ambulance" value="1" {{ old('has_ambulance', true) ? 'checked' : '' }}
-                                    class="w-4 h-4 text-rose-600 focus:ring-rose-500 border-slate-300 rounded">
-                                <div class="ml-3">
-                                    <span class="block text-sm font-bold text-slate-800">Dispose d'une ambulance / VPSP</span>
-                                    <span class="block text-[10px] text-slate-400">Cette caserne dispose de véhicules de secours et d'assistance aux victimes (Ambulance).</span>
-                                </div>
-                            </label>
-                        </div>
+
                     </div>
 
                     {{-- Recherche d'adresse et Carte --}}

@@ -12,7 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(function (Illuminate\Http\Request $request) {
-            if ($request->is('admin/*') || $request->is('assurance/*') || $request->is('police/*') || $request->is('gendarmerie/*') || $request->is('personnel/*') || $request->is('hopital/*')) {
+            if ($request->is('admin/*') || $request->is('assurance/*') || $request->is('police/*') || $request->is('gendarmerie/*') || $request->is('personnel/*') || $request->is('hopital/*') || $request->is('groupe/*')) {
                 return route('portal.login');
             }
             return route('login');

@@ -58,9 +58,9 @@ class SmsRepository
      */
     public function send(): array
     {
-        $apiUrl = rtrim(env('YELLIKA_API_URL', 'https://app.1smsafrica.com/api/v3'), '/');
-        $apiKey = env('YELLIKA_API_KEY');
-        $senderId = env('YELLIKA_SENDER_ID', 'Notify');
+        $apiUrl = rtrim(config('services.yellika.api_url', env('YELLIKA_API_URL', 'https://app.1smsafrica.com/api/v3')), '/');
+        $apiKey = config('services.yellika.api_key', env('YELLIKA_API_KEY'));
+        $senderId = config('services.yellika.sender_id', env('YELLIKA_SENDER_ID', 'Notify'));
 
         $response = Http::withoutVerifying()
             ->withHeaders([

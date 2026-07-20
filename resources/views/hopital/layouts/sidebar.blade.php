@@ -37,6 +37,12 @@
             <span class="nav-label text-sm">Secours & Capacité</span>
         </a>
 
+        <a href="{{ route('hopital.groupes.index') }}"
+            class="nav-item {{ request()->routeIs('hopital.groupes.*') ? 'active' : '' }}">
+            <span class="nav-icon"><i class="fa-solid fa-users-gear text-sm"></i></span>
+            <span class="nav-label text-sm">Gestion des Groupes</span>
+        </a>
+
     </nav>
 
     {{-- UTILISATEUR & DECONNEXION --}}

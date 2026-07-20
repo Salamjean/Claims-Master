@@ -139,7 +139,7 @@
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
             <div>
                 <h2 class="text-sm font-semibold text-slate-700">Dernières interventions</h2>
-                <p class="text-xs text-slate-400">Activité récente</p>
+                <p class="text-xs text-slate-400">Activité récente et en temps réel</p>
             </div>
             <a href="#"
                 class="text-xs font-medium px-4 py-1.5 rounded-xl text-primary border border-primary/30 hover:bg-primary/5 transition-all">
@@ -240,5 +240,10 @@
                 }
             }
         });
+
+        // Actualisation automatique chaque 15 secondes
+        setTimeout(function() {
+            window.location.reload();
+        }, 15000);
     </script>
 @endpush
