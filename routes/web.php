@@ -319,6 +319,9 @@ Route::middleware(['auth:user', 'hopital', 'force.password'])->prefix('hopital')
     Route::post('/sinistres/{sinistre}/dispatch-ambulance', [HopitalDashboardController::class, 'dispatchAmbulance'])->name('hopital.sinistres.dispatch');
     Route::post('/sinistres/{sinistre}/arrive', [HopitalDashboardController::class, 'markArrived'])->name('hopital.sinistres.arrive');
     Route::post('/sinistres/{sinistre}/complete', [HopitalDashboardController::class, 'completeTreatment'])->name('hopital.sinistres.complete');
+    Route::get('/sinistres/{sinistre}/show', [HopitalDashboardController::class, 'showConsultation'])->name('hopital.sinistres.show');
+    Route::get('/sinistres/{sinistre}/etat-des-lieux/pdf', [HopitalDashboardController::class, 'downloadEtatDesLieuxPdf'])->name('hopital.sinistres.etat_des_lieux.pdf');
+    Route::get('/sinistres/{sinistre}/etat-des-lieux/pdf/view', [HopitalDashboardController::class, 'streamEtatDesLieuxPdf'])->name('hopital.sinistres.etat_des_lieux.pdf.view');
     Route::get('/historique', [HopitalDashboardController::class, 'historique'])->name('hopital.historique');
     Route::get('/capacite', [HopitalDashboardController::class, 'capacite'])->name('hopital.capacite');
     Route::post('/capacite', [HopitalDashboardController::class, 'updateCapacite'])->name('hopital.capacite.update');
@@ -338,9 +341,17 @@ Route::middleware(['auth:user', 'hopital', 'force.password'])->prefix('hopital')
 // --------------------------------------------------------------------------
 Route::middleware(['auth:user', 'hopital', 'force.password'])->prefix('groupe')->group(function () {
     Route::get('/dashboard', [GroupeDashboardController::class, 'dashboard'])->name('groupe.dashboard');
+    Route::get('/interventions-en-cours', [GroupeDashboardController::class, 'interventionsEnCours'])->name('groupe.interventions');
     Route::get('/statistiques', [GroupeDashboardController::class, 'statistiques'])->name('groupe.statistiques');
     Route::get('/historique', [GroupeDashboardController::class, 'historique'])->name('groupe.historique');
+    Route::get('/sinistres/{sinistre}/show', [GroupeDashboardController::class, 'showConsultation'])->name('groupe.sinistres.show');
+    Route::post('/sinistres/{sinistre}/recuperer', [GroupeDashboardController::class, 'recuperer'])->name('groupe.sinistres.recuperer');
     Route::post('/sinistres/{sinistre}/dispatch', [GroupeDashboardController::class, 'dispatchAmbulance'])->name('groupe.sinistres.dispatch');
     Route::post('/sinistres/{sinistre}/arrive', [GroupeDashboardController::class, 'markArrived'])->name('groupe.sinistres.arrive');
+    Route::post('/sinistres/{sinistre}/complete', [GroupeDashboardController::class, 'completeTreatment'])->name('groupe.sinistres.complete');
+    Route::get('/sinistres/{sinistre}/etat-des-lieux', [GroupeDashboardController::class, 'showEtatDesLieuxForm'])->name('groupe.sinistres.etat_des_lieux');
+    Route::post('/sinistres/{sinistre}/etat-des-lieux', [GroupeDashboardController::class, 'storeEtatDesLieux'])->name('groupe.sinistres.etat_des_lieux.store');
+    Route::get('/sinistres/{sinistre}/etat-des-lieux/pdf', [GroupeDashboardController::class, 'downloadEtatDesLieuxPdf'])->name('groupe.sinistres.etat_des_lieux.pdf');
+    Route::get('/sinistres/{sinistre}/etat-des-lieux/pdf/view', [GroupeDashboardController::class, 'streamEtatDesLieuxPdf'])->name('groupe.sinistres.etat_des_lieux.pdf.view');
     Route::post('/logout', [GroupeDashboardController::class, 'logout'])->name('groupe.logout');
 });

@@ -19,7 +19,8 @@
                     </h2>
                     <p class="text-sm text-slate-500 mt-0.5">
                         Sinistre {{ $sinistre->numero_sinistre }} &mdash;
-                        <span class="font-semibold text-slate-700">{{ $sinistre->assure->name ?? '' }} {{ $sinistre->assure->prenom ?? '' }}</span>
+                        <span class="font-semibold text-slate-700">{{ $sinistre->assure->name ?? '' }}
+                            {{ $sinistre->assure->prenom ?? '' }}</span>
                         &mdash; <span class="text-slate-400">{{ $constat->created_at->format('d/m/Y à H:i') }}</span>
                     </p>
                 </div>
@@ -31,10 +32,10 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+
             {{-- Colonne Gauche : Contenu du constat --}}
             <div class="lg:col-span-2 space-y-6">
-                
+
                 {{-- Informations générales --}}
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                     <div class="px-5 py-3.5 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
@@ -48,7 +49,8 @@
                         </div>
                         <div class="space-y-1">
                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date et Heure</p>
-                            <p class="text-sm font-semibold text-slate-700">{{ $constat->date_heure ? $constat->date_heure->format('d/m/Y à H:i') : '—' }}</p>
+                            <p class="text-sm font-semibold text-slate-700">
+                                {{ $constat->date_heure ? $constat->date_heure->format('d/m/Y à H:i') : '—' }}</p>
                         </div>
                     </div>
                 </div>
@@ -63,48 +65,73 @@
                         <div class="p-6 space-y-4">
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="space-y-1">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marque & Type</p>
-                                    <p class="text-sm font-semibold text-slate-700">{{ $constat->veh_a_marque ?? '—' }} {{ $constat->veh_a_type ?? '' }}</p>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marque & Type
+                                    </p>
+                                    <p class="text-sm font-semibold text-slate-700">{{ $constat->veh_a_marque ?? '—' }}
+                                        {{ $constat->veh_a_type ?? '' }}</p>
                                 </div>
                                 <div class="space-y-1">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">État & Pneus</p>
-                                    <p class="text-sm font-semibold text-slate-700">{{ str_replace('_', ' ', $constat->veh_a_etat_general) ?? '—' }} / {{ str_replace('_', ' ', $constat->veh_a_pneumatiques) ?? '—' }}</p>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">État & Pneus
+                                    </p>
+                                    <p class="text-sm font-semibold text-slate-700">
+                                        {{ str_replace('_', ' ', $constat->veh_a_etat_general) ?? '—' }} /
+                                        {{ str_replace('_', ' ', $constat->veh_a_pneumatiques) ?? '—' }}</p>
                                 </div>
                             </div>
                             <hr class="border-slate-50">
                             <div class="space-y-3">
                                 <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Conducteur</p>
                                 <div class="space-y-1">
-                                    <p class="text-sm font-bold text-slate-800">{{ $constat->veh_a_conducteur_nom ?? '—' }}</p>
-                                    <p class="text-xs text-slate-500">Né(e) le {{ $constat->veh_a_conducteur_date_naissance ? $constat->veh_a_conducteur_date_naissance->format('d/m/Y') : '—' }} à {{ $constat->veh_a_conducteur_lieu_naissance ?? '—' }}</p>
-                                    <p class="text-xs text-slate-500">Fils/Fille de {{ $constat->veh_a_conducteur_pere ?? '—' }} et {{ $constat->veh_a_conducteur_mere ?? '—' }}</p>
-                                    <p class="text-xs text-slate-500">Nat: {{ $constat->veh_a_conducteur_nationalite ?? '—' }} | Tél: {{ $constat->veh_a_conducteur_tel ?? '—' }}</p>
-                                    <p class="text-xs text-slate-500">Prof: {{ $constat->veh_a_conducteur_profession ?? '—' }} | Dom: {{ $constat->veh_a_conducteur_domicile ?? '—' }}</p>
+                                    <p class="text-sm font-bold text-slate-800">{{ $constat->veh_a_conducteur_nom ?? '—' }}
+                                    </p>
+                                    <p class="text-xs text-slate-500">Né(e) le
+                                        {{ $constat->veh_a_conducteur_date_naissance ? $constat->veh_a_conducteur_date_naissance->format('d/m/Y') : '—' }}
+                                        à {{ $constat->veh_a_conducteur_lieu_naissance ?? '—' }}</p>
+                                    <p class="text-xs text-slate-500">Fils/Fille de
+                                        {{ $constat->veh_a_conducteur_pere ?? '—' }} et
+                                        {{ $constat->veh_a_conducteur_mere ?? '—' }}</p>
+                                    <p class="text-xs text-slate-500">Nat:
+                                        {{ $constat->veh_a_conducteur_nationalite ?? '—' }} | Tél:
+                                        {{ $constat->veh_a_conducteur_tel ?? '—' }}</p>
+                                    <p class="text-xs text-slate-500">Prof:
+                                        {{ $constat->veh_a_conducteur_profession ?? '—' }} | Dom:
+                                        {{ $constat->veh_a_conducteur_domicile ?? '—' }}</p>
                                 </div>
                             </div>
                             <hr class="border-slate-50">
                             <div class="space-y-3">
-                                <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Permis & Assurance</p>
+                                <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Permis & Assurance
+                                </p>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="space-y-1">
-                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Permis N°</p>
-                                        <p class="text-xs font-semibold text-slate-700">{{ $constat->veh_a_permis_numero ?? '—' }} ({{ $constat->veh_a_permis_categories ?? '—' }})</p>
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Permis N°
+                                        </p>
+                                        <p class="text-xs font-semibold text-slate-700">
+                                            {{ $constat->veh_a_permis_numero ?? '—' }}
+                                            ({{ $constat->veh_a_permis_categories ?? '—' }})</p>
                                     </div>
                                     <div class="space-y-1">
-                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Valable jusqu'au</p>
-                                        <p class="text-xs font-semibold text-slate-700">{{ $constat->veh_a_permis_validite ? $constat->veh_a_permis_validite->format('d/m/Y') : '—' }}</p>
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Valable
+                                            jusqu'au</p>
+                                        <p class="text-xs font-semibold text-slate-700">
+                                            {{ $constat->veh_a_permis_validite ? $constat->veh_a_permis_validite->format('d/m/Y') : '—' }}
+                                        </p>
                                     </div>
                                 </div>
                                 <div class="space-y-1">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assurance & Police</p>
-                                    <p class="text-xs font-semibold text-slate-700">{{ $constat->veh_a_assurance_nom ?? '—' }}</p>
-                                    <p class="text-[10px] text-slate-500">Police: {{ $constat->veh_a_police_numero ?? '—' }} | Attest: {{ $constat->veh_a_attestation_numero ?? '—' }}</p>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assurance &
+                                        Police</p>
+                                    <p class="text-xs font-semibold text-slate-700">
+                                        {{ $constat->veh_a_assurance_nom ?? '—' }}</p>
+                                    <p class="text-[10px] text-slate-500">Police: {{ $constat->veh_a_police_numero ?? '—' }}
+                                        | Attest: {{ $constat->veh_a_attestation_numero ?? '—' }}</p>
                                 </div>
                             </div>
                             @if($constat->veh_a_degats_materiels)
                                 <div class="pt-2">
                                     <p class="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Dégâts apparents</p>
-                                    <p class="text-xs text-slate-600 bg-rose-50 p-2 rounded-lg border border-rose-100 mt-1 italic">
+                                    <p
+                                        class="text-xs text-slate-600 bg-rose-50 p-2 rounded-lg border border-rose-100 mt-1 italic">
                                         {{ $constat->veh_a_degats_materiels }}
                                     </p>
                                 </div>
@@ -121,48 +148,73 @@
                         <div class="p-6 space-y-4">
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="space-y-1">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marque & Type</p>
-                                    <p class="text-sm font-semibold text-slate-700">{{ $constat->veh_b_marque ?? '—' }} {{ $constat->veh_b_type ?? '' }}</p>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Marque & Type
+                                    </p>
+                                    <p class="text-sm font-semibold text-slate-700">{{ $constat->veh_b_marque ?? '—' }}
+                                        {{ $constat->veh_b_type ?? '' }}</p>
                                 </div>
                                 <div class="space-y-1">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">État & Pneus</p>
-                                    <p class="text-sm font-semibold text-slate-700">{{ str_replace('_', ' ', $constat->veh_b_etat_general) ?? '—' }} / {{ str_replace('_', ' ', $constat->veh_b_pneumatiques) ?? '—' }}</p>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">État & Pneus
+                                    </p>
+                                    <p class="text-sm font-semibold text-slate-700">
+                                        {{ str_replace('_', ' ', $constat->veh_b_etat_general) ?? '—' }} /
+                                        {{ str_replace('_', ' ', $constat->veh_b_pneumatiques) ?? '—' }}</p>
                                 </div>
                             </div>
                             <hr class="border-slate-50">
                             <div class="space-y-3">
                                 <p class="text-[10px] font-black text-rose-600 uppercase tracking-widest">Conducteur</p>
                                 <div class="space-y-1">
-                                    <p class="text-sm font-bold text-slate-800">{{ $constat->veh_b_conducteur_nom ?? '—' }}</p>
-                                    <p class="text-xs text-slate-500">Né(e) le {{ $constat->veh_b_conducteur_date_naissance ? $constat->veh_b_conducteur_date_naissance->format('d/m/Y') : '—' }} à {{ $constat->veh_b_conducteur_lieu_naissance ?? '—' }}</p>
-                                    <p class="text-xs text-slate-500">Fils/Fille de {{ $constat->veh_b_conducteur_pere ?? '—' }} et {{ $constat->veh_b_conducteur_mere ?? '—' }}</p>
-                                    <p class="text-xs text-slate-500">Nat: {{ $constat->veh_b_conducteur_nationalite ?? '—' }} | Tél: {{ $constat->veh_b_conducteur_tel ?? '—' }}</p>
-                                    <p class="text-xs text-slate-500">Prof: {{ $constat->veh_b_conducteur_profession ?? '—' }} | Dom: {{ $constat->veh_b_conducteur_domicile ?? '—' }}</p>
+                                    <p class="text-sm font-bold text-slate-800">{{ $constat->veh_b_conducteur_nom ?? '—' }}
+                                    </p>
+                                    <p class="text-xs text-slate-500">Né(e) le
+                                        {{ $constat->veh_b_conducteur_date_naissance ? $constat->veh_b_conducteur_date_naissance->format('d/m/Y') : '—' }}
+                                        à {{ $constat->veh_b_conducteur_lieu_naissance ?? '—' }}</p>
+                                    <p class="text-xs text-slate-500">Fils/Fille de
+                                        {{ $constat->veh_b_conducteur_pere ?? '—' }} et
+                                        {{ $constat->veh_b_conducteur_mere ?? '—' }}</p>
+                                    <p class="text-xs text-slate-500">Nat:
+                                        {{ $constat->veh_b_conducteur_nationalite ?? '—' }} | Tél:
+                                        {{ $constat->veh_b_conducteur_tel ?? '—' }}</p>
+                                    <p class="text-xs text-slate-500">Prof:
+                                        {{ $constat->veh_b_conducteur_profession ?? '—' }} | Dom:
+                                        {{ $constat->veh_b_conducteur_domicile ?? '—' }}</p>
                                 </div>
                             </div>
                             <hr class="border-slate-50">
                             <div class="space-y-3">
-                                <p class="text-[10px] font-black text-rose-600 uppercase tracking-widest">Permis & Assurance</p>
+                                <p class="text-[10px] font-black text-rose-600 uppercase tracking-widest">Permis & Assurance
+                                </p>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="space-y-1">
-                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Permis N°</p>
-                                        <p class="text-xs font-semibold text-slate-700">{{ $constat->veh_b_permis_numero ?? '—' }} ({{ $constat->veh_b_permis_categories ?? '—' }})</p>
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Permis N°
+                                        </p>
+                                        <p class="text-xs font-semibold text-slate-700">
+                                            {{ $constat->veh_b_permis_numero ?? '—' }}
+                                            ({{ $constat->veh_b_permis_categories ?? '—' }})</p>
                                     </div>
                                     <div class="space-y-1">
-                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Valable jusqu'au</p>
-                                        <p class="text-xs font-semibold text-slate-700">{{ $constat->veh_b_permis_validite ? $constat->veh_b_permis_validite->format('d/m/Y') : '—' }}</p>
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Valable
+                                            jusqu'au</p>
+                                        <p class="text-xs font-semibold text-slate-700">
+                                            {{ $constat->veh_b_permis_validite ? $constat->veh_b_permis_validite->format('d/m/Y') : '—' }}
+                                        </p>
                                     </div>
                                 </div>
                                 <div class="space-y-1">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assurance & Police</p>
-                                    <p class="text-xs font-semibold text-slate-700">{{ $constat->veh_b_assurance_nom ?? '—' }}</p>
-                                    <p class="text-[10px] text-slate-500">Police: {{ $constat->veh_b_police_numero ?? '—' }} | Attest: {{ $constat->veh_b_attestation_numero ?? '—' }}</p>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assurance &
+                                        Police</p>
+                                    <p class="text-xs font-semibold text-slate-700">
+                                        {{ $constat->veh_b_assurance_nom ?? '—' }}</p>
+                                    <p class="text-[10px] text-slate-500">Police: {{ $constat->veh_b_police_numero ?? '—' }}
+                                        | Attest: {{ $constat->veh_b_attestation_numero ?? '—' }}</p>
                                 </div>
                             </div>
                             @if($constat->veh_b_degats_materiels)
                                 <div class="pt-2">
                                     <p class="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Dégâts apparents</p>
-                                    <p class="text-xs text-slate-600 bg-rose-50 p-2 rounded-lg border border-rose-100 mt-1 italic">
+                                    <p
+                                        class="text-xs text-slate-600 bg-rose-50 p-2 rounded-lg border border-rose-100 mt-1 italic">
                                         {{ $constat->veh_b_degats_materiels }}
                                     </p>
                                 </div>
@@ -182,19 +234,27 @@
                             <div class="space-y-2">
                                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Identité</p>
                                 <p class="text-sm font-bold text-slate-800">{{ $constat->victime_nom }}</p>
-                                <p class="text-xs text-slate-500">Né(e) le {{ $constat->victime_date_naissance ? $constat->victime_date_naissance->format('d/m/Y') : '—' }} à {{ $constat->victime_lieu_naissance ?? '—' }}</p>
+                                <p class="text-xs text-slate-500">Né(e) le
+                                    {{ $constat->victime_date_naissance ? $constat->victime_date_naissance->format('d/m/Y') : '—' }}
+                                    à {{ $constat->victime_lieu_naissance ?? '—' }}</p>
                                 <p class="text-xs text-slate-500">Nationalité: {{ $constat->victime_nationalite ?? '—' }}</p>
                             </div>
                             <div class="space-y-2">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Filiation & Profession</p>
-                                <p class="text-xs text-slate-500">Fils/Fille de {{ $constat->victime_pere ?? '—' }} et {{ $constat->victime_mere ?? '—' }}</p>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Filiation & Profession
+                                </p>
+                                <p class="text-xs text-slate-500">Fils/Fille de {{ $constat->victime_pere ?? '—' }} et
+                                    {{ $constat->victime_mere ?? '—' }}</p>
                                 <p class="text-xs text-slate-500">Prof: {{ $constat->victime_profession ?? '—' }}</p>
                                 <p class="text-xs text-slate-500">Dom: {{ $constat->victime_domicile ?? '—' }}</p>
                             </div>
                             <div class="space-y-2">
-                                <p class="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Blessures & Situation</p>
-                                <p class="text-xs text-slate-700 font-medium">{{ $constat->victime_blessures ?? 'Non précisé' }}</p>
-                                <p class="text-[10px] text-slate-500 mt-2 font-bold uppercase">Situation: {{ $constat->victime_passager_vehicule ? str_replace('_', ' ', $constat->victime_passager_vehicule) : '—' }}</p>
+                                <p class="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Blessures & Situation
+                                </p>
+                                <p class="text-xs text-slate-700 font-medium">{{ $constat->victime_blessures ?? 'Non précisé' }}
+                                </p>
+                                <p class="text-[10px] text-slate-500 mt-2 font-bold uppercase">Situation:
+                                    {{ $constat->victime_passager_vehicule ? str_replace('_', ' ', $constat->victime_passager_vehicule) : '—' }}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -208,29 +268,37 @@
                     </div>
                     <div class="p-6 space-y-6">
                         <div class="space-y-2">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nature des faits / Circonstances</p>
-                            <div class="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100 whitespace-pre-line">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nature des faits /
+                                Circonstances</p>
+                            <div
+                                class="text-sm text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100 whitespace-pre-line">
                                 {{ $constat->description_faits }}
                             </div>
                         </div>
 
                         <div class="space-y-2">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-rose-500">Dommages et Dégâts constatés</p>
-                            <div class="text-sm text-slate-700 font-medium bg-rose-50/30 p-4 rounded-xl border border-rose-100 whitespace-pre-line">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-rose-500">Dommages
+                                et Dégâts constatés</p>
+                            <div
+                                class="text-sm text-slate-700 font-medium bg-rose-50/30 p-4 rounded-xl border border-rose-100 whitespace-pre-line">
                                 {{ $constat->dommages }}
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                             <div class="space-y-2">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Témoins / Personnes impliquées</p>
-                                <p class="text-sm text-slate-600 bg-slate-50/50 p-3 rounded-lg border border-slate-100 min-h-[50px]">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Témoins / Personnes
+                                    impliquées</p>
+                                <p
+                                    class="text-sm text-slate-600 bg-slate-50/50 p-3 rounded-lg border border-slate-100 min-h-[50px]">
                                     {{ $constat->temoins ?? 'Aucun témoin mentionné' }}
                                 </p>
                             </div>
                             <div class="space-y-2">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Observations / Mesures prises</p>
-                                <p class="text-sm text-slate-600 bg-slate-50/50 p-3 rounded-lg border border-slate-100 min-h-[50px]">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Observations /
+                                    Mesures prises</p>
+                                <p
+                                    class="text-sm text-slate-600 bg-slate-50/50 p-3 rounded-lg border border-slate-100 min-h-[50px]">
                                     {{ $constat->observations ?? 'Aucune observation particulière' }}
                                 </p>
                             </div>
@@ -247,9 +315,13 @@
                         </div>
                         <div class="p-6 bg-slate-50/50 flex justify-center">
                             @if(Str::startsWith($constat->croquis, 'data:image'))
-                                <img src="{{ $constat->croquis }}" class="max-h-96 object-contain rounded-xl shadow-sm border border-slate-200 cursor-zoom-in" onclick="openModal(this.src)">
+                                <img src="{{ $constat->croquis }}"
+                                    class="max-h-96 object-contain rounded-xl shadow-sm border border-slate-200 cursor-zoom-in"
+                                    onclick="openModal(this.src)">
                             @else
-                                <img src="{{ Storage::url($constat->croquis) }}" class="max-h-96 object-contain rounded-xl shadow-sm border border-slate-200 cursor-zoom-in" onclick="openModal(this.src)">
+                                <img src="{{ Storage::url($constat->croquis) }}"
+                                    class="max-h-96 object-contain rounded-xl shadow-sm border border-slate-200 cursor-zoom-in"
+                                    onclick="openModal(this.src)">
                             @endif
                         </div>
                     </div>
@@ -280,7 +352,7 @@
 
             {{-- Colonne Droite : Docs & Agent --}}
             <div class="space-y-6">
-                
+
                 {{-- Agent responsable --}}
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                     <div class="px-5 py-3.5 border-b border-slate-100 bg-blue-600 text-white flex items-center gap-3">
@@ -289,7 +361,8 @@
                     </div>
                     <div class="p-5">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-extrabold border border-blue-100">
+                            <div
+                                class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-extrabold border border-blue-100">
                                 {{ strtoupper(substr($sinistre->assignedAgent->name ?? $user->name, 0, 1)) }}
                             </div>
                             <div>
@@ -314,13 +387,17 @@
                         @if($constat->ass1_photo)
                             <div class="space-y-2">
                                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assuré (Partie A)</p>
-                                <img src="{{ Storage::url($constat->ass1_photo) }}" class="w-full h-32 object-cover rounded-xl border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity" onclick="openModal(this.src)">
+                                <img src="{{ Storage::url($constat->ass1_photo) }}"
+                                    class="w-full h-32 object-cover rounded-xl border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity"
+                                    onclick="openModal(this.src)">
                             </div>
                         @endif
                         @if($constat->ass2_photo)
                             <div class="space-y-2">
                                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tiers (Partie B)</p>
-                                <img src="{{ Storage::url($constat->ass2_photo) }}" class="w-full h-32 object-cover rounded-xl border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity" onclick="openModal(this.src)">
+                                <img src="{{ Storage::url($constat->ass2_photo) }}"
+                                    class="w-full h-32 object-cover rounded-xl border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity"
+                                    onclick="openModal(this.src)">
                             </div>
                         @endif
                         @if(!$constat->ass1_photo && !$constat->ass2_photo)
@@ -338,7 +415,9 @@
                         </div>
                         <div class="p-4 grid grid-cols-2 gap-2">
                             @foreach($constat->photos_plus as $photo)
-                                <img src="{{ Storage::url($photo) }}" class="w-full h-24 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition-transform" onclick="openModal(this.src)">
+                                <img src="{{ Storage::url($photo) }}"
+                                    class="w-full h-24 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition-transform"
+                                    onclick="openModal(this.src)">
                             @endforeach
                         </div>
                     </div>

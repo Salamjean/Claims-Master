@@ -12,7 +12,8 @@
             </div>
             <div>
                 <h1 class="text-2xl font-extrabold text-slate-800">Statistiques des Constats</h1>
-                <p class="text-sm text-slate-500 mt-1">Vue globale des paiements en ligne et des déblocages en espèces — tous
+                <p class="text-sm text-slate-500 mt-1">Vue globale des paiements en ligne et des déblocages en espèces —
+                    tous
                     agents confondus.</p>
             </div>
         </div>
@@ -120,16 +121,16 @@
                 </h3>
                 <div class="flex h-6 rounded-full overflow-hidden gap-px bg-slate-100">
                     @if ($pctOnline > 0)
-                        <div class="bg-emerald-500 h-full" style="width:{{ $pctOnline }}%"
-                            title="En ligne — {{ $pctOnline }}%"></div>
+                        <div class="bg-emerald-500 h-full" style="width:{{ $pctOnline }}%" title="En ligne — {{ $pctOnline }}%">
+                        </div>
                     @endif
                     @if ($pctDeblocage > 0)
-                        <div class="bg-blue-500 h-full" style="width:{{ $pctDeblocage }}%"
-                            title="Espèces — {{ $pctDeblocage }}%"></div>
+                        <div class="bg-blue-500 h-full" style="width:{{ $pctDeblocage }}%" title="Espèces — {{ $pctDeblocage }}%">
+                        </div>
                     @endif
                     @if ($pctPending > 0)
-                        <div class="bg-amber-300 h-full" style="width:{{ $pctPending }}%"
-                            title="En attente — {{ $pctPending }}%"></div>
+                        <div class="bg-amber-300 h-full" style="width:{{ $pctPending }}%" title="En attente — {{ $pctPending }}%">
+                        </div>
                     @endif
                 </div>
                 <div class="flex flex-wrap gap-6 mt-4">
@@ -229,7 +230,8 @@
                                 Sinistre</th>
                             <th class="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">
                                 Assuré</th>
-                            <th class="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Agent
+                            <th class="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">
+                                Agent
                             </th>
                             <th class="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">
                                 Type paiement</th>
@@ -241,51 +243,53 @@
                     </thead>
                     <tbody id="history-tbody" class="divide-y divide-slate-50">
                         @forelse($history as $item)
-                            <tr class="hover:bg-slate-50/70 transition-colors"
-                                data-searchable="{{ strtolower(($item->sinistre->numero_sinistre ?? 'SI-' . $item->sinistre_id) . ' ' . ($item->sinistre->assure->name ?? '') . ' ' . ($item->sinistre->assure->contact ?? '') . ' ' . ($item->sinistre->assignedAgent->name ?? '') . ' ' . ($item->agent_unlocked ? 'especes agent' : 'en ligne')) }}"
-                                data-agent="{{ strtolower($item->sinistre->assignedAgent?->name ?? 'inconnu') }}">
-                                <td class="px-5 py-3 text-center">
-                                    <span class="text-xs font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded-lg">
-                                        {{ $item->sinistre->numero_sinistre ?? 'SI-' . $item->sinistre_id }}
-                                    </span>
-                                    <p class="text-[10px] text-slate-400 mt-1">
-                                        {{ str_replace('_', ' ', $item->sinistre->type_sinistre ?? '') }}
-                                    </p>
-                                </td>
-                                <td class="px-5 py-3 text-center">
-                                    <p class="text-sm font-semibold text-slate-700">
-                                        {{ $item->sinistre->assure->name ?? '—' }}</p>
-                                    <p class="text-[10px] text-slate-400">{{ $item->sinistre->assure->contact ?? '' }}</p>
-                                </td>
-                                <td class="px-5 py-3 text-center">
-                                    <p class="text-sm font-semibold text-slate-700">
-                                        {{ $item->sinistre->assignedAgent->name ?? '—' }}</p>
-                                </td>
-                                <td class="px-5 py-3 text-center">
-                                    @if ($item->agent_unlocked)
-                                        <span
-                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-100 text-blue-700 text-[10px] font-extrabold rounded-full">
-                                            <i class="fa-solid fa-unlock text-[10px]"></i> Espèces (agent)
-                                        </span>
-                                    @else
-                                        <span
-                                            class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-extrabold rounded-full">
-                                            <i class="fa-solid fa-credit-card text-[10px]"></i> En ligne
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="px-5 py-3 text-center font-black text-sm">
-                                    <span class="{{ $item->agent_unlocked ? 'text-blue-700' : 'text-emerald-700' }}">
-                                        {{ number_format($item->montant_a_payer ?? 0, 0, ',', ' ') }}
-                                        <span class="text-[10px] font-normal">FCFA</span>
-                                    </span>
-                                </td>
-                                <td class="px-5 py-3 text-center text-xs text-slate-500">
-                                    {{ $item->agent_unlocked
-                                        ? $item->agent_unlocked_at?->format('d/m/Y H:i')
-                                        : $item->redaction_validee_at?->format('d/m/Y H:i') }}
-                                </td>
-                            </tr>
+                                        <tr class="hover:bg-slate-50/70 transition-colors"
+                                            data-searchable="{{ strtolower(($item->sinistre->numero_sinistre ?? 'SI-' . $item->sinistre_id) . ' ' . ($item->sinistre->assure->name ?? '') . ' ' . ($item->sinistre->assure->contact ?? '') . ' ' . ($item->sinistre->assignedAgent->name ?? '') . ' ' . ($item->agent_unlocked ? 'especes agent' : 'en ligne')) }}"
+                                            data-agent="{{ strtolower($item->sinistre->assignedAgent?->name ?? 'inconnu') }}">
+                                            <td class="px-5 py-3 text-center">
+                                                <span class="text-xs font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded-lg">
+                                                    {{ $item->sinistre->numero_sinistre ?? 'SI-' . $item->sinistre_id }}
+                                                </span>
+                                                <p class="text-[10px] text-slate-400 mt-1">
+                                                    {{ str_replace('_', ' ', $item->sinistre->type_sinistre ?? '') }}
+                                                </p>
+                                            </td>
+                                            <td class="px-5 py-3 text-center">
+                                                <p class="text-sm font-semibold text-slate-700">
+                                                    {{ $item->sinistre->assure->name ?? '—' }}
+                                                </p>
+                                                <p class="text-[10px] text-slate-400">{{ $item->sinistre->assure->contact ?? '' }}</p>
+                                            </td>
+                                            <td class="px-5 py-3 text-center">
+                                                <p class="text-sm font-semibold text-slate-700">
+                                                    {{ $item->sinistre->assignedAgent->name ?? '—' }}
+                                                </p>
+                                            </td>
+                                            <td class="px-5 py-3 text-center">
+                                                @if ($item->agent_unlocked)
+                                                    <span
+                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-100 text-blue-700 text-[10px] font-extrabold rounded-full">
+                                                        <i class="fa-solid fa-unlock text-[10px]"></i> Espèces (agent)
+                                                    </span>
+                                                @else
+                                                    <span
+                                                        class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-extrabold rounded-full">
+                                                        <i class="fa-solid fa-credit-card text-[10px]"></i> En ligne
+                                                    </span>
+                                                @endif
+                                            </td>
+                                            <td class="px-5 py-3 text-center font-black text-sm">
+                                                <span class="{{ $item->agent_unlocked ? 'text-blue-700' : 'text-emerald-700' }}">
+                                                    {{ number_format($item->montant_a_payer ?? 0, 0, ',', ' ') }}
+                                                    <span class="text-[10px] font-normal">FCFA</span>
+                                                </span>
+                                            </td>
+                                            <td class="px-5 py-3 text-center text-xs text-slate-500">
+                                                {{ $item->agent_unlocked
+                            ? $item->agent_unlocked_at?->format('d/m/Y H:i')
+                            : $item->redaction_validee_at?->format('d/m/Y H:i') }}
+                                            </td>
+                                        </tr>
                         @empty
                             <tr>
                                 <td colspan="6" class="px-5 py-16 text-center text-slate-400 text-sm">
@@ -304,7 +308,7 @@
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             var input = document.getElementById('search-history');
             var agentSel = document.getElementById('filter-agent');
             var countEl = document.getElementById('search-history-count');
@@ -315,7 +319,7 @@
                 var q = input ? input.value.trim().toLowerCase() : '';
                 var agent = agentSel ? agentSel.value.toLowerCase() : '';
                 var visible = 0;
-                rows.forEach(function(row) {
+                rows.forEach(function (row) {
                     var matchText = !q || row.getAttribute('data-searchable').includes(q);
                     var matchAgent = !agent || row.getAttribute('data-agent') === agent;
                     var show = matchText && matchAgent;

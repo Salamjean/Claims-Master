@@ -317,9 +317,10 @@ class SinistreController extends Controller
                 $baseDoc = $documentsDisponibles->firstWhere('nom_document', $docName);
                 $type = $baseDoc ? $baseDoc->type_champ : 'file';
 
-                $sda = \App\Models\SinistreDocumentAttendu::create([
+                $sda = \App\Models\SinistreDocumentAttendu::firstOrCreate([
                     'sinistre_id' => $sinistre->id,
                     'nom_document' => $docName,
+                ], [
                     'type_champ' => $type,
                     'is_mandatory' => true,
                 ]);

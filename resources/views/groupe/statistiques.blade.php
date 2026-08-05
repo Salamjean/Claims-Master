@@ -6,8 +6,8 @@
 @section('content')
 <div class="max-w-7xl mx-auto">
     <div class="mb-8">
-        <h1 class="text-2xl font-bold text-slate-800">Statistiques des interventions</h1>
-        <p class="text-slate-500 mt-1">Aperçu global de votre activité.</p>
+        <h1 class="text-2xl font-bold text-slate-800">Statistiques de votre groupe</h1>
+        <p class="text-slate-500 mt-1">Chiffres basés uniquement sur les déclarations récupérées par votre groupe.</p>
     </div>
 
     <!-- Cartes de résumé -->
@@ -15,14 +15,14 @@
         <div class="card p-6 border border-slate-100 hover:shadow-md transition-shadow">
             <div class="flex items-center gap-4 mb-4">
                 <div class="w-12 h-12 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center text-xl">
-                    <i class="fa-solid fa-list"></i>
+                    <i class="fa-solid fa-hand-holding-medical"></i>
                 </div>
                 <div>
-                    <h3 class="text-slate-500 text-sm font-medium">Total</h3>
+                    <h3 class="text-slate-500 text-sm font-medium">Total récupérées</h3>
                     <p class="text-2xl font-bold text-slate-800">{{ $totalInterventions }}</p>
                 </div>
             </div>
-            <div class="text-sm text-slate-400">Interventions globales</div>
+            <div class="text-sm text-slate-400">Déclarations prises en charge</div>
         </div>
 
         <div class="card p-6 border border-slate-100 hover:shadow-md transition-shadow">
@@ -41,14 +41,14 @@
         <div class="card p-6 border border-slate-100 hover:shadow-md transition-shadow">
             <div class="flex items-center gap-4 mb-4">
                 <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl">
-                    <i class="fa-solid fa-bell"></i>
+                    <i class="fa-solid fa-clock"></i>
                 </div>
                 <div>
-                    <h3 class="text-slate-500 text-sm font-medium">En attente</h3>
+                    <h3 class="text-slate-500 text-sm font-medium">Récupérées (en attente dispatch)</h3>
                     <p class="text-2xl font-bold text-slate-800">{{ $interventionsEnAttente }}</p>
                 </div>
             </div>
-            <div class="text-sm text-slate-400">À dépêcher</div>
+            <div class="text-sm text-slate-400">En attente d'envoi d'équipe</div>
         </div>
 
         <div class="card p-6 border border-slate-100 hover:shadow-md transition-shadow">
@@ -57,11 +57,11 @@
                     <i class="fa-solid fa-truck-fast"></i>
                 </div>
                 <div>
-                    <h3 class="text-slate-500 text-sm font-medium">En cours</h3>
+                    <h3 class="text-slate-500 text-sm font-medium">En intervention</h3>
                     <p class="text-2xl font-bold text-slate-800">{{ $interventionsEnCours }}</p>
                 </div>
             </div>
-            <div class="text-sm text-slate-400">Sur le terrain</div>
+            <div class="text-sm text-slate-400">Équipes sur le terrain</div>
         </div>
     </div>
 

@@ -18,31 +18,190 @@ class AIService
     }
 
     /**
+     * Obtenir la liste réglementaire par défaut des pièces obligatoires par type de sinistre.
+     */
+    public static function getDefaultRequiredDocsByType(string $typeSinistre, string $description = ''): array
+    {
+        $typeNorm = mb_strtolower($typeSinistre);
+        $descNorm = mb_strtolower($description);
+
+        $docs = [];
+
+        // 4.1 Accident matériel
+        if (str_contains($typeNorm, 'matériel') || str_contains($typeNorm, 'materiel') || str_contains($typeNorm, 'dommage')) {
+            $docs = [
+                'Déclaration circonstanciée du sinistre',
+                'Photocopie des pièces du véhicule',
+                'Photocopie du permis du conducteur',
+                'Constat amiable ou PV police/gendarmerie',
+                'Rapport d’expertise automobile',
+                'Bon de prise en charge délivré par le courtier ou l’assureur',
+                'Facture originale acquittée des réparations'
+            ];
+        }
+        // 4.2 Accident corporel
+        elseif (str_contains($typeNorm, 'corporel') || str_contains($typeNorm, 'blessure') || str_contains($typeNorm, 'décès') || str_contains($typeNorm, 'deces')) {
+            $docs = [
+                'Déclaration circonstanciée du sinistre',
+                'PV police/gendarmerie ou constat amiable',
+                'Photocopie du permis de conduire',
+                'Photocopie des pièces du véhicule'
+            ];
+
+            if (str_contains($descNorm, 'décès') || str_contains($descNorm, 'deces') || str_contains($descNorm, 'mort')) {
+                $docs = array_merge($docs, [
+                    'Certificat de décès',
+                    'Certificat de genre de mort',
+                    'Acte de naissance du défunt',
+                    'Acte de notoriété',
+                    'Pièces d’identité des ayants droit'
+                ]);
+            } else {
+                $docs = array_merge($docs, [
+                    'Certificat médical initial',
+                    'Certificat médical de guérison ou consolidation',
+                    'Ordonnances médicales',
+                    'Factures originales de soins',
+                    'Justificatifs hospitaliers'
+                ]);
+            }
+        }
+        // 4.3 Vol / Vol à main armée
+        elseif (str_contains($typeNorm, 'vol') || str_contains($typeNorm, 'braquage')) {
+            $docs = [
+                'Dépôt de plainte dans les 24h',
+                'Déclaration circonstanciée du vol',
+                'Récépissé de dépôt de plainte',
+                'Photocopies : Carte grise, Visite technique, Vignette'
+            ];
+
+            if (str_contains($descNorm, 'retrouvé') || str_contains($descNorm, 'retrouve')) {
+                $docs = array_merge($docs, [
+                    'Attestation de retrouvaille',
+                    'Description des dégâts',
+                    'Lieu de retrouvaille'
+                ]);
+            } elseif (str_contains($descNorm, 'non retrouvé') || str_contains($descNorm, 'introuvable') || str_contains($descNorm, '1 mois') || str_contains($descNorm, 'un mois')) {
+                $docs = array_merge($docs, [
+                    'Attestation d’authenticité carte grise',
+                    'Duplicata visite technique',
+                    'Duplicata vignette',
+                    'Attestation de non-gage',
+                    'Certificat de vente légalisé à blanc',
+                    'Double des clés',
+                    'PV d’enquête préliminaire'
+                ]);
+            }
+        }
+        // 4.4 Incendie Automobile
+        elseif (str_contains($typeNorm, 'incendie') || str_contains($typeNorm, 'feu')) {
+            $docs = [
+                'Déclaration circonstanciée du sinistre',
+                'Photocopie des pièces du véhicule',
+                'Photocopie permis conducteur',
+                'Rapport des sapeurs-pompiers ou PV police',
+                'Rapport d’expertise incendie',
+                'Photographies du véhicule',
+                'Facture d’achat ou justificatif de valeur'
+            ];
+        }
+        // 4.5 Bris de glace
+        elseif (str_contains($typeNorm, 'bris') || str_contains($typeNorm, 'glace') || str_contains($typeNorm, 'pare-brise') || str_contains($typeNorm, 'vitre')) {
+            $docs = [
+                'Déclaration de sinistre',
+                'Photocopie carte grise',
+                'Photocopie permis conducteur',
+                'Constat amiable si accident associé',
+                'Facture originale du remplacement du vitrage'
+            ];
+        }
+        // 4.6 Recours (Sinistre Non Responsable)
+        elseif (str_contains($typeNorm, 'recours') || str_contains($typeNorm, 'non responsable') || str_contains($typeNorm, 'tierce')) {
+            $docs = [
+                'Déclaration circonstanciée',
+                'Photocopie pièces du véhicule',
+                'Photocopie permis conducteur',
+                'Constat amiable ou PV police/gendarmerie',
+                'Rapport d’expertise original',
+                'Facture acquittée des réparations'
+            ];
+        }
+        else {
+            $docs = [
+                'Déclaration circonstanciée du sinistre',
+                'Photocopie des pièces du véhicule',
+                'Photocopie du permis du conducteur',
+                'Constat amiable ou PV police/gendarmerie'
+            ];
+        }
+
+        return array_values(array_unique($docs));
+    }
+
+    /**
      * Analyse la description du sinistre pour déterminer sa gravité et le contexte
      * Retourne un tableau structuré (JSON décodé).
      */
     public function analyzeDeclarationText(string $typeSinistre, string $description, array $availableTypes = [])
     {
+        $defaultDocs = self::getDefaultRequiredDocsByType($typeSinistre, $description);
+
         if (!$this->apiKey) {
             Log::warning("Gemini API Key is missing. Using fallback for analysis.");
             return [
                 'gravity' => 'medium',
-                'context' => 'Analyse simulée: ' . substr($description, 0, 50),
-                'recommended_docs' => $availableTypes
+                'context' => 'Analyse basée exclusivement sur la grille officielle : ' . $typeSinistre,
+                'recommended_docs' => $defaultDocs
             ];
         }
 
         try {
-            $prompt = "Tu es un expert en assurance. L'assuré a déclaré un sinistre de type : \"{$typeSinistre}\".\n";
-            $prompt .= "Analyse la description suivante pour en déduire le contexte :\n\"{$description}\"\n\n";
-            if (!empty($availableTypes)) {
-                $prompt .= "Voici une liste de types de documents déjà configurés par l'assurance : " . implode(', ', $availableTypes) . ".\n";
-                $prompt .= "Ta mission : Propose une liste de documents strictement obligatoires pour ce cas précis.\n";
+            $prompt = "Tu es un expert qualifié en gestion de sinistres d'assurance automobile.\n";
+            $prompt .= "Voici la GRILLE EXCLUSIVE ET OFFICIELLE DES PIÈCES OBLIGATOIRES selon le type de sinistre :\n\n";
+            
+            $prompt .= "1. ACCIDENT MATÉRIEL :\n";
+            foreach (self::getDefaultRequiredDocsByType('Accident_matériel') as $doc) {
+                $prompt .= "- {$doc}\n";
             }
-            $prompt .= "Renvoie UNIQUEMENT un objet JSON avec :\n";
-            $prompt .= "- 'gravity' (low, medium, high)\n";
-            $prompt .= "- 'context' (résumé court)\n";
-            $prompt .= "- 'recommended_docs' (tableau de noms).\n";
+            
+            $prompt .= "\n2. ACCIDENT CORPOREL :\n";
+            foreach (self::getDefaultRequiredDocsByType('Accident_corporel', $description) as $doc) {
+                $prompt .= "- {$doc}\n";
+            }
+            
+            $prompt .= "\n3. VOL / VOL À MAIN ARMÉE :\n";
+            foreach (self::getDefaultRequiredDocsByType('Vol', $description) as $doc) {
+                $prompt .= "- {$doc}\n";
+            }
+            
+            $prompt .= "\n4. INCENDIE AUTOMOBILE :\n";
+            foreach (self::getDefaultRequiredDocsByType('Incendie') as $doc) {
+                $prompt .= "- {$doc}\n";
+            }
+            
+            $prompt .= "\n5. BRIS DE GLACE :\n";
+            foreach (self::getDefaultRequiredDocsByType('Bris_de_glace') as $doc) {
+                $prompt .= "- {$doc}\n";
+            }
+            
+            $prompt .= "\n6. RECOURS (SINISTRE NON RESPONSABLE) :\n";
+            foreach (self::getDefaultRequiredDocsByType('Recours') as $doc) {
+                $prompt .= "- {$doc}\n";
+            }
+            
+            $prompt .= "\n---\n";
+            $prompt .= "CONTEXTE DU CLIENT :\n";
+            $prompt .= "- Type de sinistre déclaré : \"{$typeSinistre}\"\n";
+            $prompt .= "- Description du sinistre : \"{$description}\"\n\n";
+
+            $prompt .= "RÈGLE ABSOLUE ET STRICTE :\n";
+            $prompt .= "1. Tu NE DOIS EN AUCUN CAS inventer, reformuler ou ajouter de nouveaux documents hors de la liste officielle ci-dessus.\n";
+            $prompt .= "2. Tu dois UNIQUEMENT choisir parmi les pièces exactes figurant dans la liste officielle ci-dessus.\n\n";
+
+            $prompt .= "Renvoie UNIQUEMENT un objet JSON valide avec :\n";
+            $prompt .= "- 'gravity' ('low', 'medium', 'high')\n";
+            $prompt .= "- 'context' (résumé succinct en français)\n";
+            $prompt .= "- 'recommended_docs' (tableau avec les noms exacts des pièces de la grille).\n";
 
             $url = $this->baseUrl . '/' . $this->model . ':generateContent?key=' . $this->apiKey;
 
@@ -51,7 +210,7 @@ class AIService
                 ->post($url, [
                     'contents' => [['parts' => [['text' => $prompt]]]],
                     'generationConfig' => [
-                        'temperature' => 0.2,
+                        'temperature' => 0.0,
                         'responseMimeType' => 'application/json'
                     ]
                 ]);
@@ -59,7 +218,15 @@ class AIService
             if ($response->successful()) {
                 $content = $response->json('candidates.0.content.parts.0.text');
                 $decoded = json_decode(trim(preg_replace('/```json\s*|\s*```/', '', $content)), true);
-                return is_array($decoded) ? $decoded : null;
+                if (is_array($decoded) && isset($decoded['recommended_docs'])) {
+                    // FILTRAGE STRICT : Ne conserver EXCLUSIVEMENT que les pièces présentes dans la liste officielle
+                    $filteredDocs = array_values(array_filter($decoded['recommended_docs'], function($doc) use ($defaultDocs) {
+                        return in_array($doc, $defaultDocs);
+                    }));
+
+                    $decoded['recommended_docs'] = !empty($filteredDocs) ? $filteredDocs : $defaultDocs;
+                    return $decoded;
+                }
             } else {
                 Log::error('Gemini API Error in analyzeDeclarationText: ' . $response->body());
             }
@@ -67,7 +234,12 @@ class AIService
             Log::error('Gemini Analysis Exception: ' . $e->getMessage());
         }
 
-        return null;
+        // Fallback en cas d'erreur ou d'absence de réponse IA
+        return [
+            'gravity' => 'medium',
+            'context' => 'Analyse basée exclusivement sur la grille officielle : ' . $typeSinistre,
+            'recommended_docs' => $defaultDocs
+        ];
     }
 
     /**

@@ -15,7 +15,14 @@
     {{-- Navigation Centrale --}}
     <nav class="hidden lg:flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-100">
         <a href="{{ route('groupe.dashboard') }}" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all {{ request()->routeIs('groupe.dashboard') ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100' }}">
-            <i class="fa-solid fa-truck-medical mr-1.5"></i> Interventions en cours
+            <i class="fa-solid fa-grid-2 mr-1.5"></i> Vue d'ensemble
+        </a>
+        <a href="{{ route('groupe.interventions') }}" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all inline-flex items-center gap-2 {{ request()->routeIs('groupe.interventions') ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100' }}">
+            <i class="fa-solid fa-truck-medical"></i>
+            <span>Interventions en cours</span>
+            <span class="px-2 py-0.5 text-xs font-extrabold rounded-full transition-colors {{ ($interventionsEnCoursCount ?? 0) > 0 ? (request()->routeIs('groupe.interventions') ? 'bg-rose-100 text-rose-700' : 'bg-rose-600 text-white shadow-sm') : 'bg-slate-200 text-slate-600' }}">
+                {{ $interventionsEnCoursCount ?? 0 }}
+            </span>
         </a>
         <a href="{{ route('groupe.statistiques') }}" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all {{ request()->routeIs('groupe.statistiques') ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100' }}">
             <i class="fa-solid fa-chart-pie mr-1.5"></i> Statistiques
@@ -51,3 +58,23 @@
         </div>
     </div>
 </header>
+
+{{-- Navigation Mobile --}}
+<div class="lg:hidden bg-white border-b border-slate-100 px-4 py-2 flex items-center gap-2 overflow-x-auto shrink-0 shadow-sm">
+    <a href="{{ route('groupe.dashboard') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 {{ request()->routeIs('groupe.dashboard') ? 'bg-rose-50 text-rose-600 font-bold' : 'text-slate-500 hover:bg-slate-100' }}">
+        <i class="fa-solid fa-grid-2"></i> Vue d'ensemble
+    </a>
+    <a href="{{ route('groupe.interventions') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 {{ request()->routeIs('groupe.interventions') ? 'bg-rose-50 text-rose-600 font-bold' : 'text-slate-500 hover:bg-slate-100' }}">
+        <i class="fa-solid fa-truck-medical"></i>
+        <span>Interventions en cours</span>
+        <span class="px-1.5 py-0.5 text-[10px] font-extrabold rounded-full {{ ($interventionsEnCoursCount ?? 0) > 0 ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-600' }}">
+            {{ $interventionsEnCoursCount ?? 0 }}
+        </span>
+    </a>
+    <a href="{{ route('groupe.statistiques') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 {{ request()->routeIs('groupe.statistiques') ? 'bg-rose-50 text-rose-600 font-bold' : 'text-slate-500 hover:bg-slate-100' }}">
+        <i class="fa-solid fa-chart-pie"></i> Statistiques
+    </a>
+    <a href="{{ route('groupe.historique') }}" class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 {{ request()->routeIs('groupe.historique') ? 'bg-rose-50 text-rose-600 font-bold' : 'text-slate-500 hover:bg-slate-100' }}">
+        <i class="fa-solid fa-clock-rotate-left"></i> Historique
+    </a>
+</div>

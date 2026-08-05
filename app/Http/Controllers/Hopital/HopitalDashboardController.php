@@ -104,11 +104,76 @@ class HopitalDashboardController extends Controller
             ->orWhereHas('constat', function($q) use ($hospitalId) {
                 $q->where('hospital_id', $hospitalId);
             })
-            ->with(['assure', 'constat'])
+            ->with(['assure', 'constat', 'etatDesLieux'])
             ->latest()
             ->paginate(15);
 
         return view('hopital.historique', compact('user', 'sinistres'));
+    }
+
+    public function downloadEtatDesLieuxPdf(Sinistre $sinistre)
+    {
+        $user = auth('user')->user();
+
+        abort_unless($sinistre->nearest_hospital_id === $user->id, 403);
+
+        $etatDesLieux = \App\Models\EtatDesLieux::where('sinistre_id', $sinistre->id)->first();
+
+        if (!$etatDesLieux) {
+            return back()->with('error', 'Aucun état des lieux trouvé pour ce sinistre.');
+        }
+
+        try {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.etat_des_lieux', [
+                'sinistre' => $sinistre,
+                'etat' => $etatDesLieux,
+                'user' => $user,
+            ]);
+
+            return $pdf->download('etat_des_lieux_' . ($sinistre->numero_sinistre ?? $sinistre->id) . '.pdf');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur generation PDF etat des lieux hopital: ' . $e->getMessage());
+
+            return back()->with('error', 'Erreur lors du téléchargement du PDF.');
+        }
+    }
+
+    public function streamEtatDesLieuxPdf(Sinistre $sinistre)
+    {
+        $user = auth('user')->user();
+
+        abort_unless($sinistre->nearest_hospital_id === $user->id, 403);
+
+        $etatDesLieux = \App\Models\EtatDesLieux::where('sinistre_id', $sinistre->id)->first();
+
+        if (!$etatDesLieux) {
+            return back()->with('error', 'Aucun état des lieux trouvé pour ce sinistre.');
+        }
+
+        try {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.etat_des_lieux', [
+                'sinistre' => $sinistre,
+                'etat' => $etatDesLieux,
+                'user' => $user,
+            ]);
+
+            return $pdf->stream('etat_des_lieux_' . ($sinistre->numero_sinistre ?? $sinistre->id) . '.pdf');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Erreur affichage PDF etat des lieux hopital: ' . $e->getMessage());
+
+            return back()->with('error', 'Erreur lors de l\'affichage du PDF.');
+        }
+    }
+
+    public function showConsultation(Sinistre $sinistre)
+    {
+        $user = auth('user')->user();
+
+        abort_unless($sinistre->nearest_hospital_id === $user->id, 403);
+
+        $etatDesLieux = \App\Models\EtatDesLieux::where('sinistre_id', $sinistre->id)->first();
+
+        return view('hopital.show_consultation', compact('user', 'sinistre', 'etatDesLieux'));
     }
 
     /**

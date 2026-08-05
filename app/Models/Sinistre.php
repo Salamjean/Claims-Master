@@ -59,6 +59,9 @@ class Sinistre extends Model
         'hospital_status',
         'hospital_severity',
         'hospital_notes',
+        'assigned_groupe_id',
+        'hospital_arrived_at',
+        'hospital_dispatched_at',
     ];
 
     protected $casts = [
@@ -71,6 +74,8 @@ class Sinistre extends Model
         'date_rapport_expert' => 'datetime',
         'date_bon_prise_charge' => 'datetime',
         'date_bon_sortie' => 'datetime',
+        'hospital_arrived_at' => 'datetime',
+        'hospital_dispatched_at' => 'datetime',
         'est_couvert' => 'boolean',
         'nearby_units' => 'array',
     ];
@@ -167,5 +172,15 @@ class Sinistre extends Model
     public function nearestHospital()
     {
         return $this->belongsTo(User::class, 'nearest_hospital_id');
+    }
+
+    public function assignedGroupe()
+    {
+        return $this->belongsTo(User::class, 'assigned_groupe_id');
+    }
+
+    public function etatDesLieux()
+    {
+        return $this->hasOne(EtatDesLieux::class);
     }
 }

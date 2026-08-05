@@ -22,9 +22,9 @@ class AppServiceProvider extends ServiceProvider
     {
         Schema::defaultStringLength(191);
 
-        // Register View Composer for the insured sidebar
+        // Register View Composer for the insured sidebar (now embedded in template)
         \Illuminate\Support\Facades\View::composer(
-            'assure.layouts.sidebar',
+            'assure.layouts.template',
             \App\Http\View\Composers\AssureSidebarComposer::class
         );
 
@@ -38,6 +38,12 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\View::composer(
             'personnel.layouts.sidebar',
             \App\Http\View\Composers\PersonnelSidebarComposer::class
+        );
+
+        // Register View Composer for the groupe navbar
+        \Illuminate\Support\Facades\View::composer(
+            'groupe.layouts.navbar',
+            \App\Http\View\Composers\GroupeNavbarComposer::class
         );
     }
 }

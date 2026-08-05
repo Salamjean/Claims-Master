@@ -21,6 +21,7 @@
                             <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Gravité Bilan</th>
                             <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Notes Médicales</th>
                             <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Date Prise en charge</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">Rapport & PDF</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -66,10 +67,27 @@
                                 <td class="px-6 py-4 text-center">
                                     <span class="text-xs text-slate-500 font-medium">{{ $sinistre->updated_at->format('d/m/Y H:i') }}</span>
                                 </td>
+                                <td class="px-6 py-4 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <a href="{{ route('hopital.sinistres.show', $sinistre) }}"
+                                            class="px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 text-xs font-bold rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                                            title="Consulter les détails du dossier">
+                                            <i class="fa-solid fa-eye"></i> Consulter
+                                        </a>
+
+                                        @if($sinistre->etatDesLieux)
+                                            <a href="{{ route('hopital.sinistres.etat_des_lieux.pdf', $sinistre) }}"
+                                                class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                                                title="Télécharger le PDF">
+                                                <i class="fa-solid fa-download"></i> Télécharger PDF
+                                            </a>
+                                        @endif
+                                    </div>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-12 text-center">
+                                <td colspan="6" class="px-6 py-12 text-center">
                                     <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mx-auto mb-3 text-slate-300">
                                         <i class="fa-solid fa-clock text-lg"></i>
                                     </div>

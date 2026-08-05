@@ -94,11 +94,18 @@ class AssureDashboardController extends Controller
             })
             ->count();
 
+        // ─── KPI stats ───
+        $total       = \App\Models\Sinistre::where('user_id', $user->id)->count();
+        $enAttente   = \App\Models\Sinistre::where('user_id', $user->id)->where('status', 'en_attente')->count();
+        $enCours     = \App\Models\Sinistre::where('user_id', $user->id)->where('status', 'en_cours')->count();
+        $cloture     = \App\Models\Sinistre::where('user_id', $user->id)->where('status', 'cloture')->count();
+
         return view('assure.dashboard', compact(
-            'user', 'contrats', 'chartLabels', 'chartData', 
-            'dernierSinistre', 'pendingDocumentsCount', 
+            'user', 'contrats', 'chartLabels', 'chartData',
+            'dernierSinistre', 'pendingDocumentsCount',
             'activeContractsCount', 'totalPrimes', 'recentActivities',
-            'countConstatsNonRegles'
+            'countConstatsNonRegles',
+            'total', 'enAttente', 'enCours', 'cloture'
         ));
     }
 
