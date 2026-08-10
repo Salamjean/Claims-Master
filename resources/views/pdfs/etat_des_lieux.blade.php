@@ -473,22 +473,30 @@
         </tr>
     </table>
 
-    <!-- Signatures -->
-    <table class="signature-table">
+    <!-- Signature Agent -->
+    <table class="signature-table" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
         <tr>
             <td width="50%" style="border: none;">
-                <span class="lbl">Authentification Officielle</span>
-                <div style="font-size: 8px; color: #64748b; margin-top: 2px;">
-                    Validé électroniquement par le Commandant / Chef de Garde du <strong>{{ $etatDesLieux->casernes_mobilisees ?? $sinistre->assignedGroupe->name ?? 'Groupe Sapeurs-Pompiers' }}</strong>.
+                <span class="lbl" style="font-weight: bold; text-transform: uppercase; font-size: 9px; color: #475569; display: block;">
+                    Authentification Officielle
+                </span>
+                <div style="font-size: 8.5px; color: #64748b; margin-top: 4px;">
+                    Validé électroniquement par l'Agent / Commandant d'Intervention du <strong>{{ $etatDesLieux->casernes_mobilisees ?? $sinistre->assignedGroupe->name ?? 'Groupe Sapeurs-Pompiers' }}</strong>.
                 </div>
             </td>
-            <td width="50%" style="border: none;">
-                <div class="signature-box">
-                    <span class="lbl">Signature & Cachet du Chef d'Intervention</span>
-                    <div style="text-align: right; margin-top: 14px; font-weight: 800; color: #881337; font-size: 8.5px;">
-                        [ SIGNÉ ET VALIDÉ ÉLECTRONIQUEMENT ]
-                    </div>
+            <td width="50%" style="border: 1px solid #cbd5e1; padding: 10px; vertical-align: top; background: #fafafa; border-radius: 6px;">
+                <span class="lbl" style="font-weight: bold; text-transform: uppercase; font-size: 9px; color: #475569; display: block; margin-bottom: 3px;">
+                    Signature du Chef d'Intervention / Agent
+                </span>
+                <div style="font-size: 10px; font-weight: bold; color: #1e293b; margin-bottom: 4px;">
+                    {{ $etatDesLieux->nom_agent_signataire ?? 'Chef de Groupe' }}
                 </div>
+                @if(!empty($etatDesLieux->signature_agent))
+                    <img src="{{ $etatDesLieux->signature_agent }}" style="max-height: 50px; max-width: 200px; display: block;" />
+                    <div style="font-size: 8px; color: #16a34a; font-weight: bold; margin-top: 4px;">✓ Validé électroniquement</div>
+                @else
+                    <div style="font-size: 8.5px; color: #e11d48; font-weight: 800; margin-top: 12px;">[ SIGNÉ ÉLECTRONIQUEMENT ]</div>
+                @endif
             </td>
         </tr>
     </table>

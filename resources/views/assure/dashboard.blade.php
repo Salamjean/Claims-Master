@@ -307,12 +307,12 @@
 </div>
 
 {{-- ══════════════════════════════════════════
-     GRILLE PRINCIPALE — Suivi + Activités
+     GRILLE PRINCIPALE — Suivi + Assurances + Activités
 ══════════════════════════════════════════ --}}
-<div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-    {{-- ─── COL GAUCHE (2/3) : Tracker + Chart ─── --}}
-    <div class="xl:col-span-2 space-y-5">
+    {{-- ─── COL GAUCHE (2/3) : Tracker + Mes Assurances ─── --}}
+    <div class="xl:col-span-2 space-y-6">
 
         {{-- Suivi dossier actif --}}
         <div class="section-card au au-3">
@@ -472,77 +472,72 @@
             </div>
         </div>
 
-        {{-- Graphique tendances + Profil rapide --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        {{-- Carte Assurances Expirées --}}
+        @php
+            $expiredContrats = isset($contrats) ? $contrats->filter(function($c) {
+                $isExpDate = $c->date_fin && \Carbon\Carbon::parse($c->date_fin)->isPast() && !\Carbon\Carbon::parse($c->date_fin)->isToday();
+                return $isExpDate || $c->statut === 'expire' || $c->statut === 'inactif';
+            }) : collect();
+        @endphp
 
-            {{-- Chart --}}
-            <div class="section-card au au-4">
-                <div class="section-card-header">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-chart-line text-indigo-500 text-xs"></i>
-                        <h3 class="text-sm font-black text-slate-800">Tendances</h3>
+        <div class="section-card au au-4">
+            <div class="section-card-header">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 text-sm">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
                     </div>
-                    <span class="text-[10px] font-extrabold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">6 mois</span>
-                </div>
-                <div class="section-card-body">
-                    <div class="h-36 relative">
-                        <canvas id="claimsChart"></canvas>
+                    <div>
+                        <h3 class="text-sm font-black text-slate-800">Assurances Expirées</h3>
+                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">{{ $expiredContrats->count() }} contrat(s) expiré(s) à renouveler</p>
                     </div>
                 </div>
+                <a href="{{ route('assure.contrats.index') }}" class="text-xs font-extrabold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+                    <span>Mes assurances</span>
+                    <i class="fa-solid fa-chevron-right text-[9px]"></i>
+                </a>
             </div>
 
-            {{-- Profil rapide --}}
-            <div class="section-card au au-4 flex flex-col justify-between">
-                <div class="section-card-header">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-id-card text-indigo-500 text-xs"></i>
-                        <h3 class="text-sm font-black text-slate-800">Mon profil</h3>
-                    </div>
-                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-xs shadow-emerald-400"></div>
-                </div>
-                <div class="section-card-body flex-1 flex flex-col justify-between">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-black text-base shadow-md shadow-indigo-500/20 overflow-hidden ring-2 ring-indigo-500/10">
-                            @if($user->profile_picture)
-                                <img src="{{ asset('storage/' . $user->profile_picture) }}" class="w-full h-full object-cover">
-                            @else
-                                {{ strtoupper(substr($user->name, 0, 1)) }}
-                            @endif
-                        </div>
-                        <div class="min-w-0">
-                            <p class="font-black text-slate-800 text-sm truncate">{{ $user->name }} {{ $user->prenom }}</p>
-                            <span class="inline-block text-[10px] font-bold text-indigo-600 font-mono bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100/60 mt-0.5">{{ $user->code_user }}</span>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2 mb-4">
-                        <div class="flex items-center gap-2 text-xs text-slate-600 font-medium">
-                            <div class="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs shrink-0">
-                                <i class="fa-solid fa-envelope"></i>
+            <div class="section-card-body">
+                @if($expiredContrats->count() > 0)
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                        @foreach($expiredContrats->take(4) as $contrat)
+                            <div class="p-4 rounded-2xl border border-red-100 bg-red-50/30 hover:bg-white hover:border-red-200 transition-all flex items-center justify-between gap-3 shadow-2xs">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-10 h-10 rounded-xl bg-red-100/60 border border-red-200/80 flex items-center justify-center text-red-600 font-bold shrink-0 shadow-2xs">
+                                        <i class="fa-solid fa-car text-sm"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <p class="text-xs font-extrabold text-slate-800 truncate">{{ $contrat->marque }} {{ $contrat->modele }}</p>
+                                            <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[9px] font-extrabold">Expiré</span>
+                                        </div>
+                                        <p class="text-[10px] font-mono font-bold text-slate-500 uppercase mt-0.5">{{ $contrat->plaque }}</p>
+                                        @if($contrat->date_fin)
+                                            <p class="text-[10px] text-red-600 font-medium mt-0.5">Échéance : {{ \Carbon\Carbon::parse($contrat->date_fin)->format('d/m/Y') }}</p>
+                                        @else
+                                            <p class="text-[10px] text-red-600 font-medium mt-0.5">Contrat inactif</p>
+                                        @endif
+                                    </div>
+                                </div>
                             </div>
-                            <span class="truncate">{{ $user->email }}</span>
-                        </div>
-                        @if($user->contact)
-                        <div class="flex items-center gap-2 text-xs text-slate-600 font-medium">
-                            <div class="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs shrink-0">
-                                <i class="fa-solid fa-phone"></i>
-                            </div>
-                            <span>{{ $user->contact }}</span>
-                        </div>
-                        @endif
+                        @endforeach
                     </div>
-
-                    <a href="{{ route('assure.profile') }}"
-                        class="w-full flex items-center justify-center gap-2 py-2.5 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 hover:border-indigo-200 transition-all shadow-2xs">
-                        <i class="fa-solid fa-user-pen"></i> Gérer mon profil
-                    </a>
-                </div>
+                @else
+                    <div class="empty-state py-6 flex flex-col items-center justify-center text-center">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-xl mb-3 shadow-xs">
+                            <i class="fa-solid fa-shield-check"></i>
+                        </div>
+                        <h4 class="text-sm font-black text-slate-800 mb-1">Toutes vos assurances sont à jour !</h4>
+                        <p class="text-xs text-slate-400 font-medium max-w-sm">Aucun contrat expiré à renouveler. Vos véhicules enregistrés sont sous couverture active.</p>
+                    </div>
+                @endif
             </div>
         </div>
+
     </div>
 
-    {{-- ─── COL DROITE (1/3) : Activités ─── --}}
-    <div class="section-card au au-4 flex flex-col" style="max-height: 660px;">
+    {{-- ─── COL DROITE (1/3) : Activités + Support ─── --}}
+    <div class="section-card au au-4 flex flex-col justify-between" style="min-height: 520px;">
         <div class="section-card-header shrink-0">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-clock-rotate-left text-indigo-500 text-xs"></i>
@@ -598,52 +593,3 @@
 </div>
 
 @endsection
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const ctx = document.getElementById('claimsChart').getContext('2d');
-    const grad = ctx.createLinearGradient(0, 0, 0, 150);
-    grad.addColorStop(0, 'rgba(99,102,241,0.18)');
-    grad.addColorStop(1, 'rgba(99,102,241,0)');
-
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: {!! json_encode($chartLabels) !!},
-            datasets: [{
-                data: {!! json_encode($chartData) !!},
-                borderColor: '#6366f1',
-                borderWidth: 2.5,
-                backgroundColor: grad,
-                fill: true,
-                tension: 0.45,
-                pointRadius: 0,
-                pointHoverRadius: 5,
-                pointHoverBackgroundColor: '#6366f1',
-                pointHoverBorderColor: '#fff',
-                pointHoverBorderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { intersect: false, mode: 'index' },
-            plugins: { legend: { display: false }, tooltip: {
-                backgroundColor: '#1e293b',
-                titleColor: '#94a3b8',
-                bodyColor: '#fff',
-                bodyFont: { weight: 700 },
-                padding: 10,
-                cornerRadius: 10,
-                displayColors: false
-            }},
-            scales: {
-                y: { display: false, beginAtZero: true },
-                x: { grid: { display: false }, border: { display: false }, ticks: { font: { size: 10, weight: '600' }, color: '#94a3b8' } }
-            }
-        }
-    });
-});
-</script>
-@endpush

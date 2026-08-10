@@ -29,6 +29,12 @@
             <span class="nav-label text-sm">Historique</span>
         </a>
 
+        <a href="{{ route('hopital.rapports_intervention') }}"
+            class="nav-item {{ request()->routeIs('hopital.rapports_intervention') ? 'active' : '' }}">
+            <span class="nav-icon"><i class="fa-solid fa-file-signature text-sm"></i></span>
+            <span class="nav-label text-sm">Rapports d'Intervention</span>
+        </a>
+
         <p class="nav-label text-white/30 text-[10px] uppercase tracking-widest font-semibold px-3 mt-4 mb-2">Service</p>
 
         <a href="{{ route('hopital.capacite') }}"

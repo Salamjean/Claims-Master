@@ -24,14 +24,6 @@
             </a>
         </div>
 
-        @if(session('success'))
-            <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3 animate-in"
-                style="--delay:0.15s">
-                <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5 text-lg shrink-0"></i>
-                <p class="text-sm font-medium text-emerald-700">{{ session('success') }}</p>
-            </div>
-        @endif
-
         @if($sinistres->isEmpty())
             <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-12 text-center animate-in"
                 style="--delay:0.2s">

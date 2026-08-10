@@ -19,13 +19,22 @@
         </div>
 
         <div class="flex items-center gap-2">
-            <a href="{{ route('groupe.sinistres.etat_des_lieux', $sinistre) }}" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold rounded-xl transition-colors inline-flex items-center gap-2 shadow-sm">
-                <i class="fa-solid fa-pen-to-square"></i> Modifier l'état des lieux
-            </a>
+            @if($etatDesLieux && $etatDesLieux->status !== 'valide')
+                <form action="{{ route('hopital.etat_des_lieux.valider', $etatDesLieux) }}" method="POST" class="inline" onsubmit="return confirmValidation(this, '{{ $sinistre->numero_sinistre ?? '#' . $sinistre->id }}')">
+                    @csrf
+                    <button type="submit" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold rounded-xl transition-all inline-flex items-center gap-2 shadow-sm border border-emerald-500">
+                        <i class="fa-solid fa-check-circle"></i> Valider le rapport
+                    </button>
+                </form>
+            @elseif($etatDesLieux && $etatDesLieux->status === 'valide')
+                <span class="px-3.5 py-2 bg-emerald-100 text-emerald-800 text-xs font-extrabold rounded-xl inline-flex items-center gap-1.5 border border-emerald-300">
+                    <i class="fa-solid fa-lock text-emerald-600"></i> Rapport Validé & Verrouillé
+                </span>
+            @endif
 
             @if($etatDesLieux)
-                <a href="{{ route('hopital.sinistres.etat_des_lieux.pdf', $sinistre) }}" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-xl transition-colors inline-flex items-center gap-2 shadow-sm">
-                    <i class="fa-solid fa-file-pdf"></i> Télécharger PDF
+                <a href="{{ route('hopital.sinistres.etat_des_lieux.pdf', $sinistre) }}" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold rounded-xl transition-all inline-flex items-center gap-2 shadow-sm border border-rose-500">
+                    <i class="fa-solid fa-file-pdf"></i> Télécharger le Rapport PDF
                 </a>
             @endif
         </div>
@@ -275,3 +284,31 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function confirmValidation(formElement, sinistreNum) {
+        event.preventDefault();
+        Swal.fire({
+            title: 'Valider le rapport d\'intervention ?',
+            html: `Vous êtes sur le point de valider le procès-verbal d'état des lieux pour le dossier <b>${sinistreNum}</b>.<br><br><span style="font-size: 12px; color: #be123c; font-weight: bold;">⚠️ Une fois validé, ce rapport sera verrouillé et le groupe ne pourra plus le modifier.</span>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#059669',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: '<i class="fa-solid fa-check-circle mr-1"></i> Oui, valider le rapport',
+            cancelButtonText: 'Annuler',
+            customClass: {
+                popup: 'rounded-3xl shadow-2xl',
+                confirmButton: 'px-5 py-2.5 rounded-xl font-bold text-xs',
+                cancelButton: 'px-5 py-2.5 rounded-xl font-bold text-xs'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                formElement.submit();
+            }
+        });
+        return false;
+    }
+</script>
+@endpush

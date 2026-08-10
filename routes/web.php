@@ -26,12 +26,20 @@ use App\Http\Controllers\Service\AgentController;
 use App\Http\Controllers\User\RegisterAssureController;
 use App\Http\Controllers\User\UserAuthenticate;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Public\AlertePubliqueController;
 
 Route::get('/', [HomeController::class, 'home'])->name('home');
 Route::get('/nos-services', [HomeController::class, 'services'])->name('home.services');
 Route::get('/comment-ca-marche', [HomeController::class, 'comment'])->name('home.comment');
 Route::get('/securite', [HomeController::class, 'securite'])->name('home.securite');
 Route::get('/contact', [HomeController::class, 'contact'])->name('home.contact');
+
+// Routes publiques — Signalement d'urgence anonyme (témoin / passant)
+Route::middleware('throttle:10,10')->group(function () {
+    Route::get('/signaler-urgence', [AlertePubliqueController::class, 'showForm'])->name('alerte.form');
+    Route::post('/signaler-urgence', [AlertePubliqueController::class, 'store'])->name('alerte.store');
+});
+Route::get('/suivi-alerte/{token}', [AlertePubliqueController::class, 'suiviAlerte'])->name('alerte.suivi');
 
 
 //Les routes d'authentification
@@ -161,6 +169,7 @@ Route::middleware(['auth:user', 'assure'])->prefix('mon-espace')->group(function
         Route::get('/mes-assurances', [ContratController::class, 'index'])->name('assure.contrats.index');
         Route::get('/mes-assurances/ajouter', [ContratController::class, 'create'])->name('assure.contrats.create');
         Route::post('/mes-assurances/ajouter', [ContratController::class, 'store'])->name('assure.contrats.store');
+        Route::post('/mes-assurances/{contrat}/renouveler', [ContratController::class, 'renew'])->name('assure.contrats.renew');
         Route::delete('/mes-assurances/{contrat}', [ContratController::class, 'destroy'])->name('assure.contrats.destroy');
 
         // Déclaration de sinistre
@@ -324,7 +333,8 @@ Route::middleware(['auth:user', 'hopital', 'force.password'])->prefix('hopital')
     Route::get('/sinistres/{sinistre}/etat-des-lieux/pdf/view', [HopitalDashboardController::class, 'streamEtatDesLieuxPdf'])->name('hopital.sinistres.etat_des_lieux.pdf.view');
     Route::get('/historique', [HopitalDashboardController::class, 'historique'])->name('hopital.historique');
     Route::get('/capacite', [HopitalDashboardController::class, 'capacite'])->name('hopital.capacite');
-    Route::post('/capacite', [HopitalDashboardController::class, 'updateCapacite'])->name('hopital.capacite.update');
+    Route::get('/rapports-intervention', [HopitalDashboardController::class, 'rapportsIntervention'])->name('hopital.rapports_intervention');
+    Route::post('/etat-des-lieux/{etatDesLieux}/valider', [HopitalDashboardController::class, 'validerEtatDesLieux'])->name('hopital.etat_des_lieux.valider');
 
     // Gestion des Groupes
     Route::get('/groupes', [HopitalGroupeController::class, 'index'])->name('hopital.groupes.index');

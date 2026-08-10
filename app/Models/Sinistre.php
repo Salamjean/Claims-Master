@@ -62,6 +62,10 @@ class Sinistre extends Model
         'assigned_groupe_id',
         'hospital_arrived_at',
         'hospital_dispatched_at',
+        // Déclaration Témoin / Passant
+        'declarant_nom',
+        'declarant_contact',
+        'token_suivi',
     ];
 
     protected $casts = [

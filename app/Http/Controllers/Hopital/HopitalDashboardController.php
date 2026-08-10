@@ -126,7 +126,7 @@ class HopitalDashboardController extends Controller
         try {
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.etat_des_lieux', [
                 'sinistre' => $sinistre,
-                'etat' => $etatDesLieux,
+                'etatDesLieux' => $etatDesLieux,
                 'user' => $user,
             ]);
 
@@ -153,7 +153,7 @@ class HopitalDashboardController extends Controller
         try {
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.etat_des_lieux', [
                 'sinistre' => $sinistre,
-                'etat' => $etatDesLieux,
+                'etatDesLieux' => $etatDesLieux,
                 'user' => $user,
             ]);
 
@@ -201,6 +201,68 @@ class HopitalDashboardController extends Controller
         ]);
 
         return back()->with('success', 'Disponibilité de l\'ambulance mise à jour avec succès.');
+    }
+
+    /**
+     * Liste des rapports d'intervention (états des lieux) soumis par les groupes
+     */
+    public function rapportsIntervention(Request $request)
+    {
+        $user = auth('user')->user();
+        $hospitalId = $user->id;
+
+        $query = \App\Models\EtatDesLieux::whereHas('sinistre', function ($q) use ($hospitalId) {
+            $q->where('nearest_hospital_id', $hospitalId);
+        })->with(['sinistre.assure', 'groupe', 'validator']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('numero_intervention', 'like', "%{$search}%")
+                  ->orWhere('nature_intervention', 'like', "%{$search}%")
+                  ->orWhere('nom_agent_signataire', 'like', "%{$search}%")
+                  ->orWhere('casernes_mobilisees', 'like', "%{$search}%")
+                  ->orWhereHas('sinistre', function ($sq) use ($search) {
+                      $sq->where('numero_sinistre', 'like', "%{$search}%")
+                        ->orWhere('lieu', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($request->filled('nature')) {
+            $query->where('nature_intervention', $request->nature);
+        }
+
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        $reports = $query->latest()->paginate(15);
+
+        return view('hopital.rapports_intervention', compact('user', 'reports'));
+    }
+
+    /**
+     * Valider définitivement un état des lieux
+     */
+    public function validerEtatDesLieux(\App\Models\EtatDesLieux $etatDesLieux)
+    {
+        $user = auth('user')->user();
+        $sinistre = $etatDesLieux->sinistre;
+
+        abort_unless($sinistre->nearest_hospital_id === $user->id, 403);
+
+        $etatDesLieux->update([
+            'status' => 'valide',
+            'validated_at' => now(),
+            'validated_by' => $user->id,
+        ]);
+
+        return back()->with('success', 'Le rapport d\'intervention a été validé avec succès. Il est désormais verrouillé et ne peut plus être modifié par le groupe.');
     }
 
     /**

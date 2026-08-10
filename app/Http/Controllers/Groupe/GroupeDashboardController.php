@@ -228,9 +228,27 @@ class GroupeDashboardController extends Controller
 
         $hospitals = $allHospitals;
 
+        $sinistre->load(['contrat', 'assure']);
         $etatDesLieux = EtatDesLieux::where('sinistre_id', $sinistre->id)->first();
 
         if (!$etatDesLieux) {
+            $contrat = $sinistre->contrat;
+            $assure = $sinistre->assure;
+            $vehiculesPreremplis = [];
+
+            if ($contrat && ($contrat->immatriculation || $contrat->plaque || $contrat->marque || $contrat->modele)) {
+                $marqueModele = trim(($contrat->marque ?? '') . ' ' . ($contrat->modele ?? ''));
+                $vehiculesPreremplis[] = [
+                    'type_vehicule' => $contrat->type_vehicule ?? 'Voiture',
+                    'immatriculation' => $contrat->immatriculation ?? $contrat->plaque ?? '',
+                    'marque' => $marqueModele ?: ($contrat->marque ?? ''),
+                    'couleur' => '',
+                    'conducteur_identifie' => $assure->name ?? '',
+                    'nombre_passagers' => '1',
+                    'etat_vehicule' => 'Endommagé (Sinistré)',
+                ];
+            }
+
             $natureDeduite = match (true) {
                 str_contains(strtolower($sinistre->type_sinistre ?? ''), 'incendie') || str_contains(strtolower($sinistre->type_sinistre ?? ''), 'feu') => 'Incendie',
                 str_contains(strtolower($sinistre->type_sinistre ?? ''), 'malaise') || str_contains(strtolower($sinistre->type_sinistre ?? ''), 'sante') => 'Malaise',
@@ -266,6 +284,7 @@ class GroupeDashboardController extends Controller
                 'nature_intervention' => $natureDeduite,
                 'description_situation' => $sinistre->description,
                 'niveau_gravite' => $graviteDeduite,
+                'vehicules_impliques' => $vehiculesPreremplis,
                 'victimes' => [
                     [
                         'nom' => '',
@@ -369,11 +388,15 @@ class GroupeDashboardController extends Controller
             'chronologie.*.evenement' => ['nullable', 'string', 'max:255'],
             'chronologie.*.description' => ['nullable', 'string'],
 
-            // 12. Conclusion
+            // 12. Conclusion & Signatures
             'situation_maitrisee' => ['nullable', 'string', 'max:50'],
             'cause_probable' => ['nullable', 'string'],
             'recommandations' => ['nullable', 'string'],
             'suites_a_donner' => ['nullable', 'string'],
+            'signature_agent' => ['nullable', 'string'],
+            'nom_agent_signataire' => ['required', 'string', 'max:255'],
+            'signature_assure' => ['nullable', 'string'],
+            'nom_assure_signataire' => ['nullable', 'string', 'max:255'],
         ]);
 
         $arrayFields = [
@@ -394,8 +417,16 @@ class GroupeDashboardController extends Controller
         $validated['groupe_id'] = $user->id;
 
         $existingRecord = EtatDesLieux::where('sinistre_id', $sinistre->id)->first();
+        if ($existingRecord && $existingRecord->status === 'valide') {
+            return back()->with('error', 'Ce rapport d\'intervention a été validé par la hiérarchie Sapeur-Pompier. Il est désormais verrouillé et ne peut plus être modifié.');
+        }
+
         if (empty($validated['heure_fin_intervention']) || !$existingRecord) {
             $validated['heure_fin_intervention'] = $existingRecord?->heure_fin_intervention ?? now()->format('H:i');
+        }
+
+        if (!$existingRecord || empty($existingRecord->status)) {
+            $validated['status'] = 'en_attente';
         }
 
         $wasTermine = $sinistre->hospital_status === 'termine';

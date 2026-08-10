@@ -63,15 +63,23 @@ class EtatDesLieux extends Model
         // 11. Chronologie
         'chronologie',
 
-        // 12. Conclusion
+        // 12. Conclusion & Signatures
         'situation_maitrisee',
         'cause_probable',
         'recommandations',
         'suites_a_donner',
+        'signature_agent',
+        'nom_agent_signataire',
+        'signature_assure',
+        'nom_assure_signataire',
+        'status',
+        'validated_at',
+        'validated_by',
     ];
 
     protected $casts = [
         'date_heure_alerte' => 'datetime',
+        'validated_at' => 'datetime',
         'victimes' => 'array',
         'vehicules_impliques' => 'array',
         'vehicules_utilises' => 'array',
@@ -89,5 +97,10 @@ class EtatDesLieux extends Model
     public function groupe()
     {
         return $this->belongsTo(User::class, 'groupe_id');
+    }
+
+    public function validator()
+    {
+        return $this->belongsTo(User::class, 'validated_by');
     }
 }

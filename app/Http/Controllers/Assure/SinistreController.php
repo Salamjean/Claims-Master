@@ -16,14 +16,19 @@ class SinistreController extends Controller
     /**
      * Affiche le formulaire de déclaration.
      */
-    public function create()
+    public function create(Request $request)
     {
+        $selectedContratId = $request->query('contrat_id');
         $assurances = User::where('role', 'assurance')->get();
         $contrats = auth('user')->user()->contrats()
             ->with('assureur')
             ->where('attestation_ai_status', 'valid')
+            ->where(function ($query) {
+                $query->whereNull('date_fin')
+                      ->orWhereDate('date_fin', '>=', now()->startOfDay());
+            })
             ->get();
-        return view('assure.sinistres.create', compact('assurances', 'contrats'));
+        return view('assure.sinistres.create', compact('assurances', 'contrats', 'selectedContratId'));
     }
 
     /**
@@ -130,6 +135,7 @@ class SinistreController extends Controller
 
         // 1. Validation de la requête
         $request->validate([
+            'contrat_id' => 'required|exists:contrats,id',
             'type_sinistre' => 'required|array|min:1',
             'type_sinistre.*' => 'string|in:Vol,Incendie,Accident_matériel,Accident_corporel,Bris_de_glace,Autre',
             'assurance_id' => 'nullable|exists:users,id',
@@ -142,6 +148,16 @@ class SinistreController extends Controller
             'assistance_sollicitee' => 'nullable|boolean',
             'nom_assisteur' => 'nullable|string|max:255',
         ]);
+
+        // Vérification de sécurité : le contrat appartient à l'assuré et son assurance n'est pas expirée
+        $selectedContrat = auth('user')->user()->contrats()->find($request->contrat_id);
+        if (!$selectedContrat) {
+            return redirect()->back()->withInput()->with('error', 'Le véhicule sélectionné n\'existe pas ou ne vous appartient pas.');
+        }
+
+        if ($selectedContrat->date_fin && \Carbon\Carbon::parse($selectedContrat->date_fin)->isPast() && !\Carbon\Carbon::parse($selectedContrat->date_fin)->isToday()) {
+            return redirect()->back()->withInput()->with('error', 'L\'assurance de ce véhicule a expiré le ' . \Carbon\Carbon::parse($selectedContrat->date_fin)->format('d/m/Y') . '. Impossible de déclarer un sinistre pour un véhicule non assuré.');
+        }
 
         // 2. Gestion de l'upload des photos (s'il y en a)
         $photoPaths = [];
@@ -311,18 +327,23 @@ class SinistreController extends Controller
                 'workflow_step' => 'docs_pending' // Attente des documents
             ]);
 
-            $docsAcreer = $report['recommended_docs'];
+            $docsAcreer = array_filter($report['recommended_docs'], function($d) {
+                return !\App\Services\AIService::isDocumentExcluded($d);
+            });
+
             foreach ($docsAcreer as $docName) {
                 // Trouver le type d'input correspondant en BDD si possible, sinon defaut à 'file'
                 $baseDoc = $documentsDisponibles->firstWhere('nom_document', $docName);
                 $type = $baseDoc ? $baseDoc->type_champ : 'file';
+
+                $isMandatory = \App\Services\AIService::isDocumentMandatory($docName);
 
                 $sda = \App\Models\SinistreDocumentAttendu::firstOrCreate([
                     'sinistre_id' => $sinistre->id,
                     'nom_document' => $docName,
                 ], [
                     'type_champ' => $type,
-                    'is_mandatory' => true,
+                    'is_mandatory' => $isMandatory,
                 ]);
                 $docsCrees[] = $sda;
             }

@@ -88,10 +88,10 @@
                                 <div class="flex items-center justify-center gap-2">
                                     <a href="{{ route('groupe.sinistres.etat_des_lieux', $sinistre) }}"
                                         class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded hover:bg-indigo-700 transition-colors inline-block">
-                                        {{ $sinistre->etatDesLieux ? 'Modifier état des lieux' : 'Faire état des lieux' }}
+                                        {{ ($sinistre->etatDesLieux && $sinistre->etatDesLieux->exists) ? 'Modifier état des lieux' : 'Faire état des lieux' }}
                                     </a>
 
-                                    @if ($sinistre->etatDesLieux)
+                                    @if ($sinistre->etatDesLieux && $sinistre->etatDesLieux->exists)
                                         <a href="{{ route('groupe.sinistres.etat_des_lieux.pdf', $sinistre) }}"
                                             class="px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded hover:bg-emerald-700 transition-colors inline-flex items-center gap-1">
                                             <i class="fa-solid fa-file-pdf"></i> Télécharger PDF

@@ -1117,6 +1117,56 @@
                 let isSelectionInProgress = false;
 
                 const userVehicles = @json($contrats);
+                const preselectedContratId = @json($selectedContratId ?? request('contrat_id'));
+
+                window.selectVehicleById = async function(vehicleId, showSuccessToast = false) {
+                    const selectedVehicle = userVehicles.find(v => v.id == vehicleId);
+                    if (!selectedVehicle) return false;
+
+                    contratIdInput.value = vehicleId;
+
+                    // Mise à jour de l'affichage dans la carte 2
+                    const displayContainer = document.getElementById('selected-vehicle-display');
+                    const displayName = document.getElementById('display-vehicle-name');
+                    const displayPlate = document.getElementById('display-vehicle-plate');
+
+                    if (displayContainer && selectedVehicle) {
+                        displayName.textContent = `${selectedVehicle.marque} ${selectedVehicle.modele}`;
+                        displayPlate.textContent = selectedVehicle.immatriculation;
+                        displayContainer.classList.remove('hidden');
+                    }
+
+                    // Auto-sélection de l'assurance
+                    const badge = document.getElementById('assurance-linked-badge');
+                    if (selectedVehicle && selectedVehicle.assurance_id) {
+                        const assuranceSelect = document.getElementById('assurance_id');
+                        if (assuranceSelect) {
+                            assuranceSelect.value = selectedVehicle.assurance_id;
+                            if (badge) badge.classList.remove('hidden');
+
+                            assuranceSelect.disabled = true;
+                            assuranceSelect.classList.add('bg-slate-100', 'cursor-not-allowed', 'opacity-80', 'border-blue-300');
+                        }
+                    } else {
+                        if (badge) badge.classList.add('hidden');
+                    }
+
+                    if (showSuccessToast) {
+                        await Swal.fire({
+                            title: 'Véhicule validé !',
+                            text: `${selectedVehicle.marque} ${selectedVehicle.modele}`,
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false,
+                            customClass: {
+                                popup: 'rounded-3xl'
+                            }
+                        });
+                    }
+
+                    checkFormValidity();
+                    return true;
+                };
 
                 window.showVehicleSelection = async function() {
                     if (isSelectionInProgress) return;
@@ -1191,52 +1241,34 @@
                                 const cards = Swal.getHtmlContainer().querySelectorAll(
                                     '.vehicle-card');
                                 cards.forEach(card => {
-                                    // Gérer le clic
                                     card.addEventListener('click', () => {
                                         selectedId = card.getAttribute('data-id');
 
-                                        // Reset other cards
                                         cards.forEach(c => {
-                                            c.classList.remove(
-                                                'border-orange-500',
-                                                'bg-orange-50');
-                                            c.classList.add(
-                                                'border-slate-100');
-                                            const ind = c.querySelector(
-                                                '.select-indicator');
-                                            const dot = ind.querySelector(
-                                                'div');
-                                            ind.classList.remove(
-                                                'border-orange-500');
-                                            dot.classList.remove(
-                                                'scale-100');
+                                            c.classList.remove('border-orange-500', 'bg-orange-50');
+                                            c.classList.add('border-slate-100');
+                                            const ind = c.querySelector('.select-indicator');
+                                            const dot = ind.querySelector('div');
+                                            ind.classList.remove('border-orange-500');
+                                            dot.classList.remove('scale-100');
                                             dot.classList.add('scale-0');
                                         });
 
-                                        // Highlight this card
-                                        card.classList.add('border-orange-500',
-                                            'bg-orange-50');
+                                        card.classList.add('border-orange-500', 'bg-orange-50');
                                         card.classList.remove('border-slate-100');
-                                        const indicator = card.querySelector(
-                                            '.select-indicator');
+                                        const indicator = card.querySelector('.select-indicator');
                                         const dot = indicator.querySelector('div');
-                                        indicator.classList.add(
-                                        'border-orange-500');
+                                        indicator.classList.add('border-orange-500');
                                         dot.classList.add('scale-100');
                                         dot.classList.remove('scale-0');
 
-                                        // Enable confirm button
                                         confirmBtn.disabled = false;
                                     });
 
-                                    // Si déjà sélectionné, on simule un clic (ou on applique direct)
-                                    if (selectedId && card.getAttribute('data-id') ==
-                                        selectedId) {
-                                        card.classList.add('border-orange-500',
-                                            'bg-orange-50');
+                                    if (selectedId && card.getAttribute('data-id') == selectedId) {
+                                        card.classList.add('border-orange-500', 'bg-orange-50');
                                         card.classList.remove('border-slate-100');
-                                        const indicator = card.querySelector(
-                                            '.select-indicator');
+                                        const indicator = card.querySelector('.select-indicator');
                                         const dot = indicator.querySelector('div');
                                         indicator.classList.add('border-orange-500');
                                         dot.classList.add('scale-100');
@@ -1254,61 +1286,15 @@
                         });
 
                         if (result) {
-                            const vehicleId = result;
-                            contratIdInput.value = vehicleId;
-
-                            const selectedVehicle = userVehicles.find(v => v.id == vehicleId);
-
-                            // Mise à jour de l'affichage dans la carte 2
-                            const displayContainer = document.getElementById('selected-vehicle-display');
-                            const displayName = document.getElementById('display-vehicle-name');
-                            const displayPlate = document.getElementById('display-vehicle-plate');
-
-                            if (displayContainer && selectedVehicle) {
-                                displayName.textContent = `${selectedVehicle.marque} ${selectedVehicle.modele}`;
-                                displayPlate.textContent = selectedVehicle.immatriculation;
-                                displayContainer.classList.remove('hidden');
-                            }
-
-                            // Auto-sélection de l'assurance
-                            const badge = document.getElementById('assurance-linked-badge');
-                            if (selectedVehicle && selectedVehicle.assurance_id) {
-                                const assuranceSelect = document.getElementById('assurance_id');
-                                if (assuranceSelect) {
-                                    assuranceSelect.value = selectedVehicle.assurance_id;
-                                    // Afficher le badge indicateur
-                                    if (badge) badge.classList.remove('hidden');
-
-                                    // Verrouiller le champ (l'utilisateur ne peut plus le changer)
-                                    assuranceSelect.disabled = true;
-                                    assuranceSelect.classList.add('bg-slate-100', 'cursor-not-allowed',
-                                        'opacity-80');
-
-                                    // Ajouter un effet visuel sur le select
-                                    assuranceSelect.classList.add('border-blue-300');
-                                    setTimeout(() => {
-                                        assuranceSelect.classList.remove('border-blue-300');
-                                    }, 2000);
-                                }
-                            } else {
-                                if (badge) badge.classList.add('hidden');
-                            }
-
-                            await Swal.fire({
-                                title: 'Véhicule validé !',
-                                text: `${selectedVehicle.marque} ${selectedVehicle.modele}`,
-                                icon: 'success',
-                                timer: 1500,
-                                showConfirmButton: false,
-                                customClass: {
-                                    popup: 'rounded-3xl'
-                                }
-                            });
-                            checkFormValidity();
+                            await selectVehicleById(result, true);
                         }
                     } finally {
                         isSelectionInProgress = false;
                     }
+                };
+
+                if (preselectedContratId) {
+                    selectVehicleById(preselectedContratId, false);
                 }
 
                 function updateHospitalVisibility() {

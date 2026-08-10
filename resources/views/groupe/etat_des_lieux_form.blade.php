@@ -154,8 +154,23 @@
 @php
     $record = $etatDesLieux;
     $checkedArr = fn($field, $val) => in_array($val, old($field, $record?->$field ?? []), true);
+    $contrat = $sinistre->contrat;
+    $defaultVehicules = [];
+    if ($contrat && ($contrat->immatriculation || $contrat->plaque || $contrat->marque || $contrat->modele)) {
+        $marqueModele = trim(($contrat->marque ?? '') . ' ' . ($contrat->modele ?? ''));
+        $defaultVehicules[] = [
+            'type_vehicule' => $contrat->type_vehicule ?? 'Voiture',
+            'immatriculation' => $contrat->immatriculation ?? $contrat->plaque ?? '',
+            'marque' => $marqueModele ?: ($contrat->marque ?? ''),
+            'couleur' => '',
+            'conducteur_identifie' => $sinistre->assure->name ?? '',
+            'nombre_passagers' => '1',
+            'etat_vehicule' => 'Endommagé (Sinistré)',
+        ];
+    }
+
     $jsonVictimes = json_encode($record?->victimes ?? []);
-    $jsonVehicules = json_encode($record?->vehicules_impliques ?? []);
+    $jsonVehicules = json_encode(!empty($record?->vehicules_impliques) ? $record->vehicules_impliques : $defaultVehicules);
     $jsonTemoins = json_encode($record?->temoins ?? []);
     $jsonChronologie = json_encode($record?->chronologie ?? []);
     $initialHeureFin = $record?->heure_fin_intervention ?? '';
@@ -184,7 +199,7 @@
                     <span class="font-bold text-white text-sm">{{ $sinistre->lieu ?? 'Non précisé' }}</span>
                 </div>
 
-                @if($record)
+                @if($record && $record->exists)
                     <a href="{{ route('groupe.sinistres.etat_des_lieux.pdf', $sinistre) }}"
                         class="px-4 py-3 bg-white hover:bg-rose-50 text-rose-800 rounded-2xl font-extrabold shadow-lg transition-all inline-flex items-center gap-2 text-xs border border-white/40">
                         <i class="fa-solid fa-file-pdf text-rose-600 text-base"></i> Télécharger le Rapport PDF
@@ -193,6 +208,39 @@
             </div>
         </div>
     </div>
+
+    <!-- BANNIÈRE DE STATUT DE VALIDATION -->
+    @if($record && $record->status === 'valide')
+        <div class="p-5 rounded-3xl bg-emerald-50 border-2 border-emerald-300 text-emerald-950 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-xl shrink-0 shadow-sm">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div>
+                    <h4 class="text-xs font-black uppercase tracking-wider text-emerald-950 flex items-center gap-2">
+                        <span>Rapport d'Intervention Validé & Verrouillé</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-200 text-emerald-900 uppercase">Validé</span>
+                    </h4>
+                    <p class="text-xs text-emerald-800 font-medium mt-0.5">
+                        Ce procès-verbal a été officiellement validé par le Commandement des Sapeurs-Pompiers {{ $record->validated_at ? 'le ' . $record->validated_at->format('d/m/Y à H:i') : '' }}. Il ne peut plus être modifié par le groupe.
+                    </p>
+                </div>
+            </div>
+            <a href="{{ route('groupe.sinistres.etat_des_lieux.pdf', $sinistre) }}" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold rounded-2xl shadow-sm transition-all inline-flex items-center gap-2 border border-emerald-500 shrink-0">
+                <i class="fa-solid fa-file-pdf"></i> Télécharger PDF Officiel
+            </a>
+        </div>
+    @elseif($record && $record->exists)
+        <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold flex items-center justify-between gap-4 shadow-sm">
+            <div class="flex items-center gap-2.5">
+                <div class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></div>
+                <span>Statut du Rapport : <strong>En attente de validation par le Commandement Sapeurs-Pompiers.</strong></span>
+            </div>
+            <span class="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-[10px] font-extrabold uppercase tracking-wider border border-amber-300">
+                En attente
+            </span>
+        </div>
+    @endif
 
     <!-- Messages d'erreur -->
     @if ($errors->any())
@@ -245,6 +293,8 @@
 
     <form action="{{ route('groupe.sinistres.etat_des_lieux.store', $sinistre) }}" method="POST" class="space-y-8 etat-form">
         @csrf
+
+        <fieldset {{ ($record && $record->status === 'valide') ? 'disabled' : '' }} class="block min-w-0 border-0 p-0 m-0">
 
         <!-- ==================== ÉTAPE 1 : CONTEXTE & SINISTRE ==================== -->
         <div x-show="step === 1" x-transition.opacity class="space-y-8">
@@ -823,13 +873,13 @@
                 </div>
             </section>
 
-            <!-- SECTION 11 : CONCLUSION -->
+            <!-- SECTION 11 : CONCLUSION & SIGNATURES -->
             <section class="bg-white p-6 md:p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6">
                 <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
                     <div class="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg font-bold">11</div>
                     <div>
-                        <h2 class="text-lg font-bold text-slate-800">11. Conclusion & Bilan</h2>
-                        <p class="text-xs text-slate-500">Bilan final, cause probable et suites à donner.</p>
+                        <h2 class="text-lg font-bold text-slate-800">11. Conclusion, Bilan & Signatures Digitales</h2>
+                        <p class="text-xs text-slate-500">Bilan final, cause probable, suites à donner et émargement numérique des parties.</p>
                     </div>
                 </div>
 
@@ -864,6 +914,85 @@
                         <textarea name="suites_a_donner" rows="3" placeholder="Procédure judiciaire, enquête, surveillance de zone...">{{ old('suites_a_donner', $record->suites_a_donner ?? '') }}</textarea>
                     </div>
                 </div>
+
+                {{-- ZONE DE SIGNATURE NUMÉRIQUE (AGENT) --}}
+                <div class="pt-6 border-t border-slate-100 space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-signature text-rose-600"></i> Émargement Électronique & Signature
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Veuillez signer électroniquement pour valider l'état des lieux.</p>
+                        </div>
+                    </div>
+
+                    <div class="max-w-2xl mx-auto">
+                        <div class="p-6 rounded-3xl bg-gradient-to-b from-slate-50 to-white border border-slate-200/80 shadow-sm space-y-5">
+                            
+                            {{-- Header & Statut --}}
+                            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-sm">
+                                        <i class="fa-solid fa-pen-nib"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider">Signature du Chef d'Intervention / Agent</h4>
+                                        <p class="text-[11px] text-slate-400">Émargement officiel réservé à l'agent de garde</p>
+                                    </div>
+                                </div>
+
+                                <span id="badge_sig_agent" class="px-3 py-1 rounded-full text-xs font-extrabold flex items-center gap-1.5 {{ !empty($record->signature_agent) ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700' }}">
+                                    <span class="w-2 h-2 rounded-full {{ !empty($record->signature_agent) ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse' }}"></span>
+                                    <span>{{ !empty($record->signature_agent) ? '✓ Signé' : 'En attente' }}</span>
+                                </span>
+                            </div>
+
+                            {{-- Nom du signataire --}}
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                                    Nom & Prénom du Signataire <span class="text-rose-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="text" name="nom_agent_signataire" id="nom_agent_signataire" required
+                                        placeholder="Saisissez votre Nom & Prénom"
+                                        value="{{ old('nom_agent_signataire', $record->nom_agent_signataire ?? '') }}"
+                                        class="w-full pl-10 pr-4 py-3 bg-white border border-slate-300 rounded-2xl text-xs font-bold text-slate-800 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10 focus:outline-none transition-all" />
+                                </div>
+                            </div>
+
+                            {{-- Pavé de dessin Canvas --}}
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                                        Tracé de Signature <span class="text-rose-500">*</span>
+                                    </label>
+                                    <span class="text-[10px] text-slate-400 font-semibold">Souris ou Écran tactile</span>
+                                </div>
+
+                                <div class="relative bg-white rounded-2xl border-2 border-dashed border-slate-300 hover:border-rose-400 transition-colors overflow-hidden shadow-inner touch-none">
+                                    <canvas id="canvas_agent" width="500" height="180" class="w-full h-44 bg-white cursor-crosshair"></canvas>
+                                    <input type="hidden" name="signature_agent" id="signature_agent" value="{{ old('signature_agent', $record->signature_agent ?? '') }}">
+
+                                    {{-- Watermark hint --}}
+                                    <div id="canvas_hint" class="absolute inset-0 pointer-events-none flex items-center justify-center text-slate-300 text-xs font-bold tracking-wider uppercase opacity-40">
+                                        <i class="fa-solid fa-signature mr-2"></i> Dessinez votre signature ici
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between pt-1">
+                                    <p class="text-[11px] text-slate-400 font-medium">
+                                        <i class="fa-solid fa-circle-info text-slate-400 mr-1"></i>
+                                        Cette signature sera apposée sur le PV officiel d'état des lieux PDF.
+                                    </p>
+                                    <button type="button" id="clear_agent" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 border border-slate-200">
+                                        <i class="fa-solid fa-eraser text-xs text-rose-600"></i> Effacer & Recommencer
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
             </section>
         </div>
 
@@ -888,12 +1017,19 @@
                     Étape suivante <i class="fa-solid fa-arrow-right text-xs"></i>
                 </button>
 
-                <button type="submit" x-show="step === 4" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white text-sm font-bold shadow-lg shadow-rose-600/25 transition-all flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-cloud-arrow-up"></i> Enregistrer l'état des lieux
-                </button>
+                @if($record && $record->status === 'valide')
+                    <span x-show="step === 4" class="px-5 py-2.5 rounded-xl bg-emerald-100 text-emerald-800 font-extrabold text-xs border border-emerald-300 inline-flex items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-lock text-emerald-600"></i> Rapport Validé & Verrouillé
+                    </span>
+                @else
+                    <button type="submit" x-show="step === 4" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white text-sm font-bold shadow-lg shadow-rose-600/25 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Enregistrer l'état des lieux
+                    </button>
+                @endif
             </div>
         </div>
-    </form>
+    </fieldset>
+</form>
 </div>
 @endsection
 
@@ -979,6 +1115,9 @@
                     }
                     this.step = s;
                     window.scrollTo({ top: 0, behavior: 'smooth' });
+                    if (s === 4) {
+                        setTimeout(() => window.dispatchEvent(new Event('resize')), 150);
+                    }
                 },
                 nextStep() {
                     if (!this.validateCurrentStep()) {
@@ -987,12 +1126,18 @@
                     if (this.step < 4) {
                         this.step++;
                         window.scrollTo({ top: 0, behavior: 'smooth' });
+                        if (this.step === 4) {
+                            setTimeout(() => window.dispatchEvent(new Event('resize')), 150);
+                        }
                     }
                 },
                 prevStep() {
                     if (this.step > 1) {
                         this.step--;
                         window.scrollTo({ top: 0, behavior: 'smooth' });
+                        if (this.step === 4) {
+                            setTimeout(() => window.dispatchEvent(new Event('resize')), 150);
+                        }
                     }
                 },
 
@@ -1053,7 +1198,140 @@
             }
         }
 
+        function setupSignaturePad(canvasId, inputId, clearBtnId, badgeId, initialData) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const input = document.getElementById(inputId);
+            const clearBtn = document.getElementById(clearBtnId);
+            const badge = document.getElementById(badgeId);
+
+            let drawing = false;
+            let hasDrawn = false;
+            let isInitialized = false;
+
+            const hint = document.getElementById('canvas_hint');
+
+            function initCanvas() {
+                const rect = canvas.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
+                    const newW = Math.round(rect.width);
+                    const newH = Math.round(rect.height);
+
+                    // Ne réinitialiser la taille que si elle change réellement ou si ce n'est pas encore initialisé
+                    if (!isInitialized || canvas.width !== newW || canvas.height !== newH) {
+                        let tempCanvas = null;
+                        if (isInitialized && hasDrawn && canvas.width > 0 && canvas.height > 0) {
+                            tempCanvas = document.createElement('canvas');
+                            tempCanvas.width = canvas.width;
+                            tempCanvas.height = canvas.height;
+                            tempCanvas.getContext('2d').drawImage(canvas, 0, 0);
+                        }
+
+                        canvas.width = newW;
+                        canvas.height = newH;
+                        ctx.lineWidth = 3;
+                        ctx.lineCap = 'round';
+                        ctx.lineJoin = 'round';
+                        ctx.strokeStyle = '#0f172a';
+                        isInitialized = true;
+
+                        if (tempCanvas) {
+                            ctx.drawImage(tempCanvas, 0, 0, newW, newH);
+                        } else if (initialData && !hasDrawn) {
+                            const img = new Image();
+                            img.onload = function() {
+                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                hasDrawn = true;
+                                if (hint) hint.style.display = 'none';
+                            };
+                            img.src = initialData;
+                        }
+                    }
+                }
+            }
+
+            setTimeout(initCanvas, 300);
+            window.addEventListener('resize', function() {
+                isInitialized = false;
+                initCanvas();
+            });
+
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                let clientX = e.clientX;
+                let clientY = e.clientY;
+
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                }
+
+                // Ajustement d'échelle 1:1 parfait entre les pixels affichés et la résolution interne du canvas
+                const scaleX = rect.width ? (canvas.width / rect.width) : 1;
+                const scaleY = rect.height ? (canvas.height / rect.height) : 1;
+
+                return {
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
+                };
+            }
+
+            function startDrawing(e) {
+                e.preventDefault();
+                initCanvas();
+                drawing = true;
+                hasDrawn = true;
+                if (hint) hint.style.display = 'none';
+                const pos = getPos(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+            }
+
+            function draw(e) {
+                if (!drawing) return;
+                e.preventDefault();
+                const pos = getPos(e);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            }
+
+            function stopDrawing() {
+                if (!drawing) return;
+                drawing = false;
+                input.value = canvas.toDataURL('image/png');
+                if (badge) {
+                    badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span>✓ Signé</span>';
+                    badge.className = 'px-3 py-1 rounded-full text-xs font-extrabold flex items-center gap-1.5 bg-emerald-100 text-emerald-700';
+                }
+            }
+
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseleave', stopDrawing);
+
+            canvas.addEventListener('touchstart', startDrawing, { passive: false });
+            canvas.addEventListener('touchmove', draw, { passive: false });
+            canvas.addEventListener('touchend', stopDrawing);
+
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    input.value = '';
+                    hasDrawn = false;
+                    if (hint) hint.style.display = 'flex';
+                    if (badge) {
+                        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span><span>En attente</span>';
+                        badge.className = 'px-3 py-1 rounded-full text-xs font-extrabold flex items-center gap-1.5 bg-amber-100 text-amber-700';
+                    }
+                });
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            setupSignaturePad('canvas_agent', 'signature_agent', 'clear_agent', 'badge_sig_agent', document.getElementById('signature_agent')?.value);
+
             document.querySelectorAll('.choice-card input').forEach(input => {
                 input.addEventListener('change', function() {
                     const card = this.closest('.choice-card');

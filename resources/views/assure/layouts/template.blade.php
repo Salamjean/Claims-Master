@@ -119,6 +119,10 @@
             border: 1px solid transparent;
             width: 100%;
             background: none;
+            text-align: left;
+            box-sizing: border-box;
+            font-family: inherit;
+            outline: none;
         }
         .nav-item:hover { background: #f8fafc; color: #1e293b; }
         .nav-item.active {
@@ -388,14 +392,14 @@
 
                 {{-- Sinistres (sous-menu) --}}
                 @php $isSinistreSection = request()->routeIs('assure.sinistres.*') && !request()->routeIs('assure.sinistres.historique'); @endphp
-                <div x-data="{ open: {{ $isSinistreSection ? 'true' : 'false' }} }">
-                    <button @click="open = !open"
-                        class="nav-item {{ $isSinistreSection ? 'active' : '' }}"
+                <div x-data="{ open: {{ $isSinistreSection ? 'true' : 'false' }} }" class="w-full">
+                    <button type="button" @click="open = !open"
+                        class="nav-item w-full text-left {{ $isSinistreSection ? 'active' : '' }}"
                         data-tip="Mes Sinistres">
                         <div class="nav-icon"><i class="fa-solid fa-bolt"></i></div>
                         <span class="nav-label">Mes Sinistres</span>
                         @if(isset($countMesSinistresTotal) && $countMesSinistresTotal > 0)
-                            <span class="nav-badge">{{ $countMesSinistresTotal }}</span>
+                            <span class="nav-badge mr-1.5">{{ $countMesSinistresTotal }}</span>
                         @endif
                         <i class="nav-chevron fa-solid fa-chevron-right text-[10px] text-slate-300 ml-auto transition-transform duration-200"
                             :class="open ? 'rotate-90' : ''"></i>

@@ -14,7 +14,62 @@ class AIService
     public function __construct()
     {
         $this->apiKey = config('services.gemini.key');
-        $this->model = config('services.gemini.model', 'gemini-3.5-flash');
+        $this->model = config('services.gemini.model', 'gemini-3.5-flash-lite');
+    }
+
+    /**
+     * Vérifie si un document doit être exclu car ses informations sont déjà récupérées
+     * (Informations véhicule, informations assuré / permis, Bon de prise en charge).
+     */
+    public static function isDocumentExcluded(string $docName): bool
+    {
+        $lower = mb_strtolower(trim($docName));
+
+        // 1. Exclure "Bon de prise en charge"
+        if (str_contains($lower, 'prise en charge') || str_contains($lower, 'bon de prise')) {
+            return true;
+        }
+
+        // 2. Exclure pièces du véhicule (carte grise, pièces du véhicule)
+        if (str_contains($lower, 'pièces du véhicule') || str_contains($lower, 'pieces du vehicule') || str_contains($lower, 'carte grise')) {
+            return true;
+        }
+
+        // 3. Exclure permis du conducteur / permis de conduire
+        return false;
+    }
+
+    /**
+     * Détermine si un document est strictement indispensable / obligatoire ou optionnel.
+     */
+    public static function isDocumentMandatory(string $docName): bool
+    {
+        $lower = mb_strtolower(trim($docName));
+
+        // Documents de base indispensables (Déclaration, Constat/PV, Plainte, Certificat médical initial/décès)
+        $essentialKeywords = [
+            'déclaration',
+            'declaration',
+            'constat',
+            'pv police',
+            'gendarmerie',
+            'dépôt de plainte',
+            'depot de plainte',
+            'récépissé',
+            'recepisse',
+            'certificat médical initial',
+            'certificat de décès',
+            'certificat de genre de mort'
+        ];
+
+        foreach ($essentialKeywords as $kw) {
+            if (str_contains($lower, $kw)) {
+                return true;
+            }
+        }
+
+        // Tout le reste (Factures de réparation/soins, Rapports d'expertise, Photos, etc.) est optionnel / complémentaire
+        return false;
     }
 
     /**
@@ -31,11 +86,8 @@ class AIService
         if (str_contains($typeNorm, 'matériel') || str_contains($typeNorm, 'materiel') || str_contains($typeNorm, 'dommage')) {
             $docs = [
                 'Déclaration circonstanciée du sinistre',
-                'Photocopie des pièces du véhicule',
-                'Photocopie du permis du conducteur',
                 'Constat amiable ou PV police/gendarmerie',
                 'Rapport d’expertise automobile',
-                'Bon de prise en charge délivré par le courtier ou l’assureur',
                 'Facture originale acquittée des réparations'
             ];
         }
@@ -43,9 +95,7 @@ class AIService
         elseif (str_contains($typeNorm, 'corporel') || str_contains($typeNorm, 'blessure') || str_contains($typeNorm, 'décès') || str_contains($typeNorm, 'deces')) {
             $docs = [
                 'Déclaration circonstanciée du sinistre',
-                'PV police/gendarmerie ou constat amiable',
-                'Photocopie du permis de conduire',
-                'Photocopie des pièces du véhicule'
+                'PV police/gendarmerie ou constat amiable'
             ];
 
             if (str_contains($descNorm, 'décès') || str_contains($descNorm, 'deces') || str_contains($descNorm, 'mort')) {
@@ -71,8 +121,7 @@ class AIService
             $docs = [
                 'Dépôt de plainte dans les 24h',
                 'Déclaration circonstanciée du vol',
-                'Récépissé de dépôt de plainte',
-                'Photocopies : Carte grise, Visite technique, Vignette'
+                'Récépissé de dépôt de plainte'
             ];
 
             if (str_contains($descNorm, 'retrouvé') || str_contains($descNorm, 'retrouve')) {
@@ -97,8 +146,6 @@ class AIService
         elseif (str_contains($typeNorm, 'incendie') || str_contains($typeNorm, 'feu')) {
             $docs = [
                 'Déclaration circonstanciée du sinistre',
-                'Photocopie des pièces du véhicule',
-                'Photocopie permis conducteur',
                 'Rapport des sapeurs-pompiers ou PV police',
                 'Rapport d’expertise incendie',
                 'Photographies du véhicule',
@@ -109,8 +156,6 @@ class AIService
         elseif (str_contains($typeNorm, 'bris') || str_contains($typeNorm, 'glace') || str_contains($typeNorm, 'pare-brise') || str_contains($typeNorm, 'vitre')) {
             $docs = [
                 'Déclaration de sinistre',
-                'Photocopie carte grise',
-                'Photocopie permis conducteur',
                 'Constat amiable si accident associé',
                 'Facture originale du remplacement du vitrage'
             ];
@@ -119,8 +164,6 @@ class AIService
         elseif (str_contains($typeNorm, 'recours') || str_contains($typeNorm, 'non responsable') || str_contains($typeNorm, 'tierce')) {
             $docs = [
                 'Déclaration circonstanciée',
-                'Photocopie pièces du véhicule',
-                'Photocopie permis conducteur',
                 'Constat amiable ou PV police/gendarmerie',
                 'Rapport d’expertise original',
                 'Facture acquittée des réparations'
@@ -129,13 +172,13 @@ class AIService
         else {
             $docs = [
                 'Déclaration circonstanciée du sinistre',
-                'Photocopie des pièces du véhicule',
-                'Photocopie du permis du conducteur',
                 'Constat amiable ou PV police/gendarmerie'
             ];
         }
 
-        return array_values(array_unique($docs));
+        $cleanDocs = array_filter($docs, fn($d) => !self::isDocumentExcluded($d));
+
+        return array_values(array_unique($cleanDocs));
     }
 
     /**
@@ -219,9 +262,9 @@ class AIService
                 $content = $response->json('candidates.0.content.parts.0.text');
                 $decoded = json_decode(trim(preg_replace('/```json\s*|\s*```/', '', $content)), true);
                 if (is_array($decoded) && isset($decoded['recommended_docs'])) {
-                    // FILTRAGE STRICT : Ne conserver EXCLUSIVEMENT que les pièces présentes dans la liste officielle
+                    // FILTRAGE STRICT : Ne conserver EXCLUSIVEMENT que les pièces non exclues
                     $filteredDocs = array_values(array_filter($decoded['recommended_docs'], function($doc) use ($defaultDocs) {
-                        return in_array($doc, $defaultDocs);
+                        return in_array($doc, $defaultDocs) && !self::isDocumentExcluded($doc);
                     }));
 
                     $decoded['recommended_docs'] = !empty($filteredDocs) ? $filteredDocs : $defaultDocs;
@@ -267,29 +310,73 @@ class AIService
     }
 
     /**
-     * Vérifie spécifiquement l'attestation d'assurance par rapport aux données du formulaire.
+     * Analyse et convertit n'importe quel format de date (ISO YYYY-MM-DD, FR DD/MM/YYYY, etc.) en objet Carbon.
+     */
+    public static function parseFlexibleDate(?string $dateStr): ?\Carbon\Carbon
+    {
+        if (empty($dateStr)) {
+            return null;
+        }
+
+        $clean = trim($dateStr);
+
+        // Si le format contient JJ/MM/AAAA ou JJ-MM-AAAA (Format Français)
+        if (preg_match('/(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})/', $clean, $m)) {
+            return \Carbon\Carbon::createFromDate((int)$m[3], (int)$m[2], (int)$m[1])->startOfDay();
+        }
+
+        // Si le format est AAAA-MM-JJ ou AAAA/MM/JJ (Format ISO)
+        if (preg_match('/(\d{4})[\/\.-](\d{1,2})[\/\.-](\d{1,2})/', $clean, $m)) {
+            return \Carbon\Carbon::createFromDate((int)$m[1], (int)$m[2], (int)$m[3])->startOfDay();
+        }
+
+        $normalized = str_replace('/', '-', $clean);
+        try {
+            return \Carbon\Carbon::parse($normalized)->startOfDay();
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Audit complet et extraction de l'attestation d'assurance (Structure ASACI, Plaque, Marque, Échéance, Assureur)
      */
     public function verifyAttestation(string $imagePath, array $formData)
     {
         if (!$this->apiKey) {
-            return ['status' => 'valid', 'feedback' => 'Validation simulée.'];
+            return ['status' => 'valid', 'feedback' => 'Validation simulée.', 'date_expiration' => null];
         }
 
         try {
             $imageData = base64_encode(file_get_contents($imagePath));
             $mimeType = mime_content_type($imagePath);
 
-            $prompt = "Tu es un expert en audit de documents d'assurance en Côte d'Ivoire. Ta mission est de scanner l'attestation d'assurance jointe et de vérifier UNIQUEMENT si l'immatriculation du véhicule correspond.\n\n";
-            $prompt .= "Données à vérifier :\n";
-            $prompt .= "- Immatriculation attendue : " . ($formData['plaque'] ?? 'Non spécifiée') . "\n\n";
-            $prompt .= "Extraits également le nom de la compagnie d'assurance (Assureur) mentionné sur le document.\n\n";
-            $prompt .= "Règles d'analyse :\n";
-            $prompt .= "1. Localise le numéro d'immatriculation sur le document.\n";
-            $prompt .= "2. COMPARE consciencieusement. Ignore absolument les tirets ou espaces (ex: '1234 AB 01' est identique à '1234AB01').\n";
-            $prompt .= "3. Si l'immatriculation lue sur le document est différente de celle attendue, le statut est 'invalid'.\n";
-            $prompt .= "4. Si l'immatriculation correspond parfaitement ou est très proche (faute de frappe mineure évidente), réponds 'valid'.\n";
-            $prompt .= "5. TRÈS IMPORTANT : IGNORE toutes les autres informations (numéro de contrat, marque, modèle, dates) SAUF le nom de l'assureur.\n\n";
-            $prompt .= "Réponds UNIQUEMENT au format JSON : {\"status\": \"valid\"|\"invalid\", \"feedback\": \"Explication concise\", \"assureur\": \"NOM_DE_L_ASSUREUR_TROUVE\"}";
+            $prompt = "Tu es un expert qualifié en audit et contrôle de conformité des attestations d'assurance automobile en Côte d'Ivoire (Format ASACI).\n";
+            $prompt .= "Ta mission est de scanner l'attestation d'assurance transmise et d'analyser les informations suivantes :\n\n";
+
+            $prompt .= "--- DONNÉES ENREGISTRÉES DU VÉHICULE ---\n";
+            $prompt .= "- Plaque d'immatriculation attendue : " . ($formData['plaque'] ?? 'Non spécifiée') . "\n";
+            if (!empty($formData['marque'])) {
+                $prompt .= "- Marque attendue : " . $formData['marque'] . "\n";
+            }
+            if (!empty($formData['modele'])) {
+                $prompt .= "- Modèle attendu : " . $formData['modele'] . "\n";
+            }
+            if (!empty($formData['numero_contrat'])) {
+                $prompt .= "- Numéro de Police / Contrat attendu : " . $formData['numero_contrat'] . "\n";
+            }
+
+            $prompt .= "\n--- EXTRACTION DES INFORMATIONS CLÉS ---\n";
+            $prompt .= "1. 'assureur' : Nom de la compagnie d'assurance (ex: NSIA, SANLAM, ALLIANZ, AXA, SUNU, etc.).\n";
+            $prompt .= "2. 'date_expiration' : La date de fin / d'échéance de l'assurance (la 2ème date après 'Au', 'au', 'Date d'échéance', 'Fin de validité'). Ex: '09/02/2027', '2027-02-09'. Ne mets null que si absente.\n\n";
+
+            $prompt .= "--- RÈGLES DE VALIDATION (STATUS 'valid' OU 'invalid') ---\n";
+            $prompt .= "1. STRUCTURE ASACI : Vérifie que le document a l'apparence d'une attestation d'assurance automobile officielle. Si ce n'est pas une attestation d'assurance, réponds status: 'invalid' et feedback: 'Le document téléversé n'est pas une attestation d'assurance automobile.'\n";
+            $prompt .= "2. PLAQUE D'IMMATRICULATION : Compare la plaque trouvée avec la plaque attendue (" . ($formData['plaque'] ?? '') . "), en ignorant tirets et espaces. Si la plaque sur le document diffère de la plaque attendue, réponds status: 'invalid'.\n";
+            $prompt .= "3. MARQUE / POLICE : Si la marque ou le numéro de police sur l'attestation contredit le véhicule enregistré, réponds status: 'invalid'.\n";
+            $prompt .= "4. SI TOUT EST CONFORME : Réponds status: 'valid' et un feedback positif concise.\n\n";
+
+            $prompt .= "Réponds UNIQUEMENT au format JSON strict : {\"status\": \"valid\"|\"invalid\", \"feedback\": \"Explication concise en français\", \"assureur\": \"NOM_ASSUREUR\", \"date_expiration\": \"DATE_EXTRAITE_OU_NULL\"}";
 
             return $this->callGeminiVision($prompt, $imageData, $mimeType);
         } catch (\Exception $e) {
@@ -324,13 +411,6 @@ class AIService
                         ['text' => "Tu as deux images : le 'MODÈLE ASACI' (image 1) et le 'DOCUMENT SCANNE' (image 2). 
                         Vérifie si le document scanné respecte la STRUCTURE TYPE des attestations d'assurance automobile en Côte d'Ivoire (Modèle ASACI).
                         
-                        Critères :
-                        - Disposition des cadres et des lignes identique.
-                        - Présence des en-têtes standards.
-                        - Même format général de formulaire.
-                        
-                        Note : Les données remplies au stylo ou à l'imprimante varient d'un client à l'autre, c'est NORMAL. Fais abstraction du contenu des textes remplis, concentre-toi sur le FOND et la MISE EN PAGE.
-                        
                         Réponds JSON : {\"status\": \"valid\"|\"invalid\", \"feedback\": \"Justification concise en français\"}"],
                         ['inlineData' => ['mimeType' => 'image/jpeg', 'data' => $templateData]],
                         ['inlineData' => ['mimeType' => $mimeType, 'data' => $uploadedData]]
@@ -351,13 +431,18 @@ class AIService
      */
     protected function callGeminiVisionDetailed(array $contents)
     {
-        $url = $this->baseUrl . '/' . $this->model . ':generateContent?key=' . $this->apiKey;
-        $maxAttempts = 3;
-        $attempt = 0;
+        $modelsToTry = array_unique([
+            $this->model,
+            'gemini-3.5-flash-lite',
+            'gemini-flash-latest',
+            'gemini-3.1-flash-lite'
+        ]);
 
-        while ($attempt < $maxAttempts) {
+        foreach ($modelsToTry as $m) {
+            $url = $this->baseUrl . '/' . $m . ':generateContent?key=' . $this->apiKey;
+
             try {
-                $response = Http::withOptions(['verify' => false])->timeout(60)->post($url, [
+                $response = Http::withOptions(['verify' => false])->timeout(15)->post($url, [
                     'contents' => $contents,
                     'generationConfig' => ['temperature' => 0.1, 'maxOutputTokens' => 600, 'responseMimeType' => 'application/json']
                 ]);
@@ -365,24 +450,18 @@ class AIService
                 if ($response->successful()) {
                     $content = $response->json('candidates.0.content.parts.0.text');
                     $decoded = json_decode(trim(preg_replace('/```json\s*|\s*```/', '', $content)), true);
-                    if (is_array($decoded))
+                    if (is_array($decoded)) {
                         return $decoded;
+                    }
                 } else {
-                    Log::error('Gemini API Error in callGeminiVisionDetailed (Attempt ' . ($attempt+1) . '): ' . $response->body());
-                }
-
-                if ($response->status() === 503 && $attempt < $maxAttempts - 1) {
-                    $attempt++;
-                    sleep(2);
-                    continue;
+                    Log::warning("Gemini Vision Detailed model '$m' attempt failed (Status " . $response->status() . ")");
                 }
             } catch (\Exception $e) {
-                Log::error('Attempt fail: ' . $e->getMessage());
+                Log::error("Gemini Vision Detailed model '$m' exception: " . $e->getMessage());
             }
-            break;
         }
 
-        return ['status' => 'pending', 'feedback' => 'Format de réponse IA invalide ou serveur indisponible.'];
+        return ['status' => 'pending', 'feedback' => 'Quota ou service IA temporairement indisponible.'];
     }
 
     /**
@@ -390,13 +469,18 @@ class AIService
      */
     protected function callGeminiVision(string $prompt, string $imageData, string $mimeType)
     {
-        $url = $this->baseUrl . '/' . $this->model . ':generateContent?key=' . $this->apiKey;
-        $maxAttempts = 3;
-        $attempt = 0;
+        $modelsToTry = array_unique([
+            $this->model,
+            'gemini-3.5-flash-lite',
+            'gemini-flash-latest',
+            'gemini-3.1-flash-lite'
+        ]);
 
-        while ($attempt < $maxAttempts) {
+        foreach ($modelsToTry as $m) {
+            $url = $this->baseUrl . '/' . $m . ':generateContent?key=' . $this->apiKey;
+
             try {
-                $response = Http::withOptions(['verify' => false])->timeout(60)->post($url, [
+                $response = Http::withOptions(['verify' => false])->timeout(15)->post($url, [
                     'contents' => [['parts' => [['text' => $prompt], ['inlineData' => ['mimeType' => $mimeType, 'data' => $imageData]]]]],
                     'generationConfig' => ['temperature' => 0.1, 'maxOutputTokens' => 600, 'responseMimeType' => 'application/json']
                 ]);
@@ -404,24 +488,18 @@ class AIService
                 if ($response->successful()) {
                     $content = $response->json('candidates.0.content.parts.0.text');
                     $decoded = json_decode(trim(preg_replace('/```json\s*|\s*```/', '', $content)), true);
-                    if (is_array($decoded))
+                    if (is_array($decoded)) {
                         return $decoded;
+                    }
                 } else {
-                    Log::error('Gemini API Error in callGeminiVision (Attempt ' . ($attempt+1) . '): ' . $response->body());
-                }
-
-                if ($response->status() === 503 && $attempt < $maxAttempts - 1) {
-                    $attempt++;
-                    sleep(2);
-                    continue;
+                    Log::warning("Gemini Vision model '$m' attempt failed (Status " . $response->status() . ")");
                 }
             } catch (\Exception $e) {
-                Log::error('Attempt fail: ' . $e->getMessage());
+                Log::error("Gemini Vision model '$m' exception: " . $e->getMessage());
             }
-            break;
         }
 
-        return ['status' => 'pending', 'feedback' => 'Format de réponse IA invalide ou serveur indisponible.'];
+        return ['status' => 'pending', 'feedback' => 'Quota ou service IA temporairement indisponible.'];
     }
 
     /**

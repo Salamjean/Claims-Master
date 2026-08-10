@@ -37,6 +37,18 @@
                     Comment ça marche
                 </a>
             </div>
+
+            {{-- Bouton Signaler une urgence --}}
+            <div style="margin-top:1.5rem;">
+                <a href="{{ route('alerte.form') }}"
+                   style="display:inline-flex;align-items:center;gap:0.6rem;padding:14px 24px;background:rgba(239,68,68,0.15);border:1.5px solid rgba(239,68,68,0.5);color:#fca5a5;font-size:14px;font-weight:800;border-radius:999px;text-decoration:none;transition:all 0.2s;backdrop-filter:blur(12px);"
+                   onmouseover="this.style.background='rgba(239,68,68,0.3)';this.style.color='#ffffff'"
+                   onmouseout="this.style.background='rgba(239,68,68,0.15)';this.style.color='#fca5a5'">
+                    <span style="width:10px;height:10px;border-radius:50%;background:#ef4444;animation:pulse-dot 1.5s infinite;display:inline-block;flex-shrink:0;"></span>
+                    🚨 Signaler une urgence — Sans connexion requise
+                </a>
+                <style>@keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(1.3)} }</style>
+            </div>
         </div>
     </section>
 

@@ -87,12 +87,21 @@
                             <tr class="hover:bg-slate-50 transition-colors">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center justify-center gap-3">
-                                        <div class="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-xs font-bold shrink-0">
-                                            {{ strtoupper(substr($sinistre->assure->name ?? 'P', 0, 1)) }}
+                                        <div class="w-8 h-8 rounded-xl {{ $sinistre->user_id ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600' }} flex items-center justify-center text-xs font-bold shrink-0">
+                                            {{ strtoupper(substr($sinistre->declarant_nom ?? $sinistre->assure->name ?? 'P', 0, 1)) }}
                                         </div>
                                         <div class="text-left">
-                                            <p class="text-sm font-bold text-slate-800">{{ $sinistre->assure->name ?? '—' }} {{ $sinistre->assure->prenom ?? '' }}</p>
-                                            <p class="text-xs text-slate-500">{{ $sinistre->assure->contact ?? 'N/A' }}</p>
+                                            @if(!$sinistre->user_id)
+                                                {{-- Déclaration Témoin / Passant --}}
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-700 border border-amber-300 mb-0.5">
+                                                    <i class="fa-solid fa-eye text-[9px]"></i> Alerte Témoin
+                                                </span>
+                                                <p class="text-sm font-bold text-slate-800">{{ $sinistre->declarant_nom ?? 'Passant Anonyme' }}</p>
+                                                <p class="text-xs text-slate-500">{{ $sinistre->declarant_contact ?? 'Contact non fourni' }}</p>
+                                            @else
+                                                <p class="text-sm font-bold text-slate-800">{{ $sinistre->assure->name ?? '—' }} {{ $sinistre->assure->prenom ?? '' }}</p>
+                                                <p class="text-xs text-slate-500">{{ $sinistre->assure->contact ?? 'N/A' }}</p>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>

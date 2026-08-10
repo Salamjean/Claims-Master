@@ -20,9 +20,17 @@
         </div>
 
         <div class="flex items-center gap-2">
-            <a href="{{ route('groupe.sinistres.etat_des_lieux', $sinistre) }}" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold rounded-xl transition-colors inline-flex items-center gap-2 shadow-sm">
-                <i class="fa-solid fa-pen-to-square"></i> Modifier l'état des lieux
-            </a>
+            @if($etatDesLieux && $etatDesLieux->status === 'valide')
+                {{-- Rapport validé : bouton Consulter avec cadenas --}}
+                <a href="{{ route('groupe.sinistres.etat_des_lieux', $sinistre) }}" class="px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-extrabold rounded-xl transition-colors inline-flex items-center gap-2 shadow-sm border border-emerald-300">
+                    <i class="fa-solid fa-lock text-emerald-600"></i> Consulter l'état des lieux (Verrouillé)
+                </a>
+            @else
+                {{-- Rapport modifiable --}}
+                <a href="{{ route('groupe.sinistres.etat_des_lieux', $sinistre) }}" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold rounded-xl transition-colors inline-flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-pen-to-square"></i> Modifier l'état des lieux
+                </a>
+            @endif
 
             @if($etatDesLieux)
                 <a href="{{ route('groupe.sinistres.etat_des_lieux.pdf', $sinistre) }}" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition-colors inline-flex items-center gap-2 shadow-sm">
