@@ -37,11 +37,7 @@
 
         <p class="nav-label text-white/30 text-[10px] uppercase tracking-widest font-semibold px-3 mt-4 mb-2">Service</p>
 
-        <a href="{{ route('hopital.capacite') }}"
-            class="nav-item {{ request()->routeIs('hopital.capacite') ? 'active' : '' }}">
-            <span class="nav-icon"><i class="fa-solid fa-truck-field text-sm"></i></span>
-            <span class="nav-label text-sm">Secours & Capacité</span>
-        </a>
+
 
         <a href="{{ route('hopital.groupes.index') }}"
             class="nav-item {{ request()->routeIs('hopital.groupes.*') ? 'active' : '' }}">
