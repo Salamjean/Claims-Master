@@ -163,13 +163,6 @@
                                                 <i class="fa-solid fa-map-location-dot"></i> Non localisé
                                             </button>
                                         @endif
-
-                                        <button type="button"
-                                            @click="openModal = true; completeUrl = '{{ route('hopital.sinistres.complete', $sinistre) }}'"
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors shadow-sm cursor-pointer"
-                                            title="Clôturer l'intervention et la transférer vers l'historique">
-                                            <i class="fa-solid fa-flag-checkered"></i> Terminer
-                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -186,48 +179,6 @@
                         @endforelse
                     </tbody>
                 </table>
-            </div>
-
-            {{-- Modal Saisie Rapport d'Intervention --}}
-            <div x-show="openModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4" x-cloak>
-                <div class="bg-white rounded-3xl border border-slate-100 max-w-lg w-full p-6 shadow-2xl transform transition-all" @click.away="openModal = false">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-file-shield text-rose-600 text-lg animate-pulse"></i>
-                            Rapport d'Intervention Initial
-                        </h3>
-                        <button @click="openModal = false" class="text-slate-400 hover:text-slate-600">
-                            <i class="fa-solid fa-xmark text-lg"></i>
-                        </button>
-                    </div>
-
-                    <form :action="completeUrl" method="POST" class="space-y-4">
-                        @csrf
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Gravité estimée de l'accident <span class="text-red-500">*</span></label>
-                            <select name="hospital_severity" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm" required>
-                                <option value="">Sélectionner...</option>
-                                <option value="leger">Léger (Secours de base uniquement)</option>
-                                <option value="grave">Grave (Évacuation requise)</option>
-                                <option value="deces">Décès constaté</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Observations / Rapport d'intervention</label>
-                            <textarea name="hospital_notes" rows="4" placeholder="Ex: Choc arrière violent, blessé léger pris en charge..." class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 text-sm resize-none"></textarea>
-                        </div>
-
-                        <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
-                            <button type="button" @click="openModal = false" class="px-5 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-slate-50 border border-slate-200 text-xs">
-                                Annuler
-                            </button>
-                            <button type="submit" class="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md shadow-rose-600/10">
-                                Valider & Clôturer l'intervention
-                            </button>
-                        </div>
-                    </form>
-                </div>
             </div>
         </div>
     </div>

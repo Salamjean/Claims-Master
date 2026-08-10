@@ -914,7 +914,7 @@
 
                         <div class="sms-info-box">
                             <i class="fa-solid fa-comment-sms text-amber-600" style="font-size:1.1rem; flex-shrink:0; margin-top:2px;"></i>
-                            <span>Si vous renseignez votre numéro, vous recevrez un <strong>SMS instantané</strong> avec le lien de suivi de l'intervention.</span>
+                            <span>Indiquez votre numéro pour recevoir un <strong>SMS instantané</strong> avec le lien de suivi de l'intervention.</span>
                         </div>
 
                         <div class="grid-2col">
@@ -926,8 +926,8 @@
                                     oninput="updateSummary()">
                             </div>
                             <div class="form-field">
-                                <label class="form-label-custom" for="declarant_contact">Votre numéro de téléphone (optionnel)</label>
-                                <input type="tel" name="declarant_contact" id="declarant_contact"
+                                <label class="form-label-custom" for="declarant_contact">Votre numéro de téléphone <span class="req">*</span></label>
+                                <input type="tel" name="declarant_contact" id="declarant_contact" required
                                     class="form-control-custom" placeholder="Ex: 07 07 07 07 07"
                                     value="{{ old('declarant_contact') }}"
                                     oninput="updateSummary()">
@@ -1205,13 +1205,14 @@
         const type = document.getElementById('type_sinistre').value;
         const lieu = document.getElementById('lieu').value.trim();
         const photos = document.getElementById('photos').files.length;
+        const contact = document.getElementById('declarant_contact').value.trim();
 
-        if (!type || !lieu || !photos) {
+        if (!type || !lieu || !photos || !contact) {
             e.preventDefault();
             Swal.fire({
                 icon: 'warning',
                 title: 'Informations manquantes',
-                text: 'Veuillez vérifier tous les champs obligatoires (Type, Lieu, Photo).',
+                text: 'Veuillez vérifier tous les champs obligatoires (Type, Lieu, Photo, Numéro de téléphone).',
                 confirmButtonColor: '#B9123C'
             });
             return;

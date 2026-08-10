@@ -24,23 +24,13 @@ class SmsRepository
         // Garde uniquement les chiffres
         $phone = preg_replace('/\D/', '', $phone);
 
-        // Si déjà en format international (commence par 225 + 10 chiffres = 13 digits)
-        if (str_starts_with($phone, '225') && strlen($phone) === 13) {
+        // Si commence déjà par 225
+        if (str_starts_with($phone, '225')) {
             return $phone;
         }
 
-        // Numéro local ivoirien à 10 chiffres (ex: 0798278981) → +2250798278981
-        if (strlen($phone) === 10) {
-            return '+225' . $phone;
-        }
-
-        // Si le numéro commence déjà par 225 (format international sans +)
-        if (str_starts_with($phone, '225')) {
-            return '+' . $phone;
-        }
-
-        // Autres cas : on préfixe par +225
-        return '+225' . $phone;
+        // Numéro local à 10 chiffres (ex: 0707070707) -> 2250707070707
+        return '225' . $phone;
     }
 
     /**

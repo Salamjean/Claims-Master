@@ -41,7 +41,7 @@ class AlertePubliqueController extends Controller
             'latitude'         => ['nullable', 'numeric', 'between:-90,90'],
             'longitude'        => ['nullable', 'numeric', 'between:-180,180'],
             'declarant_nom'    => ['nullable', 'string', 'max:255'],
-            'declarant_contact' => ['nullable', 'string', 'max:50'],
+            'declarant_contact' => ['required', 'string', 'max:50'],
             'photos'           => ['required', 'array', 'min:1', 'max:3'],
             'photos.*'         => ['required', 'image', 'max:5120'], // 5MB par photo
         ]);
@@ -102,11 +102,13 @@ class AlertePubliqueController extends Controller
         // Envoi SMS de confirmation avec lien de suivi (si contact fourni)
         if (!empty($validated['declarant_contact'])) {
             $lienSuivi = route('alerte.suivi', $token);
-            $nomDeclarant = $validated['declarant_nom'] ? ', ' . $validated['declarant_nom'] : '';
-            $message = "Claims Master{$nomDeclarant}: Votre signalement d'urgence a ete enregistre. Ref: {$sinistre->numero_sinistre}. Suivez l'intervention ici: {$lienSuivi}";
+            $nomDeclarant = !empty($validated['declarant_nom']) ? ', ' . $validated['declarant_nom'] : '';
+            $refSinistre = $sinistre->numero_sinistre ?? ('URG-' . $sinistre->id);
+            $message = "Claims Master{$nomDeclarant}: Votre signalement d'urgence a ete enregistre. Ref: {$refSinistre}. Suivez l'intervention ici: {$lienSuivi}";
 
             try {
-                $this->sms->sendSms($validated['declarant_contact'], $message);
+                $res = $this->sms->sendSms($validated['declarant_contact'], $message);
+                Log::info('SMS suivi alerte anonyme resultat: ', ['contact' => $validated['declarant_contact'], 'result' => $res]);
             } catch (\Exception $e) {
                 Log::warning('SMS suivi alerte anonyme non envoye: ' . $e->getMessage());
             }
