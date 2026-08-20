@@ -9,12 +9,13 @@ class AIService
 {
     protected $apiKey;
     protected $model;
-    protected $baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+    protected $baseUrl;
 
     public function __construct()
     {
-        $this->apiKey = config('services.gemini.key');
-        $this->model  = config('services.gemini.model', 'gemini-3.5-flash');
+        $this->apiKey  = config('services.gemini.key');
+        $this->model   = config('services.gemini.model', 'gemini-3.5-flash');
+        $this->baseUrl = config('services.gemini.base_url', 'https://generativelanguage.googleapis.com/v1beta/models');
     }
 
     /**
