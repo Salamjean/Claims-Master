@@ -451,9 +451,9 @@ class AIService
     {
         $modelsToTry = array_unique([
             $this->model,
-            'gemini-1.5-flash',
-            'gemini-2.0-flash',
-            'gemini-1.5-pro'
+            'gemini-3.5-flash',
+            'gemini-2.5-flash',
+            'gemini-flash-latest'
         ]);
 
         foreach ($modelsToTry as $m) {
@@ -480,7 +480,7 @@ class AIService
                     }
                     if ($status === 403 || $status === 401) {
                         Log::warning("Gemini API Erreur d'accès/clé (Status $status) sur modèle '$m' : " . $body);
-                        break; // Inutile de boucler sur d'autres modèles si la clé/compte est refusé
+                        break;
                     }
                     Log::warning("Gemini Vision Detailed model '$m' attempt failed (Status " . $status . ")");
                 }
@@ -499,9 +499,9 @@ class AIService
     {
         $modelsToTry = array_unique([
             $this->model,
-            'gemini-1.5-flash',
-            'gemini-2.0-flash',
-            'gemini-1.5-pro'
+            'gemini-3.5-flash',
+            'gemini-2.5-flash',
+            'gemini-flash-latest'
         ]);
 
         foreach ($modelsToTry as $m) {
