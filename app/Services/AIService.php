@@ -14,7 +14,20 @@ class AIService
     public function __construct()
     {
         $this->apiKey = config('services.gemini.key');
-        $this->model = config('services.gemini.model', 'gemini-3.5-flash-lite');
+        $this->model  = config('services.gemini.model', 'gemini-3.5-flash');
+    }
+
+    /**
+     * Reçois les options HTTP de base (avec gestion du proxy si configuré)
+     */
+    protected function getHttpOptions(): array
+    {
+        $options = ['verify' => false];
+        $proxy = config('services.gemini.proxy');
+        if (!empty($proxy)) {
+            $options['proxy'] = $proxy;
+        }
+        return $options;
     }
 
     /**
@@ -248,7 +261,7 @@ class AIService
 
             $url = $this->baseUrl . '/' . $this->model . ':generateContent?key=' . $this->apiKey;
 
-            $response = Http::withOptions(['verify' => false])
+            $response = Http::withOptions($this->getHttpOptions())
                 ->timeout(60)
                 ->post($url, [
                     'contents' => [['parts' => [['text' => $prompt]]]],
@@ -271,7 +284,12 @@ class AIService
                     return $decoded;
                 }
             } else {
-                Log::error('Gemini API Error in analyzeDeclarationText: ' . $response->body());
+                $body = $response->body();
+                if (str_contains($body, 'User location is not supported')) {
+                    Log::warning("Google Gemini API restreint sur l'IP du serveur de production. Basculement sur la grille réglementaire locale.");
+                } else {
+                    Log::error('Gemini API Error in analyzeDeclarationText: ' . $body);
+                }
             }
         } catch (\Exception $e) {
             Log::error('Gemini Analysis Exception: ' . $e->getMessage());
@@ -433,16 +451,16 @@ class AIService
     {
         $modelsToTry = array_unique([
             $this->model,
-            'gemini-3.5-flash-lite',
-            'gemini-flash-latest',
-            'gemini-3.1-flash-lite'
+            'gemini-1.5-flash',
+            'gemini-2.0-flash',
+            'gemini-1.5-pro'
         ]);
 
         foreach ($modelsToTry as $m) {
             $url = $this->baseUrl . '/' . $m . ':generateContent?key=' . $this->apiKey;
 
             try {
-                $response = Http::withOptions(['verify' => false])->timeout(15)->post($url, [
+                $response = Http::withOptions($this->getHttpOptions())->timeout(15)->post($url, [
                     'contents' => $contents,
                     'generationConfig' => ['temperature' => 0.1, 'maxOutputTokens' => 600, 'responseMimeType' => 'application/json']
                 ]);
@@ -454,6 +472,11 @@ class AIService
                         return $decoded;
                     }
                 } else {
+                    $body = $response->body();
+                    if (str_contains($body, 'User location is not supported')) {
+                        Log::warning("Gemini API non disponible pour l'IP du serveur de production (User location not supported). Basculement automatique sur la règle locale.");
+                        break; // Arrêter la boucle d'essais car l'IP est restreinte par Google
+                    }
                     Log::warning("Gemini Vision Detailed model '$m' attempt failed (Status " . $response->status() . ")");
                 }
             } catch (\Exception $e) {
@@ -461,7 +484,7 @@ class AIService
             }
         }
 
-        return ['status' => 'pending', 'feedback' => 'Quota ou service IA temporairement indisponible.'];
+        return ['status' => 'pending', 'feedback' => 'Analyse manuelle requise (Localisation serveur non supportée par Google AI Studio ou quota dépassé).'];
     }
 
     /**
@@ -471,16 +494,16 @@ class AIService
     {
         $modelsToTry = array_unique([
             $this->model,
-            'gemini-3.5-flash-lite',
-            'gemini-flash-latest',
-            'gemini-3.1-flash-lite'
+            'gemini-1.5-flash',
+            'gemini-2.0-flash',
+            'gemini-1.5-pro'
         ]);
 
         foreach ($modelsToTry as $m) {
             $url = $this->baseUrl . '/' . $m . ':generateContent?key=' . $this->apiKey;
 
             try {
-                $response = Http::withOptions(['verify' => false])->timeout(15)->post($url, [
+                $response = Http::withOptions($this->getHttpOptions())->timeout(15)->post($url, [
                     'contents' => [['parts' => [['text' => $prompt], ['inlineData' => ['mimeType' => $mimeType, 'data' => $imageData]]]]],
                     'generationConfig' => ['temperature' => 0.1, 'maxOutputTokens' => 600, 'responseMimeType' => 'application/json']
                 ]);
@@ -492,6 +515,11 @@ class AIService
                         return $decoded;
                     }
                 } else {
+                    $body = $response->body();
+                    if (str_contains($body, 'User location is not supported')) {
+                        Log::warning("Gemini API non disponible pour l'IP du serveur de production (User location not supported). Basculement automatique sur la règle locale.");
+                        break;
+                    }
                     Log::warning("Gemini Vision model '$m' attempt failed (Status " . $response->status() . ")");
                 }
             } catch (\Exception $e) {
@@ -499,7 +527,7 @@ class AIService
             }
         }
 
-        return ['status' => 'pending', 'feedback' => 'Quota ou service IA temporairement indisponible.'];
+        return ['status' => 'pending', 'feedback' => 'Analyse manuelle requise (Localisation serveur non supportée par Google AI Studio).'];
     }
 
     /**
@@ -514,7 +542,7 @@ class AIService
             $prompt = "Rédige un message pour demander : " . implode(', ', $requiredDocs) . " pour un sinistre " . $sinistre->type_sinistre;
             $url = $this->baseUrl . '/' . $this->model . ':generateContent?key=' . $this->apiKey;
 
-            $response = Http::withOptions(['verify' => false])->timeout(60)->post($url, [
+            $response = Http::withOptions($this->getHttpOptions())->timeout(60)->post($url, [
                 'contents' => [['parts' => [['text' => $prompt]]]],
                 'generationConfig' => ['temperature' => 0.7, 'maxOutputTokens' => 600]
             ]);

@@ -36,8 +36,9 @@ return [
     ],
 
     'gemini' => [
-        'key' => env('GEMINI_API_KEY'),
+        'key'   => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-3.5-flash'),
+        'proxy' => env('GEMINI_PROXY'),
     ],
 
     'google_maps_key' => env('GOOGLE_MAPS_API_KEY'),
