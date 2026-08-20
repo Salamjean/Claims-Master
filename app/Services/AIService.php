@@ -473,18 +473,23 @@ class AIService
                     }
                 } else {
                     $body = $response->body();
+                    $status = $response->status();
                     if (str_contains($body, 'User location is not supported')) {
                         Log::warning("Gemini API non disponible pour l'IP du serveur de production (User location not supported). Basculement automatique sur la règle locale.");
-                        break; // Arrêter la boucle d'essais car l'IP est restreinte par Google
+                        break;
                     }
-                    Log::warning("Gemini Vision Detailed model '$m' attempt failed (Status " . $response->status() . ")");
+                    if ($status === 403 || $status === 401) {
+                        Log::warning("Gemini API Erreur d'accès/clé (Status $status) sur modèle '$m' : " . $body);
+                        break; // Inutile de boucler sur d'autres modèles si la clé/compte est refusé
+                    }
+                    Log::warning("Gemini Vision Detailed model '$m' attempt failed (Status " . $status . ")");
                 }
             } catch (\Exception $e) {
                 Log::error("Gemini Vision Detailed model '$m' exception: " . $e->getMessage());
             }
         }
 
-        return ['status' => 'pending', 'feedback' => 'Analyse manuelle requise (Localisation serveur non supportée par Google AI Studio ou quota dépassé).'];
+        return ['status' => 'pending', 'feedback' => 'Analyse manuelle requise (Accès ou localisation non supportés).'];
     }
 
     /**
@@ -516,18 +521,23 @@ class AIService
                     }
                 } else {
                     $body = $response->body();
+                    $status = $response->status();
                     if (str_contains($body, 'User location is not supported')) {
                         Log::warning("Gemini API non disponible pour l'IP du serveur de production (User location not supported). Basculement automatique sur la règle locale.");
                         break;
                     }
-                    Log::warning("Gemini Vision model '$m' attempt failed (Status " . $response->status() . ")");
+                    if ($status === 403 || $status === 401) {
+                        Log::warning("Gemini API Erreur d'accès/clé (Status $status) sur modèle '$m' : " . $body);
+                        break;
+                    }
+                    Log::warning("Gemini Vision model '$m' attempt failed (Status " . $status . ")");
                 }
             } catch (\Exception $e) {
                 Log::error("Gemini Vision model '$m' exception: " . $e->getMessage());
             }
         }
 
-        return ['status' => 'pending', 'feedback' => 'Analyse manuelle requise (Localisation serveur non supportée par Google AI Studio).'];
+        return ['status' => 'pending', 'feedback' => 'Analyse manuelle requise (Accès ou localisation non supportés).'];
     }
 
     /**
