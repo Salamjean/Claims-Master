@@ -90,5 +90,35 @@ class UserSeeder extends Seeder
             'email_verified_at' => now(),
             'password' => Hash::make('azertyui'),
         ]);
+
+        // 7. HÔPITAL / SAPEURS-POMPIERS (Caserne)
+        $hopital = User::create([
+            'name' => 'Caserne Sapeurs-Pompiers (GSPM)',
+            'prenom' => 'Indénié',
+            'email' => 'hopital@gmail.com',
+            'contact' => '0505050505',
+            'adresse' => 'Abidjan, Adjamé Indénié',
+            'commune' => 'Adjamé',
+            'role' => 'hopital',
+            'code_user' => 'HOSP-GSPM01-2026',
+            'has_ambulance' => true,
+            'latitude' => 5.3465,
+            'longitude' => -4.0195,
+            'email_verified_at' => now(),
+            'password' => Hash::make('azertyui'),
+        ]);
+
+        // 8. GROUPE (Équipe de secours rattachée à l'hôpital/caserne)
+        User::create([
+            'name' => 'Groupe Secours Indénié',
+            'prenom' => 'Équipe Alpha',
+            'email' => 'groupe@gmail.com',
+            'contact' => '0606060606',
+            'adresse' => 'Abidjan, Adjamé Indénié',
+            'role' => 'groupe',
+            'service_id' => $hopital->id,
+            'email_verified_at' => now(),
+            'password' => Hash::make('azertyui'),
+        ]);
     }
 }
