@@ -332,8 +332,8 @@
                     <div class="space-y-3 mb-6">
                         <label class="block text-sm font-bold text-slate-700">Nouvelle Attestation d'Assurance (Format ASACI) <span class="text-red-500">*</span></label>
                         <div class="relative border-2 border-dashed border-slate-200 hover:border-indigo-500 rounded-2xl p-6 text-center cursor-pointer transition-colors bg-slate-50/50 group">
-                            <input type="file" name="attestation_assurance" id="pop_attestation_assurance" required accept="image/*,application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" @change="fileName = $event.target.files[0] ? $event.target.files[0].name : ''">
-                            <div class="flex flex-col items-center justify-center gap-2">
+                            <input type="file" name="attestation_assurance" id="pop_attestation_assurance" required accept="image/*,application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" @change="fileName = $event.target.files[0] ? $event.target.files[0].name : ''">
+                            <div class="flex flex-col items-center justify-center gap-2 pointer-events-none">
                                 <div class="w-12 h-12 rounded-2xl bg-white text-indigo-600 shadow-md border border-slate-100 flex items-center justify-center group-hover:scale-110 transition-transform">
                                     <i class="fa-solid fa-cloud-arrow-up text-xl"></i>
                                 </div>

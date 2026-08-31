@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Agent;
 use App\Http\Controllers\Controller;
 use App\Models\Sinistre;
 use App\Models\Constat;
+use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -34,8 +35,8 @@ class AgentDashboardController extends Controller
 
         // Stats personnelles pour les compteurs
         $enAttente = Sinistre::where('assigned_agent_id', $agent->id)->where('status', 'en_attente')->count();
-        $enCours   = Sinistre::where('assigned_agent_id', $agent->id)->whereIn('status', ['en_cours', 'constat_terrain_ok'])->count();
-        $cloture   = Sinistre::where('assigned_agent_id', $agent->id)->where('status', 'cloture')->count();
+        $enCours = Sinistre::where('assigned_agent_id', $agent->id)->whereIn('status', ['en_cours', 'constat_terrain_ok'])->count();
+        $cloture = Sinistre::where('assigned_agent_id', $agent->id)->where('status', 'cloture')->count();
 
         return view('agent.dashboard', compact('agent', 'sinistres', 'totalPublic', 'enAttente', 'enCours', 'cloture'));
     }
@@ -118,12 +119,12 @@ class AgentDashboardController extends Controller
         }
 
         $sinistre->update([
-            'assigned_agent_id'  => $agent->id,
+            'assigned_agent_id' => $agent->id,
             'assigned_service_id' => $agent->service_id,
-            'status'             => 'en_cours',
+            'status' => 'en_cours',
             // Capture de la position GPS de l'agent au moment de la récupération
-            'agent_start_lat'    => $request->input('agent_lat') ?? $agent->latitude,
-            'agent_start_lng'    => $request->input('agent_lng') ?? $agent->longitude,
+            'agent_start_lat' => $request->input('agent_lat') ?? $agent->latitude,
+            'agent_start_lng' => $request->input('agent_lng') ?? $agent->longitude,
         ]);
 
         // Notification à l'assuré
@@ -149,9 +150,9 @@ class AgentDashboardController extends Controller
         abort_unless(Sinistre::where('id', $sinistre->id)->whereInvolved($agent->id, $agent->service_id)->exists(), 403);
         $sinistre->load('assure');
         $isAccident = in_array($sinistre->type_sinistre, ['Accident_matériel', 'Accident_corporel']);
-        
+
         $hospitals = \App\Models\User::where('role', 'hopital')->get();
-        
+
         return view('agent.sinistres.constat', compact('sinistre', 'isAccident', 'hospitals'));
     }
 
@@ -215,7 +216,7 @@ class AgentDashboardController extends Controller
         $agent = auth('user')->user();
         abort_unless(
             $sinistre->assigned_agent_id === $agent->id ||
-                $sinistre->assigned_service_id === $agent->service_id,
+            $sinistre->assigned_service_id === $agent->service_id,
             403
         );
         abort_unless($sinistre->constat && $sinistre->constat->terrain_valide, 403, 'Le constat terrain doit être validé avant la rédaction.');
@@ -233,19 +234,19 @@ class AgentDashboardController extends Controller
         $agent = auth('user')->user();
         abort_unless(
             $sinistre->assigned_agent_id === $agent->id ||
-                $sinistre->assigned_service_id === $agent->service_id,
+            $sinistre->assigned_service_id === $agent->service_id,
             403
         );
 
         // Validation : soit un texte, soit un PDF — l'un des deux est obligatoire
         $request->validate([
             'redaction_contenu' => 'nullable|string|min:50',
-            'redaction_pdf'     => 'nullable|file|mimes:pdf|max:10240',
-            'montant_a_payer'   => 'required|integer|min:0',
+            'redaction_pdf' => 'nullable|file|mimes:pdf|max:10240',
+            'montant_a_payer' => 'required|integer|min:0',
         ], [
             'redaction_contenu.min' => 'La rédaction texte doit contenir au moins 50 caractères.',
-            'redaction_pdf.mimes'   => 'Le fichier doit être un PDF.',
-            'redaction_pdf.max'     => 'Le PDF ne doit pas dépasser 10 Mo.',
+            'redaction_pdf.mimes' => 'Le fichier doit être un PDF.',
+            'redaction_pdf.max' => 'Le PDF ne doit pas dépasser 10 Mo.',
             'montant_a_payer.required' => 'Le montant à payer par l\'assuré est obligatoire.',
         ]);
 
@@ -254,9 +255,9 @@ class AgentDashboardController extends Controller
         }
 
         $updateData = [
-            'redaction_validee'    => true,
+            'redaction_validee' => true,
             'redaction_validee_at' => now(),
-            'montant_a_payer'      => $request->input('montant_a_payer'),
+            'montant_a_payer' => $request->input('montant_a_payer'),
         ];
 
         if ($request->filled('redaction_contenu')) {
@@ -272,8 +273,8 @@ class AgentDashboardController extends Controller
         $sinistre->update(['status' => 'traite']);
 
         // ── SMS Yellika à l'assuré ────────────────────────────────────────────
-        $assure      = $sinistre->assure;
-        $numero      = $assure->contact ?? null;
+        $assure = $sinistre->assure;
+        $numero = $assure->contact ?? null;
         $serviceName = $sinistre->service->name ?? 'notre agence';
 
         // Suppression des accents pour éviter l'erreur UNICODE de l'API
@@ -337,17 +338,17 @@ class AgentDashboardController extends Controller
             ->latest('redaction_validee_at')
             ->get();
 
-        $online    = $constats->where('statut_paiement', 'success')->where('agent_unlocked', false);
+        $online = $constats->where('statut_paiement', 'success')->where('agent_unlocked', false);
         $deblocage = $constats->where('agent_unlocked', true);
-        $pending   = $constats->where('statut_paiement', '!=', 'success');
+        $pending = $constats->where('statut_paiement', '!=', 'success');
 
         $stats = [
-            'total'            => $constats->count(),
-            'online_count'     => $online->count(),
-            'online_montant'   => $online->sum('montant_a_payer'),
-            'deblocage_count'  => $deblocage->count(),
+            'total' => $constats->count(),
+            'online_count' => $online->count(),
+            'online_montant' => $online->sum('montant_a_payer'),
+            'deblocage_count' => $deblocage->count(),
             'deblocage_montant' => $deblocage->sum('montant_a_payer'),
-            'pending_count'    => $pending->count(),
+            'pending_count' => $pending->count(),
         ];
 
         $history = $constats
@@ -366,7 +367,7 @@ class AgentDashboardController extends Controller
         $agent = auth('user')->user();
         abort_unless(
             $sinistre->assigned_agent_id === $agent->id ||
-                $sinistre->assigned_service_id === $agent->service_id,
+            $sinistre->assigned_service_id === $agent->service_id,
             403
         );
 
@@ -374,7 +375,7 @@ class AgentDashboardController extends Controller
 
         $sinistre->constat->update([
             'recupere_par_assure' => true,
-            'recupere_at'         => now(),
+            'recupere_at' => now(),
         ]);
 
         return back()->with('success', '✅ Le constat a été marqué comme récupéré par l\'assuré.');
@@ -389,7 +390,7 @@ class AgentDashboardController extends Controller
         $agent = auth('user')->user();
         abort_unless(
             $sinistre->assigned_agent_id === $agent->id ||
-                $sinistre->assigned_service_id === $agent->service_id,
+            $sinistre->assigned_service_id === $agent->service_id,
             403
         );
 
@@ -397,25 +398,38 @@ class AgentDashboardController extends Controller
         abort_unless($constat && $constat->redaction_validee, 403, "Le constat n'est pas encore rédigé.");
         abort_if($constat->statut_paiement === 'success', 400, 'Ce constat est déjà débloqué.');
 
-        // Marquer comme débloqué par l'agent (pas de crédit wallet)
-        $constat->update([
-            'statut_paiement'  => 'success',
-            'agent_unlocked'   => true,
-            'agent_unlocked_at' => now(),
-            'agent_unlocked_by' => $agent->id,
-        ]);
+        // Utilisation d'une transaction DB atomique avec verrouillage (lockForUpdate) pour garantir l'idempotence
+        // et contrer les attaques par rejeu (replay attacks) / requêtes simultanées
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($sinistre, $constat, $agent) {
+            $constatLocked = \App\Models\Constat::where('id', $constat->id)->lockForUpdate()->first();
+            if ($constatLocked && $constatLocked->statut_paiement === 'success') {
+                return back()->with('info', 'Ce constat est déjà débloqué.');
+            }
 
-        // Historique dans wallet_transactions (montant 0, type agent_unlock — aucun crédit)
-        \App\Models\WalletTransaction::create([
-            'user_id'     => $agent->id,
-            'sinistre_id' => $sinistre->id,
-            'amount'      => 0,
-            'type'        => 'agent_unlock',
-            'description' => 'Déblocage manuel agent — constat #' . ($sinistre->numero_sinistre ?? $sinistre->id) . ' (sans paiement assuré)',
-            'status'      => 'completed',
-        ]);
+            // Marquer comme débloqué par l'agent (pas de crédit wallet)
+            $constatLocked->update([
+                'statut_paiement' => 'success',
+                'agent_unlocked' => true,
+                'agent_unlocked_at' => now(),
+                'agent_unlocked_by' => $agent->id,
+            ]);
 
-        return back()->with('success', '✅ Téléchargement débloqué pour l\'assuré. Aucun montant crédité.');
+            // Historique dans wallet_transactions (montant 0, type agent_unlock — aucun crédit) - Idempotent pour éviter les doublons / attaques par rejeu
+            WalletTransaction::firstOrCreate(
+                [
+                    'sinistre_id' => $sinistre->id,
+                    'type'        => 'agent_unlock',
+                ],
+                [
+                    'user_id'     => $agent->id,
+                    'amount'      => 0,
+                    'description' => 'Déblocage manuel agent — constat #' . ($sinistre->numero_sinistre ?? $sinistre->id) . ' (sans paiement assuré)',
+                    'status'      => 'completed',
+                ]
+            );
+
+            return back()->with('success', '✅ Téléchargement débloqué pour l\'assuré. Aucun montant crédité.');
+        });
     }
 
     public function showConstat(Sinistre $sinistre)
@@ -435,7 +449,7 @@ class AgentDashboardController extends Controller
     public function getAgentLocation(Sinistre $sinistre)
     {
         $agent = $sinistre->assignedAgent;
-        
+
         $sinistreLat = (float) ($sinistre->latitude ?? 5.3411);
         $sinistreLng = (float) ($sinistre->longitude ?? -4.028);
 
@@ -456,14 +470,14 @@ class AgentDashboardController extends Controller
         }
 
         return response()->json([
-            'lat'          => $agentLat,
-            'lng'          => $agentLng,
-            'start_lat'    => $hasStartPos ? (float) $sinistre->agent_start_lat : $agentLat,
-            'start_lng'    => $hasStartPos ? (float) $sinistre->agent_start_lng : $agentLng,
-            'agent_name'   => $agent?->name ?? 'Agent de terrain',
+            'lat' => $agentLat,
+            'lng' => $agentLng,
+            'start_lat' => $hasStartPos ? (float) $sinistre->agent_start_lat : $agentLat,
+            'start_lng' => $hasStartPos ? (float) $sinistre->agent_start_lng : $agentLng,
+            'agent_name' => $agent?->name ?? 'Agent de terrain',
             'sinistre_lat' => $sinistreLat,
             'sinistre_lng' => $sinistreLng,
-            'status'       => $sinistre->status,
+            'status' => $sinistre->status,
         ]);
     }
 
