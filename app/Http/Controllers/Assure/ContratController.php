@@ -47,6 +47,20 @@ class ContratController extends Controller
         $renouvelerId = $request->input('renouveler_id');
         $contratExistant = $renouvelerId ? auth('user')->user()->contrats()->find($renouvelerId) : null;
 
+        // Si ce n'est pas un renouvellement explicit, vérifier si le véhicule (plaque) existe déjà pour l'utilisateur
+        if (!$contratExistant && $request->filled('plaque')) {
+            $plaqueClean = strtoupper(preg_replace('/\s+/', '', $request->plaque));
+            $existingPlaqueContrat = auth('user')->user()->contrats()->get()->first(function ($c) use ($plaqueClean) {
+                return strtoupper(preg_replace('/\s+/', '', $c->plaque)) === $plaqueClean;
+            });
+
+            if ($existingPlaqueContrat) {
+                return redirect()->route('assure.contrats.create', ['renouveler_id' => $existingPlaqueContrat->id])
+                    ->withInput()
+                    ->with('error', 'Un contrat existe déjà pour le véhicule avec la plaque "' . $request->plaque . '". Vous avez été réorienté automatiquement vers le mode de renouvellement.');
+            }
+        }
+
         $uniqueRule = 'required|string|unique:contrats,numero_contrat';
         if ($contratExistant) {
             $uniqueRule = 'required|string|unique:contrats,numero_contrat,' . $contratExistant->id;
@@ -81,6 +95,7 @@ class ContratController extends Controller
                 $aiStatus = $verification['status'] ?? 'pending';
                 $aiFeedback = $verification['feedback'] ?? null;
                 $nomAssureurDocument = $verification['assureur'] ?? null;
+                $numeroContratDoc = $verification['numero_contrat'] ?? null;
                 $dateExpirationDoc = $verification['date_expiration'] ?? null;
 
                 if ($aiStatus === 'invalid') {
@@ -89,7 +104,12 @@ class ContratController extends Controller
                         ->with('error', 'Le document d\'attestation a été rejeté par l\'IA : ' . ($aiFeedback ?? 'Les informations du document ne correspondent pas.'));
                 }
 
-                // --- ÉTAPE 2 : Attribution automatique de l'assureur ---
+                // --- ÉTAPE 2 : Mise à jour du N° de police si extrait par l'IA ---
+                if (!empty($numeroContratDoc)) {
+                    $dataInsurer['numero_contrat'] = trim($numeroContratDoc);
+                }
+
+                // --- ÉTAPE 3 : Attribution automatique de l'assureur ---
                 if (!empty($nomAssureurDocument)) {
                     $cleanedName = trim($nomAssureurDocument);
 
@@ -108,7 +128,7 @@ class ContratController extends Controller
                     $dataInsurer['nom_assureur'] = $cleanedName;
                 }
 
-                // --- ÉTAPE 3 : Extraction de la date d'expiration via l'IA ---
+                // --- ÉTAPE 4 : Extraction de la date d'expiration via l'IA ---
                 if (!empty($dateExpirationDoc)) {
                     $parsedDate = AIService::parseFlexibleDate($dateExpirationDoc);
                     if ($parsedDate) {
@@ -230,11 +250,12 @@ class ContratController extends Controller
         $tempPath = $file->getPathname();
 
         // Audit et Vérification IA complète (Structure ASACI, Immatriculation, Marque, Modèle, N° Police & Extraction Échéance) en 1 seul appel rapide
-        $verification = $aiService->verifyAttestation($tempPath, $contrat->only(['plaque', 'marque', 'modele', 'numero_contrat']));
+        $verification = $aiService->verifyAttestation($tempPath, $contrat->only(['plaque', 'marque', 'modele']));
 
         $aiStatus = $verification['status'] ?? 'pending';
         $aiFeedback = $verification['feedback'] ?? null;
         $nomAssureurDocument = $verification['assureur'] ?? null;
+        $numeroContratDoc = $verification['numero_contrat'] ?? null;
         $dateExpirationDoc = $verification['date_expiration'] ?? null;
 
         // Rejet si l'IA déclare le document invalide (informations incohérentes ou immatriculation différente)
@@ -272,6 +293,11 @@ class ContratController extends Controller
             'date_fin' => $parsedExpiration->format('Y-m-d'),
         ];
 
+        // Mettre à jour le N° de police si détecté par l'IA sur la nouvelle attestation
+        if (!empty($numeroContratDoc)) {
+            $updateData['numero_contrat'] = trim($numeroContratDoc);
+        }
+
         // Mettre à jour l'assureur si détecté
         if (!empty($nomAssureurDocument)) {
             $cleanedName = trim($nomAssureurDocument);
@@ -290,5 +316,53 @@ class ContratController extends Controller
 
         return redirect()->route('assure.contrats.index')
             ->with('success', 'L\'attestation d\'assurance pour le véhicule ' . $contrat->plaque . ' a été renouvelée avec succès ! Nouvelle échéance : ' . $parsedExpiration->format('d/m/Y'));
+    }
+
+    /**
+     * Scan d'une attestation d'assurance par IA (AJAX) pour pré-remplissage automatique des champs.
+     */
+    public function scanAttestationAI(Request $request, AIService $aiService)
+    {
+        set_time_limit(120);
+
+        $request->validate([
+            'attestation' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+
+        $file = $request->file('attestation');
+        $tempPath = $file->getPathname();
+
+        $result = $aiService->extractAttestationData($tempPath);
+
+        if (($result['status'] ?? '') === 'success') {
+            $data = $result['data'] ?? [];
+            $existingContratId = null;
+            $existingPlaque = null;
+
+            if (!empty($data['plaque'])) {
+                $plaqueClean = strtoupper(preg_replace('/\s+/', '', $data['plaque']));
+                $found = auth('user')->user()->contrats()->get()->first(function ($c) use ($plaqueClean) {
+                    return strtoupper(preg_replace('/\s+/', '', $c->plaque)) === $plaqueClean;
+                });
+
+                if ($found) {
+                    $existingContratId = $found->id;
+                    $existingPlaque = $found->plaque;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Attestation analysée avec succès par l\'IA.',
+                'data'    => $data,
+                'existing_contrat_id' => $existingContratId,
+                'existing_plaque' => $existingPlaque
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => $result['message'] ?? 'Erreur lors de l\'analyse de l\'attestation.'
+        ], 422);
     }
 }

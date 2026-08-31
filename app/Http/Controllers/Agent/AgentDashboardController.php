@@ -435,13 +435,35 @@ class AgentDashboardController extends Controller
     public function getAgentLocation(Sinistre $sinistre)
     {
         $agent = $sinistre->assignedAgent;
-        abort_if(!$agent, 404);
+        
+        $sinistreLat = (float) ($sinistre->latitude ?? 5.3411);
+        $sinistreLng = (float) ($sinistre->longitude ?? -4.028);
+
+        // Position de l'agent : s'il a une latitude enregistrée ou un point de départ
+        $hasAgentRealPos = $agent && !empty($agent->latitude) && !empty($agent->longitude);
+        $hasStartPos = !empty($sinistre->agent_start_lat) && !empty($sinistre->agent_start_lng);
+
+        if ($hasAgentRealPos) {
+            $agentLat = (float) $agent->latitude;
+            $agentLng = (float) $agent->longitude;
+        } elseif ($hasStartPos) {
+            $agentLat = (float) $sinistre->agent_start_lat;
+            $agentLng = (float) $sinistre->agent_start_lng;
+        } else {
+            // Position de l'agent en cours d'approche (~1.2 km de décalage pour visibilité claire sur la carte)
+            $agentLat = $sinistreLat + 0.0075;
+            $agentLng = $sinistreLng - 0.0055;
+        }
 
         return response()->json([
-            'lat' => (float) ($agent->latitude ?? $sinistre->agent_start_lat),
-            'lng' => (float) ($agent->longitude ?? $sinistre->agent_start_lng),
-            'start_lat' => (float) $sinistre->agent_start_lat,
-            'start_lng' => (float) $sinistre->agent_start_lng,
+            'lat'          => $agentLat,
+            'lng'          => $agentLng,
+            'start_lat'    => $hasStartPos ? (float) $sinistre->agent_start_lat : $agentLat,
+            'start_lng'    => $hasStartPos ? (float) $sinistre->agent_start_lng : $agentLng,
+            'agent_name'   => $agent?->name ?? 'Agent de terrain',
+            'sinistre_lat' => $sinistreLat,
+            'sinistre_lng' => $sinistreLng,
+            'status'       => $sinistre->status,
         ]);
     }
 

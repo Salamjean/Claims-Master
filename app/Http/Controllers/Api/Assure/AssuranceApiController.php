@@ -405,4 +405,50 @@ class AssuranceApiController extends Controller
             'updated_at'              => $contrat->updated_at?->toIso8601String(),
         ];
     }
+
+    /**
+     * POST /api/v1/assure/assurances/scan-attestation-ai
+     * Scan d'une attestation d'assurance par l'IA pour extraire les informations clés.
+     */
+    public function scanAttestationAI(Request $request, AIService $aiService)
+    {
+        $user = $request->user();
+
+        if (!$user || $user->role !== 'assure') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès refusé.'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'attestation' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur de validation du fichier.',
+                'errors'  => $validator->errors()
+            ], 422);
+        }
+
+        $file = $request->file('attestation');
+        $tempPath = $file->getPathname();
+
+        $result = $aiService->extractAttestationData($tempPath);
+
+        if (($result['status'] ?? '') === 'success') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Attestation analysée avec succès par l\'IA.',
+                'data'    => $result['data']
+            ], 200);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => $result['message'] ?? 'Erreur lors de l\'analyse de l\'attestation.'
+        ], 422);
+    }
 }

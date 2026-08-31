@@ -169,6 +169,7 @@ Route::middleware(['auth:user', 'assure'])->prefix('mon-espace')->group(function
         Route::get('/mes-assurances', [ContratController::class, 'index'])->name('assure.contrats.index');
         Route::get('/mes-assurances/ajouter', [ContratController::class, 'create'])->name('assure.contrats.create');
         Route::post('/mes-assurances/ajouter', [ContratController::class, 'store'])->name('assure.contrats.store');
+        Route::post('/mes-assurances/scan-attestation-ai', [ContratController::class, 'scanAttestationAI'])->name('assure.contrats.scan-attestation-ai');
         Route::post('/mes-assurances/{contrat}/renouveler', [ContratController::class, 'renew'])->name('assure.contrats.renew');
         Route::delete('/mes-assurances/{contrat}', [ContratController::class, 'destroy'])->name('assure.contrats.destroy');
 

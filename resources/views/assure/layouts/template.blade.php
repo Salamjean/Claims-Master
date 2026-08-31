@@ -643,6 +643,9 @@
 
 </div>
 
+{{-- Partial Modal Agent Map Tracking --}}
+@include('assure.partials.agent_map_modal')
+
 {{-- Scripts --}}
 @stack('scripts')
 <script>

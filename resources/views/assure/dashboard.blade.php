@@ -444,7 +444,15 @@
                             @endif
                         </p>
 
-                        <div class="flex gap-2 shrink-0 flex-wrap">
+                        <div class="flex gap-2 shrink-0 flex-wrap items-center">
+                            @if($dernierSinistre->assignedAgent && $dernierSinistre->status === 'en_cours')
+                                <button type="button"
+                                    onclick="openAgentMapModal({{ $dernierSinistre->id }}, '{{ addslashes($dernierSinistre->assignedAgent->name) }}', {{ $dernierSinistre->latitude ?? 0 }}, {{ $dernierSinistre->longitude ?? 0 }})"
+                                    class="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-black rounded-xl shadow-md shadow-blue-500/25 transition-all transform hover:scale-[1.02] active:scale-95">
+                                    <i class="fa-solid fa-location-dot text-amber-300 animate-bounce"></i>
+                                    <span>Position de l'agent</span>
+                                </button>
+                            @endif
                             @if($dernierSinistre->constat && $dernierSinistre->constat->methode_redaction === 'Amiable')
                                 <a href="{{ route('assure.sinistres.constat.download', $dernierSinistre->id) }}"
                                     class="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all">

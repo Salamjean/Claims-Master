@@ -23,7 +23,14 @@ class AIService
      */
     protected function getHttpOptions(): array
     {
-        $options = ['verify' => false];
+        $options = [
+            'verify' => false,
+            'curl'   => [
+                CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+                CURLOPT_CONNECTTIMEOUT => 15,
+                CURLOPT_TIMEOUT => 60,
+            ],
+        ];
         $proxy = config('services.gemini.proxy');
         if (!empty($proxy)) {
             $options['proxy'] = $proxy;
@@ -387,15 +394,16 @@ class AIService
 
             $prompt .= "\n--- EXTRACTION DES INFORMATIONS CLÉS ---\n";
             $prompt .= "1. 'assureur' : Nom de la compagnie d'assurance (ex: NSIA, SANLAM, ALLIANZ, AXA, SUNU, etc.).\n";
-            $prompt .= "2. 'date_expiration' : La date de fin / d'échéance de l'assurance (la 2ème date après 'Au', 'au', 'Date d'échéance', 'Fin de validité'). Ex: '09/02/2027', '2027-02-09'. Ne mets null que si absente.\n\n";
+            $prompt .= "2. 'numero_contrat' : Le numéro de la police ou du contrat d'assurance visible sur la nouvelle attestation.\n";
+            $prompt .= "3. 'date_expiration' : La date de fin / d'échéance de l'assurance (la 2ème date après 'Au', 'au', 'Date d'échéance', 'Fin de validité'). Ex: '09/02/2027', '2027-02-09'. Ne mets null que si absente.\n\n";
 
             $prompt .= "--- RÈGLES DE VALIDATION (STATUS 'valid' OU 'invalid') ---\n";
-            $prompt .= "1. STRUCTURE ASACI : Vérifie que le document a l'apparence d'une attestation d'assurance automobile officielle. Si ce n'est pas une attestation d'assurance, réponds status: 'invalid' et feedback: 'Le document téléversé n'est pas une attestation d'assurance automobile.'\n";
-            $prompt .= "2. PLAQUE D'IMMATRICULATION : Compare la plaque trouvée avec la plaque attendue (" . ($formData['plaque'] ?? '') . "), en ignorant tirets et espaces. Si la plaque sur le document diffère de la plaque attendue, réponds status: 'invalid'.\n";
-            $prompt .= "3. MARQUE / POLICE : Si la marque ou le numéro de police sur l'attestation contredit le véhicule enregistré, réponds status: 'invalid'.\n";
-            $prompt .= "4. SI TOUT EST CONFORME : Réponds status: 'valid' et un feedback positif concise.\n\n";
+            $prompt .= "1. STRUCTURE ASACI : Vérifie que le document a l'apparence d'une attestation d'assurance automobile officielle. Si ce n'est pas une attestation d'assurance, réponds status: 'invalid' et feedback: 'Le document téléversé n\'est pas une attestation d\'assurance automobile.'\n";
+            $prompt .= "2. PLAQUE D'IMMATRICULATION ET MARQUE : Compare la plaque trouvée avec la plaque attendue (" . ($formData['plaque'] ?? '') . "), en ignorant tirets et espaces. Si la plaque sur le document diffère nettement de la plaque attendue, réponds status: 'invalid'.\n";
+            $prompt .= "3. NUMÉRO DE POLICE & ASSUREUR (AUTORISÉS À CHANGER) : Lors d'un renouvellement, le numéro de police (numéro de contrat), la compagnie d'assurance et les dates de validité PEUVENT CHANGER (un assuré peut recevoir un nouveau N° de police ou changer d'assureur). Ne rejette JAMAIS une attestation parce que le numéro de police ou l'assureur est différent !\n";
+            $prompt .= "4. SI LA PLAQUE ET LE VÉHICULE CORRESPONDENT : Réponds status: 'valid' et un feedback positif concise.\n\n";
 
-            $prompt .= "Réponds UNIQUEMENT au format JSON strict : {\"status\": \"valid\"|\"invalid\", \"feedback\": \"Explication concise en français\", \"assureur\": \"NOM_ASSUREUR\", \"date_expiration\": \"DATE_EXTRAITE_OU_NULL\"}";
+            $prompt .= "Réponds UNIQUEMENT au format JSON strict : {\"status\": \"valid\"|\"invalid\", \"feedback\": \"Explication concise en français\", \"assureur\": \"NOM_ASSUREUR\", \"numero_contrat\": \"NUMERO_CONTRAT_EXTRAIT\", \"date_expiration\": \"DATE_EXTRAITE_OU_NULL\"}";
 
             return $this->callGeminiVision($prompt, $imageData, $mimeType);
         } catch (\Exception $e) {
@@ -403,6 +411,121 @@ class AIService
         }
 
         return ['status' => 'pending', 'feedback' => 'Erreur technique.'];
+    }
+
+    /**
+     * Extrait automatiquement toutes les informations lisibles d'une attestation d'assurance pour pré-remplir le formulaire.
+     */
+    public function extractAttestationData(string $imagePath): array
+    {
+        if (!$this->apiKey) {
+            return [
+                'status' => 'error',
+                'message' => 'Clé d\'API IA non configurée.',
+                'data' => []
+            ];
+        }
+
+        try {
+            $imageData = base64_encode(file_get_contents($imagePath));
+            $mimeType = mime_content_type($imagePath);
+
+            $prompt = "Tu es un expert qualifié en contrôle de conformité des attestations d'assurance automobile en Côte d'Ivoire (Format ASACI ou attestation officielle).\n";
+            $prompt .= "1. VÉRIFICATION STRICTE : Examine l'image / document transmis. Est-ce UNE ATTESTATION OU POLICE D'ASSURANCE AUTOMOBILE ?\n";
+            $prompt .= "Si ce n'est PAS un document d'assurance automobile (ex: pièce d'identité, permis de conduire, carte grise seule, reçu quelconque, photo de véhicule ou paysage, document administratif hors assurance, etc.), réponds strictly {\"is_attestation\": false, \"feedback\": \"Le document téléversé n'est pas une attestation d'assurance automobile valide.\"}.\n\n";
+            $prompt .= "2. EXTRACTION (Si is_attestation est true) :\n";
+            $prompt .= "Extrais les champs suivants au format JSON strict :\n";
+            $prompt .= "- 'is_attestation' : true\n";
+            $prompt .= "- 'plaque' : Numéro d'immatriculation du véhicule (ex: '1234AB01' ou '1234 AB 01').\n";
+            $prompt .= "- 'numero_contrat' : Numéro de la police ou du contrat d'assurance.\n";
+            $prompt .= "- 'marque' : Marque du véhicule (ex: Toyota, Hyundai, Peugeot, Nissan, Mercedes, etc.). Null si absente.\n";
+            $prompt .= "- 'modele' : Modèle du véhicule (ex: Corolla, Tucson, 208, Hilux, etc.). Null si absent.\n";
+            $prompt .= "- 'type_vehicule' : Type/Catégorie de véhicule (choisir obligatoirement parmi: 'Berline', 'SUV', 'Citadine', 'Camionnette', 'Coupé'). Null si indéterminé.\n";
+            $prompt .= "- 'immatriculation' : Numéro de châssis / VIN / N° de série s'il est mentionné. Null si absent.\n";
+            $prompt .= "- 'assureur' : Nom de la compagnie d'assurance (ex: NSIA, SANLAM, ALLIANZ, AXA, SUNU, AMSA, SAHAM, CORIS, MACI, ATLANTIQUE, GNA, SAAR, LMAI, etc.). Null si absent.\n";
+            $prompt .= "- 'date_expiration' : La date d'échéance / fin de validité au format 'YYYY-MM-DD' ou 'DD/MM/YYYY'. Null si absente.\n";
+            $prompt .= "- 'date_debut' : La date de prise d'effet / début de validité au format 'YYYY-MM-DD' ou 'DD/MM/YYYY'. Null si absente.\n\n";
+            $prompt .= "Réponds UNIQUEMENT au format JSON strict.";
+
+            $result = $this->callGeminiVision($prompt, $imageData, $mimeType);
+
+            if (is_array($result)) {
+                // Si l'IA détecte que le document n'est pas une attestation d'assurance
+                if (isset($result['is_attestation']) && $result['is_attestation'] === false) {
+                    return [
+                        'status' => 'invalid',
+                        'message' => $result['feedback'] ?? 'Le document téléversé n\'est pas une attestation d\'assurance automobile.',
+                        'data' => []
+                    ];
+                }
+
+                // Vérification secondaire : Si aucune information majeure d'assurance n'est lisible
+                if (empty($result['plaque']) && empty($result['numero_contrat']) && empty($result['assureur'])) {
+                    return [
+                        'status' => 'invalid',
+                        'message' => 'Le document téléversé ne semble pas être une attestation d\'assurance (Plaque, Numéro de police ou Assureur introuvables).',
+                        'data' => []
+                    ];
+                }
+
+                // Rapprochement de l'assureur si présent
+                $assuranceId = null;
+                $nomAssureurClean = null;
+                if (!empty($result['assureur'])) {
+                    $nomAssureurClean = trim($result['assureur']);
+                    $matchingAssureur = \App\Models\User::where('role', 'assurance')
+                        ->where(function ($query) use ($nomAssureurClean) {
+                            $query->where('name', 'LIKE', '%' . $nomAssureurClean . '%')
+                                ->orWhereRaw('? LIKE CONCAT("%", name, "%")', [$nomAssureurClean]);
+                        })
+                        ->first();
+                    if ($matchingAssureur) {
+                        $assuranceId = $matchingAssureur->id;
+                    }
+                }
+
+                // Normalisation des dates
+                $dateFinParsed = null;
+                if (!empty($result['date_expiration'])) {
+                    $parsed = self::parseFlexibleDate($result['date_expiration']);
+                    if ($parsed) {
+                        $dateFinParsed = $parsed->format('Y-m-d');
+                    }
+                }
+
+                $dateDebutParsed = null;
+                if (!empty($result['date_debut'])) {
+                    $parsed = self::parseFlexibleDate($result['date_debut']);
+                    if ($parsed) {
+                        $dateDebutParsed = $parsed->format('Y-m-d');
+                    }
+                }
+
+                return [
+                    'status' => 'success',
+                    'data' => [
+                        'plaque'          => $result['plaque'] ?? null,
+                        'numero_contrat'  => $result['numero_contrat'] ?? null,
+                        'marque'          => $result['marque'] ?? null,
+                        'modele'          => $result['modele'] ?? null,
+                        'type_vehicule'   => $result['type_vehicule'] ?? null,
+                        'immatriculation' => $result['immatriculation'] ?? null,
+                        'assureur'        => $nomAssureurClean,
+                        'assurance_id'    => $assuranceId,
+                        'date_fin'        => $dateFinParsed,
+                        'date_debut'      => $dateDebutParsed,
+                    ]
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('Gemini extractAttestationData Exception: ' . $e->getMessage());
+        }
+
+        return [
+            'status' => 'error',
+            'message' => 'Impossible d\'analyser l\'attestation d\'assurance transmise.',
+            'data' => []
+        ];
     }
 
     /**
@@ -451,17 +574,16 @@ class AIService
     protected function callGeminiVisionDetailed(array $contents)
     {
         $modelsToTry = array_unique([
-            $this->model,
-            'gemini-3.5-flash',
-            'gemini-2.5-flash',
-            'gemini-flash-latest'
+            'gemini-3.6-flash',
+            'gemini-3.5-flash-lite',
+            $this->model
         ]);
 
         foreach ($modelsToTry as $m) {
             $url = $this->baseUrl . '/' . $m . ':generateContent?key=' . $this->apiKey;
 
             try {
-                $response = Http::withOptions($this->getHttpOptions())->timeout(15)->post($url, [
+                $response = Http::withOptions($this->getHttpOptions())->timeout(45)->post($url, [
                     'contents' => $contents,
                     'generationConfig' => ['temperature' => 0.1, 'maxOutputTokens' => 600, 'responseMimeType' => 'application/json']
                 ]);
@@ -498,18 +620,21 @@ class AIService
      */
     protected function callGeminiVision(string $prompt, string $imageData, string $mimeType)
     {
+        if (empty($mimeType) || $mimeType === 'application/octet-stream') {
+            $mimeType = 'image/jpeg';
+        }
+
         $modelsToTry = array_unique([
-            $this->model,
-            'gemini-3.5-flash',
-            'gemini-2.5-flash',
-            'gemini-flash-latest'
+            'gemini-3.6-flash',
+            'gemini-3.5-flash-lite',
+            $this->model
         ]);
 
         foreach ($modelsToTry as $m) {
             $url = $this->baseUrl . '/' . $m . ':generateContent?key=' . $this->apiKey;
 
             try {
-                $response = Http::withOptions($this->getHttpOptions())->timeout(15)->post($url, [
+                $response = Http::withOptions($this->getHttpOptions())->timeout(45)->post($url, [
                     'contents' => [['parts' => [['text' => $prompt], ['inlineData' => ['mimeType' => $mimeType, 'data' => $imageData]]]]],
                     'generationConfig' => ['temperature' => 0.1, 'maxOutputTokens' => 600, 'responseMimeType' => 'application/json']
                 ]);

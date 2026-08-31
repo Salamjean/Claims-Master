@@ -121,6 +121,14 @@
                                 </td>
                                 <td class="px-5 py-4 text-right">
                                     <div class="flex items-center justify-end gap-2">
+                                        @if($sinistre->assignedAgent && $sinistre->status === 'en_cours')
+                                            <button type="button"
+                                                onclick="openAgentMapModal({{ $sinistre->id }}, '{{ addslashes($sinistre->assignedAgent->name) }}', {{ $sinistre->latitude ?? 0 }}, {{ $sinistre->longitude ?? 0 }})"
+                                                class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white text-xs font-black rounded-xl transition-all shadow-md shadow-blue-600/20">
+                                                <i class="fa-solid fa-location-dot text-amber-300 animate-bounce"></i>
+                                                <span>Position de l'agent</span>
+                                            </button>
+                                        @endif
                                         @if($sinistre->constat && $sinistre->constat->methode_redaction === 'Amiable')
                                             <a href="{{ route('assure.sinistres.constat.download', $sinistre->id) }}"
                                                 class="inline-flex items-center justify-center w-9 h-9 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-xl transition-all"
@@ -131,7 +139,7 @@
                                         <a href="{{ route('assure.sinistres.show', $sinistre->id) }}"
                                             class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm">
                                             <i class="fa-solid fa-eye text-xs"></i> 
-                                            {{ $sinistre->status === 'traite' ? 'Voir détails' : 'Suivre l\'agent' }}
+                                            Voir détails
                                         </a>
                                     </div>
                                 </td>

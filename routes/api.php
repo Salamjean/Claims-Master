@@ -44,6 +44,7 @@ Route::prefix('v1/assure')->middleware('auth:sanctum')->group(function () {
 
     // Gestion des assurances / contrats
     Route::get('/assurances', [AssuranceApiController::class, 'index']);
+    Route::post('/assurances/scan-attestation-ai', [AssuranceApiController::class, 'scanAttestationAI']);
     Route::get('/assurances/{id}', [AssuranceApiController::class, 'show']);
     Route::post('/assurances', [AssuranceApiController::class, 'store']);
     Route::match(['put', 'post'], '/assurances/{id}', [AssuranceApiController::class, 'update']);

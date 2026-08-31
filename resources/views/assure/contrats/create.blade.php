@@ -67,7 +67,7 @@
             <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-blue-500/20 blur-3xl pointer-events-none"></div>
             <div class="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-indigo-500/20 blur-3xl pointer-events-none"></div>
 
-            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div class="flex items-start md:items-center gap-5">
                     <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-0.5 shadow-lg shadow-blue-500/30 shrink-0">
                         <div class="w-full h-full bg-slate-950/40 backdrop-blur-md rounded-[14px] flex items-center justify-center text-white">
@@ -84,21 +84,44 @@
                         <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white">
                             {{ isset($contratExistant) && $contratExistant ? 'Renouveler l\'Assurance Automobile' : 'Enregistrer une nouvelle assurance' }}
                         </h1>
-                        <p class="text-slate-300 text-xs md:text-sm mt-1 max-w-2xl leading-relaxed">
-                            {{ isset($contratExistant) && $contratExistant ? 'Mettez à jour votre attestation pour réactiver le véhicule ' . $contratExistant->plaque : 'Complétez les étapes ci-dessous et téléversez vos justificatifs pour l\'analyse automatique.' }}
+                        <p class="text-slate-300 text-xs md:text-sm mt-1 max-w-xl leading-relaxed">
+                            {{ isset($contratExistant) && $contratExistant ? 'Mettez à jour votre attestation pour réactiver le véhicule ' . $contratExistant->plaque : 'Complétez les étapes ci-dessous ou pré-remplissez automatiquement par IA en téléversant votre attestation.' }}
                         </p>
                     </div>
                 </div>
 
-                @if(isset($contratExistant) && $contratExistant)
-                    <div class="shrink-0 bg-white/10 backdrop-blur-md border border-white/15 p-4 rounded-2xl flex items-center gap-4">
-                        <div class="text-right">
-                            <p class="text-[10px] text-blue-200 uppercase tracking-widest font-bold">Véhicule Cible</p>
-                            <p class="text-sm font-extrabold text-white font-mono">{{ $contratExistant->plaque }}</p>
-                            <p class="text-xs text-slate-300">{{ $contratExistant->marque }} {{ $contratExistant->modele }}</p>
+                {{-- BOUTON DE TÉLÉVERSEMENT OPTIONNEL IA DANS LE HEADER SUR LA MÊME LIGNE --}}
+                <div class="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                    @if(isset($contratExistant) && $contratExistant)
+                        <div class="bg-white/10 backdrop-blur-md border border-white/15 p-3 px-4 rounded-2xl flex items-center gap-3 shadow-sm">
+                            <div class="w-9 h-9 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center text-sm shrink-0 border border-amber-400/30">
+                                <i class="fa-solid fa-car"></i>
+                            </div>
+                            <div class="text-left">
+                                <p class="text-[9px] text-blue-200 uppercase tracking-widest font-bold">Véhicule Cible</p>
+                                <p class="text-xs font-extrabold text-white font-mono">{{ $contratExistant->plaque }}</p>
+                                <p class="text-[10px] text-slate-300">{{ $contratExistant->marque }} {{ $contratExistant->modele }}</p>
+                            </div>
                         </div>
-                    </div>
-                @endif
+                    @endif
+
+                    <label for="ai_attestation_uploader" class="group px-5 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs font-extrabold shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 cursor-pointer transition-all flex items-center justify-center gap-3 border border-white/20 hover:scale-[1.02] active:scale-95">
+                        <div class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-amber-300 group-hover:rotate-12 transition-transform shrink-0">
+                            <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
+                        </div>
+                        <div class="text-left">
+                            <span class="block text-[9px] text-blue-200 uppercase font-bold tracking-wider">Pré-remplissage IA (Optionnel)</span>
+                            <span id="ai_uploader_btn_text" class="block text-xs font-extrabold text-white">Téléverser l'Attestation</span>
+                        </div>
+                        <input type="file" id="ai_attestation_uploader" accept="image/*,application/pdf" class="hidden" onchange="handleAIAttestationUpload(this)">
+                    </label>
+                </div>
+            </div>
+
+            {{-- Statut du Scan IA --}}
+            <div id="ai_scan_status" class="hidden relative z-10 mt-4 pt-4 border-t border-white/10 flex items-center gap-3 text-xs">
+                <div id="ai_scan_spinner" class="animate-spin text-indigo-400"><i class="fa-solid fa-circle-notch text-base"></i></div>
+                <span id="ai_scan_message" class="font-medium text-slate-200">Analyse de votre attestation par l'IA en cours...</span>
             </div>
         </div>
 
@@ -175,6 +198,13 @@
                     </div>
                 </div>
 
+                @if(isset($contratExistant) && $contratExistant)
+                    <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs flex items-center gap-3">
+                        <i class="fa-solid fa-lock text-amber-600 text-base shrink-0"></i>
+                        <span><strong>Mode Renouvellement :</strong> Les identifiants du véhicule (Plaque, Marque, Modèle) restent identiques. Le N° de police/contrat, l'assureur et la date d'échéance seront mis à jour via votre nouvelle attestation.</span>
+                    </div>
+                @endif
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {{-- Plaque --}}
                     <div class="space-y-2 md:col-span-2">
@@ -188,8 +218,8 @@
                             <input type="text" name="plaque" id="plaque"
                                 value="{{ old('plaque', $contratExistant->plaque ?? '') }}"
                                 placeholder="Ex: 1234AB01 ou 1234 AB 01"
-                                required
-                                class="w-full pl-12 pr-4 py-4 bg-slate-50/70 border border-slate-200 rounded-2xl text-base font-extrabold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all uppercase tracking-wider outline-none">
+                                required {{ isset($contratExistant) && $contratExistant ? 'readonly' : '' }}
+                                class="w-full pl-12 pr-4 py-4 {{ isset($contratExistant) && $contratExistant ? 'bg-slate-100/90 text-slate-600 cursor-not-allowed' : 'bg-slate-50/70 focus:bg-white focus:border-blue-500' }} border border-slate-200 rounded-2xl text-base font-extrabold text-slate-800 transition-all uppercase tracking-wider outline-none">
                         </div>
                         @error('plaque') <p class="text-red-500 text-xs font-semibold mt-1"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ $message }}</p> @enderror
                     </div>
@@ -206,8 +236,8 @@
                             <input type="text" name="marque" id="marque"
                                 value="{{ old('marque', $contratExistant->marque ?? '') }}"
                                 placeholder="Ex: Toyota, Hyundai..."
-                                required
-                                class="w-full pl-11 pr-4 py-3.5 bg-slate-50/70 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">
+                                required {{ isset($contratExistant) && $contratExistant ? 'readonly' : '' }}
+                                class="w-full pl-11 pr-4 py-3.5 {{ isset($contratExistant) && $contratExistant ? 'bg-slate-100/90 text-slate-600 cursor-not-allowed' : 'bg-slate-50/70 focus:bg-white focus:border-blue-500' }} border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 transition-all outline-none">
                         </div>
                         @error('marque') <p class="text-red-500 text-xs font-semibold mt-1"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ $message }}</p> @enderror
                     </div>
@@ -224,8 +254,8 @@
                             <input type="text" name="modele" id="modele"
                                 value="{{ old('modele', $contratExistant->modele ?? '') }}"
                                 placeholder="Ex: Corolla, Tucson..."
-                                required
-                                class="w-full pl-11 pr-4 py-3.5 bg-slate-50/70 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none">
+                                required {{ isset($contratExistant) && $contratExistant ? 'readonly' : '' }}
+                                class="w-full pl-11 pr-4 py-3.5 {{ isset($contratExistant) && $contratExistant ? 'bg-slate-100/90 text-slate-600 cursor-not-allowed' : 'bg-slate-50/70 focus:bg-white focus:border-blue-500' }} border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 transition-all outline-none">
                         </div>
                         @error('modele') <p class="text-red-500 text-xs font-semibold mt-1"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ $message }}</p> @enderror
                     </div>
@@ -242,8 +272,8 @@
                             <input type="text" name="immatriculation" id="immatriculation"
                                 value="{{ old('immatriculation', $contratExistant->immatriculation ?? '') }}"
                                 placeholder="Ex: CH299253 ou VF1..."
-                                required
-                                class="w-full pl-11 pr-4 py-3.5 bg-slate-50/70 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all uppercase outline-none">
+                                required {{ isset($contratExistant) && $contratExistant ? 'readonly' : '' }}
+                                class="w-full pl-11 pr-4 py-3.5 {{ isset($contratExistant) && $contratExistant ? 'bg-slate-100/90 text-slate-600 cursor-not-allowed' : 'bg-slate-50/70 focus:bg-white focus:border-blue-500' }} border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 transition-all uppercase outline-none">
                         </div>
                         @error('immatriculation') <p class="text-red-500 text-xs font-semibold mt-1"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ $message }}</p> @enderror
                     </div>
@@ -257,8 +287,8 @@
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                                 <i class="fa-solid fa-truck-pickup text-sm"></i>
                             </div>
-                            <select name="type_vehicule" id="type_vehicule" required
-                                class="w-full pl-11 pr-10 py-3.5 bg-slate-50/70 border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none appearance-none cursor-pointer">
+                            <select name="type_vehicule" id="type_vehicule" required {{ isset($contratExistant) && $contratExistant ? 'disabled' : '' }}
+                                class="w-full pl-11 pr-10 py-3.5 {{ isset($contratExistant) && $contratExistant ? 'bg-slate-100/90 text-slate-600 cursor-not-allowed' : 'bg-slate-50/70 focus:bg-white focus:border-blue-500' }} border border-slate-200 rounded-2xl text-sm font-bold text-slate-800 transition-all outline-none appearance-none">
                                 <option value="" disabled selected>Sélectionnez la catégorie</option>
                                 <option value="Berline" {{ old('type_vehicule', $contratExistant->type_vehicule ?? '') == 'Berline' ? 'selected' : '' }}>Berline</option>
                                 <option value="SUV" {{ old('type_vehicule', $contratExistant->type_vehicule ?? '') == 'SUV' ? 'selected' : '' }}>SUV / 4x4</option>
@@ -266,6 +296,9 @@
                                 <option value="Camionnette" {{ old('type_vehicule', $contratExistant->type_vehicule ?? '') == 'Camionnette' ? 'selected' : '' }}>Camionnette / Utilitaire</option>
                                 <option value="Coupé" {{ old('type_vehicule', $contratExistant->type_vehicule ?? '') == 'Coupé' ? 'selected' : '' }}>Coupé / Cabriolet</option>
                             </select>
+                            @if(isset($contratExistant) && $contratExistant)
+                                <input type="hidden" name="type_vehicule" value="{{ $contratExistant->type_vehicule }}">
+                            @endif
                             <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-400">
                                 <i class="fa-solid fa-chevron-down text-xs"></i>
                             </div>
@@ -547,6 +580,158 @@
 
     @push('scripts')
         <script>
+            function handleAIAttestationUpload(input) {
+                if (!input.files || !input.files[0]) return;
+
+                const file = input.files[0];
+                const statusBox = document.getElementById('ai_scan_status');
+                const statusMsg = document.getElementById('ai_scan_message');
+                const spinner = document.getElementById('ai_scan_spinner');
+                const btnText = document.getElementById('ai_uploader_btn_text');
+
+                statusBox.classList.remove('hidden');
+                spinner.classList.remove('hidden');
+                statusMsg.className = "font-medium text-indigo-300 flex items-center gap-2";
+                statusMsg.textContent = '';
+                const loadIcon = document.createElement('i');
+                loadIcon.className = "fa-solid fa-circle-notch animate-spin text-base mr-1";
+                statusMsg.appendChild(document.createTextNode("Analyse intelligente de votre attestation d'assurance par l'IA en cours..."));
+                btnText.textContent = "Analyse en cours...";
+
+                const formData = new FormData();
+                formData.append('attestation', file);
+                formData.append('_token', '{{ csrf_token() }}');
+
+                fetch('{{ route("assure.contrats.scan-attestation-ai") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(res => {
+                    spinner.classList.add('hidden');
+                    btnText.textContent = "Changer l'Attestation";
+
+                    if (res.success && res.data) {
+                        const d = res.data;
+                        let filledCount = 0;
+                        let filledList = [];
+
+                        if (d.plaque) {
+                            document.getElementById('plaque').value = d.plaque;
+                            filledCount++; filledList.push('Plaque d\'immatriculation');
+                        }
+                        if (d.marque) {
+                            document.getElementById('marque').value = d.marque;
+                            filledCount++; filledList.push('Marque');
+                        }
+                        if (d.modele) {
+                            document.getElementById('modele').value = d.modele;
+                            filledCount++; filledList.push('Modèle');
+                        }
+                        if (d.immatriculation) {
+                            document.getElementById('immatriculation').value = d.immatriculation;
+                            filledCount++; filledList.push('N° Châssis');
+                        }
+                        if (d.type_vehicule) {
+                            const selectType = document.getElementById('type_vehicule');
+                            if (selectType) {
+                                for (let opt of selectType.options) {
+                                    if (opt.value.toLowerCase() === d.type_vehicule.toLowerCase()) {
+                                        opt.selected = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            filledCount++; filledList.push('Type de véhicule');
+                        }
+                        if (d.numero_contrat) {
+                            document.getElementById('numero_contrat').value = d.numero_contrat;
+                            filledCount++; filledList.push('N° de Police/Contrat');
+                        }
+
+                        // Attacher directement le fichier à l'input attestation_assurance (Étape 3)
+                        const attestationInput = document.getElementById('attestation_assurance');
+                        if (attestationInput) {
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(file);
+                            attestationInput.files = dataTransfer.files;
+
+                            // Déclencher l'événement change pour rafraîchir l'aperçu
+                            const event = new Event('change', { bubbles: true });
+                            attestationInput.dispatchEvent(event);
+                        }
+
+                        statusMsg.className = "font-extrabold text-emerald-400 flex flex-wrap items-center gap-2";
+                        statusMsg.textContent = '';
+                        const checkIcon = document.createElement('i');
+                        checkIcon.className = "fa-solid fa-circle-check text-emerald-400 text-base";
+                        statusMsg.appendChild(checkIcon);
+                        statusMsg.appendChild(document.createTextNode(' Attestation analysée avec succès ! ' +
+                            filledCount + ' champ(s) renseigné(s) (' + filledList.join(', ') + ') + Attestation liée à l\'Étape 3.'));
+
+                        if (res.existing_contrat_id && !{{ isset($contratExistant) && $contratExistant ? 'true' : 'false' }}) {
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'info',
+                                    title: 'Assurance déjà enregistrée !',
+                                    html: 'Une assurance existe déjà dans votre compte pour le véhicule immatriculé <b>' + (res.existing_plaque || d.plaque || '') + '</b>.<br><br>Souhaitez-vous passer directement en <b>mode renouvellement</b> pour cette assurance ?',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Oui, renouveler cette assurance',
+                                    cancelButtonText: 'Non, continuer',
+                                    confirmButtonColor: '#2563eb',
+                                    cancelButtonColor: '#64748b',
+                                    customClass: { popup: 'rounded-3xl' }
+                                }).then((result) => {
+                                    if (result.isConfirmed && res.existing_contrat_id) {
+                                        const contratId = parseInt(res.existing_contrat_id, 10);
+                                        if (!isNaN(contratId)) {
+                                            window.location.href = "{{ route('assure.contrats.create') }}?renouveler_id=" + contratId;
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    } else {
+                        btnText.textContent = "Téléverser l'Attestation";
+                        statusMsg.className = "font-extrabold text-red-400 flex items-center gap-2";
+                        const errorMsg = res.message || 'Le document téléversé n\'est pas une attestation d\'assurance automobile.';
+                        statusMsg.textContent = '';
+                        const errorIcon = document.createElement('i');
+                        errorIcon.className = "fa-solid fa-circle-xmark text-red-400 text-base mr-1";
+                        statusMsg.appendChild(errorIcon);
+                        statusMsg.appendChild(document.createTextNode(' Document rejeté : ' + errorMsg));
+
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Document Invalide',
+                                text: errorMsg,
+                                confirmButtonText: 'Compris',
+                                confirmButtonColor: '#ef4444',
+                                customClass: {
+                                    popup: 'rounded-3xl'
+                                }
+                            });
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error("Erreur IA Scan:", err);
+                    spinner.classList.add('hidden');
+                    btnText.textContent = "Recommencer";
+                    statusMsg.className = "font-bold text-red-400 flex items-center gap-2";
+                    statusMsg.textContent = '';
+                    const warnIcon = document.createElement('i');
+                    warnIcon.className = "fa-solid fa-circle-exclamation text-red-400 mr-1";
+                    statusMsg.appendChild(warnIcon);
+                    statusMsg.appendChild(document.createTextNode(' Une erreur est survenue lors de la vérification par l\'IA. Vous pouvez continuer le remplissage manuel.'));
+                });
+            }
+
             document.addEventListener('DOMContentLoaded', function () {
                 // --- GESTION DES APERÇUS & DROPZONES ---
                 const fileInputs = document.querySelectorAll('.file-input-preview');

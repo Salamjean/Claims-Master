@@ -24,7 +24,16 @@
                 </h2>
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 flex-wrap">
+                {{-- Bouton Suivi Position Agent --}}
+                @if($sinistre->assignedAgent && $sinistre->status === 'en_cours')
+                    <button type="button"
+                        onclick="openAgentMapModal({{ $sinistre->id }}, '{{ addslashes($sinistre->assignedAgent->name) }}', {{ $sinistre->latitude ?? 0 }}, {{ $sinistre->longitude ?? 0 }})"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 text-white font-extrabold rounded-xl text-sm transition-all shadow-md shadow-blue-600/25">
+                        <i class="fa-solid fa-location-dot text-amber-300 animate-bounce"></i> Position de l'agent
+                    </button>
+                @endif
+
                 {{-- Bouton Documents Requis --}}
                 @if($sinistre->documentsAttendus()->count() > 0)
                     <a href="{{ route('assure.sinistres.upload-docs', $sinistre->id) }}"
@@ -246,7 +255,7 @@
 
                         {{-- Agent --}}
                         @if($sinistre->assignedAgent)
-                            <div class="flex items-center justify-between">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
                                         <i class="fa-solid fa-user-shield text-emerald-500 text-sm"></i>
@@ -257,7 +266,11 @@
                                     </div>
                                 </div>
                                 @if($sinistre->status === 'en_cours')
-                                    <span class="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-black rounded-lg uppercase">En route</span>
+                                    <button type="button"
+                                        onclick="openAgentMapModal({{ $sinistre->id }}, '{{ addslashes($sinistre->assignedAgent->name) }}', {{ $sinistre->latitude ?? 0 }}, {{ $sinistre->longitude ?? 0 }})"
+                                        class="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[11px] font-black rounded-xl shadow-md shadow-blue-500/20 hover:from-blue-700 transition-all flex items-center gap-1.5">
+                                        <i class="fa-solid fa-location-dot text-amber-300 animate-bounce"></i> Position agent
+                                    </button>
                                 @endif
                             </div>
                         @endif
@@ -403,18 +416,34 @@
             })
             .then(r => r.json())
             .then(data => {
+                display.replaceChildren();
                 if (data && data.display_name) {
-                    display.innerHTML = `
-                        <div class="flex items-start gap-2">
-                            <i class="fa-solid fa-location-dot text-red-400 mt-0.5 shrink-0"></i>
-                            <span class="text-sm text-slate-700 leading-snug">${data.display_name}</span>
-                        </div>`;
+                    const container = document.createElement('div');
+                    container.className = 'flex items-start gap-2';
+
+                    const icon = document.createElement('i');
+                    icon.className = 'fa-solid fa-location-dot text-red-400 mt-0.5 shrink-0';
+
+                    const span = document.createElement('span');
+                    span.className = 'text-sm text-slate-700 leading-snug';
+                    span.textContent = data.display_name;
+
+                    container.appendChild(icon);
+                    container.appendChild(span);
+                    display.appendChild(container);
                 } else {
-                    display.innerHTML = `<span class="text-slate-400 italic text-xs">Adresse introuvable (${lat}, ${lng})</span>`;
+                    const span = document.createElement('span');
+                    span.className = 'text-slate-400 italic text-xs';
+                    span.textContent = `Adresse introuvable (${lat}, ${lng})`;
+                    display.appendChild(span);
                 }
             })
             .catch(() => {
-                display.innerHTML = `<span class="text-slate-400 italic text-xs">Lat : ${lat}, Lng : ${lng}</span>`;
+                display.replaceChildren();
+                const span = document.createElement('span');
+                span.className = 'text-slate-400 italic text-xs';
+                span.textContent = `Lat : ${lat}, Lng : ${lng}`;
+                display.appendChild(span);
             });
         })();
     </script>
