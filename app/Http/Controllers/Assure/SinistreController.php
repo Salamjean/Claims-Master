@@ -159,6 +159,17 @@ class SinistreController extends Controller
             return redirect()->back()->withInput()->with('error', 'L\'assurance de ce véhicule a expiré le ' . \Carbon\Carbon::parse($selectedContrat->date_fin)->format('d/m/Y') . '. Impossible de déclarer un sinistre pour un véhicule non assuré.');
         }
 
+        // Protection Anti-Doublon / Anti-Rejeu : Éviter la création multiple si l'assuré a cliqué plusieurs fois d'affilée
+        $recentSinistre = Sinistre::where('user_id', auth('user')->id())
+            ->where('contrat_id', $request->contrat_id)
+            ->where('created_at', '>=', now()->subSeconds(20))
+            ->first();
+
+        if ($recentSinistre) {
+            return redirect()->route('assure.sinistres.show', $recentSinistre->id)
+                ->with('info', 'Votre alerte a déjà été enregistrée et est en cours de traitement.');
+        }
+
         // 2. Gestion de l'upload des photos (s'il y en a)
         $photoPaths = [];
         if ($request->hasFile('photos')) {

@@ -1936,13 +1936,25 @@
                     checkFormValidity();
                 }
 
-                // S'assurer que les champs disabled sont envoyés lors du submit
+                // Protection anti-doublon et désactivation du bouton lors de la soumission du formulaire
                 const form = document.getElementById('sinistre-form');
                 if (form) {
-                    form.addEventListener('submit', function() {
+                    form.addEventListener('submit', function(e) {
+                        if (form.dataset.submitting === 'true') {
+                            e.preventDefault();
+                            return false;
+                        }
+                        form.dataset.submitting = 'true';
+
                         const assuranceSelect = document.getElementById('assurance_id');
                         if (assuranceSelect) {
                             assuranceSelect.disabled = false;
+                        }
+
+                        if (typeof btnSubmit !== 'undefined' && btnSubmit) {
+                            btnSubmit.setAttribute('disabled', 'disabled');
+                            btnSubmit.innerHTML = '<span>Transmission en cours...</span><i class="fa-solid fa-spinner fa-spin ml-3"></i>';
+                            btnSubmit.className = 'w-full sm:w-auto px-10 py-3.5 rounded-xl bg-slate-400 text-white font-bold flex items-center justify-center cursor-not-allowed opacity-75';
                         }
                     });
                 }

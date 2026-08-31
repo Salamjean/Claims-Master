@@ -46,6 +46,17 @@ class AlertePubliqueController extends Controller
             'photos.*'         => ['required', 'image', 'max:5120'], // 5MB par photo
         ]);
 
+        // Protection Anti-Doublon / Anti-Rejeu : Vérifier si une alerte identique a été soumise très récemment (ex: 20 secondes)
+        $recentDuplicate = Sinistre::where('declarant_contact', $validated['declarant_contact'])
+            ->where('lieu', $validated['lieu'])
+            ->where('created_at', '>=', now()->subSeconds(20))
+            ->first();
+
+        if ($recentDuplicate) {
+            return redirect()->route('public.alerte.suivi', $recentDuplicate->suivi_token)
+                ->with('info', 'Votre alerte d\'urgence a déjà été transmise et enregistrée.');
+        }
+
         // Upload des photos si fournies
         $photosPaths = [];
         if ($request->hasFile('photos')) {
