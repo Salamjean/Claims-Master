@@ -63,7 +63,13 @@ class SmsRepository
                     'type' => 'plain',
                 ]);
 
-        Log::info('Yellika SMS response', ['status' => $response->status(), 'body' => $response->json()]);
+        // On ne journalise pas le corps complet : la réponse Yellika contient la clé API en clair
+        Log::info('Yellika SMS response', [
+            'status'     => $response->status(),
+            'message'    => $response->json('message'),
+            'sms_status' => $response->json('data.status'),
+            'sms_id'     => $response->json('data.id'),
+        ]);
 
         if ($response->successful()) {
             return ['success' => true, 'data' => $response->json()];
