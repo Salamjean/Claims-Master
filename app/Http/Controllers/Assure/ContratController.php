@@ -74,7 +74,7 @@ class ContratController extends Controller
             'modele' => 'required|string',
             'type_vehicule' => 'required|string',
             'immatriculation' => 'required|string',
-            'document_pdf' => $contratExistant ? 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120' : 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'document_pdf' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120', // plus demandé dans le formulaire
             'attestation_assurance' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'carte_grise' => $contratExistant ? 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120' : 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
             'visite_technique' => $contratExistant ? 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120' : 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
@@ -363,6 +363,162 @@ class ContratController extends Controller
         return response()->json([
             'success' => false,
             'message' => $result['message'] ?? 'Erreur lors de l\'analyse de l\'attestation.'
+        ], 422);
+    }
+
+    /**
+     * Scan d'une visite technique par IA (AJAX) : vérifie qu'il s'agit bien d'un certificat de visite technique
+     * et que son immatriculation correspond au véhicule saisi.
+     */
+    public function scanVisiteTechniqueAI(Request $request, AIService $aiService)
+    {
+        set_time_limit(120);
+
+        $request->validate([
+            'visite_technique' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'plaque'           => 'required|string|max:30',
+        ], [
+            'plaque.required' => 'Renseignez d\'abord la plaque d\'immatriculation du véhicule.',
+        ]);
+
+        $result = $aiService->extractVisiteTechniqueData($request->file('visite_technique')->getPathname());
+
+        if (($result['status'] ?? '') !== 'success') {
+            return response()->json([
+                'success' => false,
+                'invalid' => ($result['status'] ?? '') === 'invalid',
+                'message' => $result['message'] ?? 'Erreur lors de l\'analyse de la visite technique.'
+            ], 422);
+        }
+
+        $data = $result['data'] ?? [];
+        $normalize = fn ($v) => strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $v));
+        $plaqueCarte = $normalize($data['plaque'] ?? '');
+
+        if ($plaqueCarte === '') {
+            return response()->json([
+                'success' => false,
+                'mismatch' => true,
+                'message' => 'Impossible de lire l\'immatriculation sur cette visite technique. Veuillez transmettre une photo plus nette.',
+            ], 422);
+        }
+
+        if ($plaqueCarte !== $normalize($request->input('plaque'))) {
+            return response()->json([
+                'success' => false,
+                'mismatch' => true,
+                'message' => 'L\'immatriculation de la visite technique (' . $data['plaque'] . ') ne correspond pas à celle du véhicule saisi (' . $request->input('plaque') . ').',
+            ], 422);
+        }
+
+        $expiree = !empty($data['date_expiration']) && \Carbon\Carbon::parse($data['date_expiration'])->endOfDay()->isPast();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Visite technique vérifiée : l\'immatriculation correspond.',
+            'data'    => [
+                'plaque'          => $data['plaque'],
+                'date_expiration' => $data['date_expiration'],
+                'expiree'         => $expiree,
+            ],
+        ]);
+    }
+
+    /**
+     * Scan d'un permis de conduire par IA (AJAX) : vérifie qu'il s'agit bien d'un permis de conduire.
+     */
+    public function scanPermisAI(Request $request, AIService $aiService)
+    {
+        set_time_limit(120);
+
+        $request->validate([
+            'permis_conduire' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+
+        $result = $aiService->extractPermisData($request->file('permis_conduire')->getPathname());
+
+        if (($result['status'] ?? '') !== 'success') {
+            return response()->json([
+                'success' => false,
+                'invalid' => ($result['status'] ?? '') === 'invalid',
+                'message' => $result['message'] ?? 'Erreur lors de l\'analyse du permis de conduire.'
+            ], 422);
+        }
+
+        $data = $result['data'] ?? [];
+        $data['expiree'] = !empty($data['date_expiration']) && \Carbon\Carbon::parse($data['date_expiration'])->endOfDay()->isPast();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Permis de conduire vérifié.',
+            'data'    => $data,
+        ]);
+    }
+
+    /**
+     * Scan d'une carte grise par IA (AJAX) : vérifie qu'il s'agit bien d'une carte grise et extrait ses informations.
+     */
+    public function scanCarteGriseAI(Request $request, AIService $aiService)
+    {
+        set_time_limit(120);
+
+        $request->validate([
+            'carte_grise' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'plaque'      => 'required|string|max:30',
+        ], [
+            'plaque.required' => 'Renseignez d\'abord la plaque d\'immatriculation du véhicule.',
+        ]);
+
+        $result = $aiService->extractCarteGriseData($request->file('carte_grise')->getPathname());
+
+        if (($result['status'] ?? '') === 'success') {
+            $data = $result['data'] ?? [];
+
+            // Normalisation : on ne garde que lettres et chiffres (AA-665-TQ-01 == AA 665 TQ 01)
+            $normalize = fn ($v) => strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $v));
+            $plaqueSaisie = $normalize($request->input('plaque'));
+            $plaqueCarte = $normalize($data['plaque'] ?? '');
+
+            if ($plaqueCarte === '') {
+                return response()->json([
+                    'success' => false,
+                    'mismatch' => true,
+                    'message' => 'Impossible de lire l\'immatriculation sur cette carte grise. Veuillez transmettre une photo plus nette.',
+                ], 422);
+            }
+
+            if ($plaqueCarte !== $plaqueSaisie) {
+                return response()->json([
+                    'success' => false,
+                    'mismatch' => true,
+                    'plaque_carte' => $data['plaque'],
+                    'message' => 'L\'immatriculation de la carte grise (' . $data['plaque'] . ') ne correspond pas à celle du véhicule saisi (' . $request->input('plaque') . ').',
+                ], 422);
+            }
+
+            $numero = $data['numero_carte_grise'] ?: ($data['numero_chassis'] ?? null);
+            if (!$numero) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Immatriculation vérifiée, mais le numéro de carte grise est illisible. Saisissez-le manuellement.',
+                ], 422);
+            }
+
+            // On ne renvoie que ce qui sert à remplir le champ « N° de carte grise »
+            return response()->json([
+                'success' => true,
+                'message' => 'Carte grise vérifiée : l\'immatriculation correspond.',
+                'data'    => [
+                    'numero_carte_grise' => $numero,
+                    'plaque'             => $data['plaque'],
+                ],
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'invalid' => ($result['status'] ?? '') === 'invalid',
+            'message' => $result['message'] ?? 'Erreur lors de l\'analyse de la carte grise.'
         ], 422);
     }
 }

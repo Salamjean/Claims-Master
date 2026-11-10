@@ -1,1975 +1,1309 @@
 @extends('assure.layouts.template')
 
 @section('title', 'Déclarer un sinistre')
-@section('page-title', 'Nouveau Sinistre')
+@section('page-title', 'Nouveau sinistre')
+
+@php
+    $incidents = [
+        'Accident_matériel' => ['label' => 'Accident matériel', 'icon' => 'fa-car-burst',     'hint' => 'Dégâts sur le véhicule'],
+        'Accident_corporel' => ['label' => 'Accident corporel', 'icon' => 'fa-user-injured',  'hint' => 'Personne(s) blessée(s)'],
+        'Vol'               => ['label' => 'Vol / Braquage',    'icon' => 'fa-mask',          'hint' => 'Véhicule ou biens volés'],
+        'Incendie'          => ['label' => 'Incendie',          'icon' => 'fa-fire',          'hint' => 'Feu sur le véhicule'],
+        'Bris_de_glace'     => ['label' => 'Bris de glace',     'icon' => 'fa-hammer',        'hint' => 'Pare-brise, vitres…'],
+        'Autre'             => ['label' => 'Autre',             'icon' => 'fa-ellipsis',      'hint' => 'Précisez dans la description'],
+    ];
+
+    $circonstances = [
+        "En stationnement / à l'arrêt",
+        'Quittait un stationnement / ouvrait une portière',
+        'Prenait un stationnement',
+        "Sortait d'un parking, d'un lieu privé, d'un chemin de terre",
+        'S’engageait dans un parking, un lieu privé, un chemin de terre',
+        'S’engageait sur une place à sens giratoire',
+        'Roulait sur une place à sens giratoire',
+        'Heurtait à l’arrière, en roulant dans le même sens et sur une même file',
+        'Roulait dans le même sens et sur une file différente',
+        'Changeait de file',
+        'Doublait',
+        'Virait à droite',
+        'Virait à gauche',
+        'Reculait',
+        'Empiétait sur une voie réservée à la circulation en sens inverse',
+        'Venait de droite (dans un carrefour)',
+        'N’avait pas observé un signal de priorité ou un feu rouge',
+    ];
+
+    // Points de choc : position de la flèche + rotation de l'icône (flèche dirigée vers le véhicule)
+    $impactPoints = [
+        ['point' => 'avant',          'title' => 'Avant',          'pos' => 'arrow-front', 'icon' => 'fa-arrow-down', 'rot' => 0],
+        ['point' => 'arriere',        'title' => 'Arrière',        'pos' => 'arrow-back',  'icon' => 'fa-arrow-up',   'rot' => 0],
+        ['point' => 'gauche',         'title' => 'Gauche',         'pos' => 'arrow-left',  'icon' => 'fa-arrow-right','rot' => 0],
+        ['point' => 'droite',         'title' => 'Droite',         'pos' => 'arrow-right', 'icon' => 'fa-arrow-left', 'rot' => 0],
+        ['point' => 'avant-gauche',   'title' => 'Avant gauche',   'pos' => 'arrow-fl',    'icon' => 'fa-arrow-down', 'rot' => -45],
+        ['point' => 'avant-droite',   'title' => 'Avant droite',   'pos' => 'arrow-fr',    'icon' => 'fa-arrow-down', 'rot' => 45],
+        ['point' => 'arriere-gauche', 'title' => 'Arrière gauche', 'pos' => 'arrow-bl',    'icon' => 'fa-arrow-up',   'rot' => 45],
+        ['point' => 'arriere-droite', 'title' => 'Arrière droite', 'pos' => 'arrow-br',    'icon' => 'fa-arrow-up',   'rot' => -45],
+    ];
+
+    $authUser = auth('user')->user();
+
+    $labelClass = 'block text-[13px] font-semibold text-slate-700 mb-1.5';
+    $inputClass = 'w-full px-3.5 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10';
+@endphp
 
 @section('content')
-    <div class="mx-auto pb-12" style="width: 95%;">
+    <div class="w-full pb-12">
 
-        {{-- En-tête de la page --}}
-        <div class="mb-8 text-center sm:text-left animate-in" style="--delay: 0.1s">
-            <h2
-                class="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center justify-center sm:justify-start gap-4">
-                <div
-                    class="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-50 to-red-100 border border-red-200 flex items-center justify-center text-red-600 shadow-sm">
-                    <i class="fa-solid fa-car-burst text-2xl"></i>
-                </div>
-                Déclaration de sinistre
-            </h2>
-            <p class="mt-3 text-slate-500 text-sm md:text-base max-w-2xl leading-relaxed">
-                Signalez rapidement votre accident. Votre position est détectée automatiquement pour dépêcher les forces de
-                l'ordre (Police/Gendarmerie) les plus proches de votre position exacte en temps réel.
-            </p>
+        {{-- ═════════ EN-TÊTE ═════════ --}}
+        @php
+            // Retour vers la page précédente (ou le tableau de bord si on arrive directement ici)
+            $backUrl = url()->previous() !== url()->current() ? url()->previous() : route('assure.dashboard');
+        @endphp
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <h1 class="text-2xl md:text-[28px] font-bold tracking-tight text-slate-900">Déclarer un sinistre</h1>
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-red-50 text-red-700 text-xs font-medium">
+                    <i class="fa-solid fa-phone"></i> Urgence : 110 · 111 · 180
+                </span>
+                <a href="{{ $backUrl }}"
+                    class="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-[13px] font-semibold text-slate-700 transition">
+                    <i class="fa-solid fa-arrow-left text-xs"></i> Retour
+                </a>
+            </div>
         </div>
 
         <form action="{{ route('assure.sinistres.store') }}" method="POST" enctype="multipart/form-data" id="sinistre-form"
-            class="flex flex-col gap-6 lg:gap-8">
+            class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_380px] gap-6 items-start">
             @csrf
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {{-- Champs cachés --}}
+            <input type="hidden" name="latitude" id="latitude" required>
+            <input type="hidden" name="longitude" id="longitude" required>
+            <input type="hidden" name="lieu" id="lieu_input">
+            <input type="hidden" name="contrat_id" id="contrat_id" required>
+            <input type="hidden" name="amiable_data" id="amiable_data">
 
-                {{-- 1. LOCALISATION AUTOMATIQUE --}}
-                <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden relative animate-in flex flex-col"
-                    style="--delay: 0.2s">
-                    <div class="absolute top-0 left-0 w-full h-2 bg-blue-500"></div>
-                    <div class="p-6 md:p-8 flex-1 flex flex-col">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div
-                                class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
-                                1</div>
-                            <h3 class="text-lg font-bold text-slate-800">Géolocalisation</h3>
+            {{-- ═════════ COLONNE PRINCIPALE ═════════ --}}
+            <div class="space-y-6 min-w-0">
+
+                {{-- 1. VÉHICULE & NATURE DE L'INCIDENT --}}
+                <section class="rounded-2xl bg-white border border-slate-200">
+                    <header class="flex items-center gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+                        <span class="w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center">1</span>
+                        <div>
+                            <h2 class="text-[15px] font-semibold text-slate-900">Véhicule et nature de l'incident</h2>
+                            <p class="text-xs text-slate-500">Choisissez le véhicule concerné puis ce qui s'est passé.</p>
                         </div>
+                    </header>
 
-                        <div
-                            class="bg-slate-50 rounded-2xl p-5 border border-slate-200 flex flex-col items-center text-center gap-5 flex-1 justify-center">
-                            {{-- Icône radar / map --}}
-                            <div
-                                class="relative w-20 h-20 rounded-full bg-white shadow-sm border border-slate-100 flex items-center justify-center shrink-0">
-                                <i class="fa-solid fa-satellite-dish text-3xl text-blue-500 animate-pulse"></i>
-                                <div class="absolute inset-0 rounded-full border border-blue-400 animate-ping opacity-20">
-                                </div>
+                    <div class="p-6 grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4 items-start">
+                        {{-- Carte : véhicule --}}
+                        <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i class="fa-solid fa-car text-slate-400 text-sm"></i>
+                                <p class="text-[13px] font-semibold text-slate-900">Véhicule concerné <span class="text-red-500">*</span></p>
                             </div>
 
-                            <div class="w-full">
-                                <h4 class="font-bold text-slate-800 mb-1 text-base">Recherche de précision</h4>
-                                <p class="text-sm text-slate-500 mb-4 line-clamp-2">Calcul de vos coordonnées GPS pour
-                                    trouver le poste le plus proche.</p>
+                            <button type="button" id="vehicle-empty" onclick="showVehicleSelection()"
+                                class="w-full flex items-center gap-3 p-4 rounded-xl border border-dashed border-slate-300 bg-white hover:border-blue-500 hover:bg-blue-50/40 text-left transition">
+                                <span class="w-10 h-10 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center shrink-0"><i class="fa-solid fa-plus"></i></span>
+                                <span class="flex-1 min-w-0">
+                                    <span class="block text-[13px] font-semibold text-slate-900">Choisir le véhicule</span>
+                                    <span class="block text-xs text-slate-500">Parmi vos assurances actives et vérifiées</span>
+                                </span>
+                                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                            </button>
 
-                                {{-- Indicateur de statut --}}
-                                <div id="btn-geoloc"
-                                    class="inline-flex items-center justify-center w-full px-4 py-2.5 bg-blue-50 text-blue-700 font-semibold rounded-xl text-sm border border-blue-100">
-                                    <i class="fa-solid fa-spinner fa-spin mr-2"></i> Recherche GPS...
-                                </div>
-
-                                <div id="geoloc-status" class="mt-3 text-xs font-semibold hidden"></div>
-
-                                {{-- Liste des services à proximité --}}
-                                <div id="nearest-services-list" class="mt-6 space-y-2 hidden text-left w-full">
-                                    {{-- Injecté par JS --}}
-                                </div>
-
-                                {{-- Hidden inputs --}}
-                                <input type="hidden" name="latitude" id="latitude" required>
-                                <input type="hidden" name="longitude" id="longitude" required>
-                                <input type="hidden" name="lieu" id="lieu_input">
-                                <input type="hidden" name="contrat_id" id="contrat_id" required>
-                                <input type="hidden" name="amiable_data" id="amiable_data">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- 2. INFORMATIONS DU SINISTRE --}}
-                <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden relative animate-in flex flex-col"
-                    style="--delay: 0.3s">
-                    <div class="absolute top-0 left-0 w-full h-2 bg-orange-400"></div>
-                    <div class="p-6 md:p-8 flex-1 flex flex-col">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div
-                                class="w-8 h-8 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center font-bold text-sm shrink-0">
-                                2</div>
-                            <h3 class="text-lg font-bold text-slate-800">Nature de l'incident</h3>
-                        </div>
-
-                        <div class="flex flex-col gap-5 flex-1">
-                            <div>
-                                <label class="block text-sm font-bold text-slate-700 mb-3">Types d'incidents <span
-                                        class="text-red-500">*</span></label>
-                                <div class="grid grid-cols-1 gap-2">
-                                    @php
-                                        $incidents = [
-                                            'Accident_matériel' => [
-                                                'label' => 'Accident matériel',
-                                                'icon' => 'fa-car-burst',
-                                                'color' => 'text-blue-500',
-                                            ],
-                                            'Accident_corporel' => [
-                                                'label' => 'Accident corporel',
-                                                'icon' => 'fa-user-injured',
-                                                'color' => 'text-red-500',
-                                            ],
-                                            'Vol' => [
-                                                'label' => 'Vol / Braquage',
-                                                'icon' => 'fa-mask',
-                                                'color' => 'text-slate-700',
-                                            ],
-                                            'Incendie' => [
-                                                'label' => 'Incendie / Feu',
-                                                'icon' => 'fa-fire',
-                                                'color' => 'text-orange-500',
-                                            ],
-                                            'Bris_de_glace' => [
-                                                'label' => 'Bris de glace',
-                                                'icon' => 'fa-hammer',
-                                                'color' => 'text-cyan-500',
-                                            ],
-                                            'Autre' => [
-                                                'label' => 'Autre...',
-                                                'icon' => 'fa-ellipsis',
-                                                'color' => 'text-slate-400',
-                                            ],
-                                        ];
-                                    @endphp
-                                    @foreach ($incidents as $value => $data)
-                                        <label
-                                            class="relative flex items-center p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-all has-[:checked]:border-orange-500 has-[:checked]:bg-orange-50/30">
-                                            <input type="checkbox" name="type_sinistre[]" value="{{ $value }}"
-                                                class="w-4 h-4 text-orange-500 focus:ring-orange-400 border-slate-300 rounded incident-checkbox">
-                                            <div class="ml-3 flex items-center gap-2">
-                                                <i
-                                                    class="fa-solid {{ $data['icon'] }} {{ $data['color'] }} text-sm w-5 text-center"></i>
-                                                <span class="text-sm font-bold text-slate-800">{{ $data['label'] }}</span>
-                                            </div>
-                                        </label>
-                                    @endforeach
-                                </div>
-                                @error('type_sinistre')
-                                    <p class="text-xs text-red-500 mt-1 font-medium"><i
-                                            class="fa-solid fa-circle-exclamation mr-1"></i>{{ $message }}</p>
-                                @enderror
-
-                                {{-- Affichage du véhicule sélectionné --}}
-                                <div id="selected-vehicle-display" class="mt-4 pt-4 border-t border-slate-100 hidden">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Véhicule
-                                        sélectionné</p>
-                                    <div
-                                        class="flex items-center justify-between bg-slate-50/50 rounded-2xl p-3 border border-slate-100 group/veh">
-                                        <div class="flex items-center gap-3">
-                                            <div
-                                                class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center text-sm shadow-sm">
-                                                <i class="fa-solid fa-car"></i>
-                                            </div>
-                                            <div class="overflow-hidden">
-                                                <h5 id="display-vehicle-name"
-                                                    class="text-xs font-bold text-slate-800 leading-tight truncate"></h5>
-                                                <p id="display-vehicle-plate"
-                                                    class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                                                </p>
-                                            </div>
+                            <div id="selected-vehicle-display" class="hidden">
+                                <div class="p-4 rounded-xl border border-blue-200 bg-white">
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-car-side"></i></span>
+                                        <div class="flex-1 min-w-0">
+                                            <p id="display-vehicle-name" class="text-[13px] font-semibold text-slate-900 truncate"></p>
+                                            <p id="display-vehicle-plate" class="text-xs font-mono font-semibold text-slate-500 uppercase tracking-wide"></p>
                                         </div>
-                                        <button type="button" onclick="showVehicleSelection()"
-                                            class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-orange-500 hover:border-orange-200 hover:bg-orange-50 transition-all flex items-center justify-center shadow-sm">
-                                            <i class="fa-solid fa-sync-alt text-xs"></i>
-                                        </button>
+                                        <i class="fa-solid fa-circle-check text-blue-600"></i>
                                     </div>
+                                    <button type="button" onclick="showVehicleSelection()"
+                                        class="mt-3 w-full h-8 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition inline-flex items-center justify-center gap-1.5">
+                                        <i class="fa-solid fa-arrows-rotate text-[10px]"></i> Changer de véhicule
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                {{-- 3. CONSTATATION DE L'ACCIDENT --}}
-                <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden relative animate-in flex flex-col"
-                    style="--delay: 0.35s">
-                    <div class="absolute top-0 left-0 w-full h-2 bg-purple-500"></div>
-                    <div class="p-6 md:p-8 flex-1 flex flex-col">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div
-                                class="w-8 h-8 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm shrink-0">
-                                2.5
+                        {{-- Carte : type d'incident --}}
+                        <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i class="fa-solid fa-triangle-exclamation text-slate-400 text-sm"></i>
+                                <p class="text-[13px] font-semibold text-slate-900">Type(s) d'incident <span class="text-red-500">*</span></p>
+                                <span class="text-xs text-slate-400">· plusieurs choix possibles</span>
                             </div>
-                            <h3 class="text-lg font-bold text-slate-800">Constatation & Assurance</h3>
+                            <div class="grid grid-cols-2 xl:grid-cols-3 gap-2">
+                                @foreach ($incidents as $value => $data)
+                                    <label class="relative flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 bg-white cursor-pointer transition hover:border-slate-300 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 has-[:checked]:ring-2 has-[:checked]:ring-blue-600/10">
+                                        <input type="checkbox" name="type_sinistre[]" value="{{ $value }}"
+                                            class="incident-checkbox peer sr-only">
+                                        <span class="w-8 h-8 rounded-md bg-slate-100 text-slate-500 flex items-center justify-center shrink-0 peer-checked:bg-blue-600 peer-checked:text-white transition">
+                                            <i class="fa-solid {{ $data['icon'] }} text-xs"></i>
+                                        </span>
+                                        <span class="min-w-0 pr-4">
+                                            <span class="block text-[13px] font-semibold text-slate-900 truncate">{{ $data['label'] }}</span>
+                                            <span class="block text-[11px] text-slate-500 truncate">{{ $data['hint'] }}</span>
+                                        </span>
+                                        <i class="fa-solid fa-circle-check text-blue-600 text-xs absolute top-2 right-2 opacity-0 peer-checked:opacity-100 transition"></i>
+                                    </label>
+                                @endforeach
+                            </div>
+                            <p id="incident-error" class="hidden text-xs text-red-600 mt-2"><i class="fa-solid fa-circle-exclamation mr-1"></i>Sélectionnez au moins un type d'incident.</p>
+                            @error('type_sinistre')
+                                <p class="text-xs text-red-600 mt-2"><i class="fa-solid fa-circle-exclamation mr-1"></i>{{ $message }}</p>
+                            @enderror
                         </div>
+                    </div>
+                </section>
 
-                        <div class="flex flex-col gap-5 flex-1">
+                {{-- 2. CONSTAT, CIRCONSTANCES & PHOTOS --}}
+                <section class="rounded-2xl bg-white border border-slate-200">
+                    <header class="flex items-center gap-3 px-6 pt-5 pb-4 border-b border-slate-100">
+                        <span class="w-7 h-7 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center">2</span>
+                        <div>
+                            <h2 class="text-[15px] font-semibold text-slate-900">Constat et circonstances</h2>
+                            <p class="text-xs text-slate-500">Comment le constat est établi, ce qui s'est passé et les photos.</p>
+                        </div>
+                    </header>
+
+                    <div class="p-6 grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-4 items-start">
+
+                        {{-- Carte : constat & circonstances --}}
+                        <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-5">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-file-signature text-slate-400 text-sm"></i>
+                                <p class="text-[13px] font-semibold text-slate-900">Constat et circonstances</p>
+                            </div>
+
+                            {{-- Méthode de constat --}}
                             <div>
-                                <label class="block text-sm font-bold text-slate-700 mb-3">Établissement du constat <span
-                                        class="text-red-500">*</span></label>
-                                <div class="grid grid-cols-1 gap-2">
+                                <p class="{{ $labelClass }}">Établissement du constat <span class="text-red-500">*</span></p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <label id="label-constat-amiable"
-                                        class="relative flex items-center p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-all has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50/30">
-                                        <input type="radio" name="methode_constat" id="constat-amiable"
-                                            value="Amiable"
-                                            class="w-4 h-4 text-purple-600 focus:ring-purple-500 border-slate-300"
-                                            required>
-                                        <div class="ml-3">
-                                            <span class="block text-sm font-bold text-slate-800">Constat amiable</span>
-                                            <span class="block text-[10px] text-slate-500">Rempli avec l'autre partie
-                                                impliquée</span>
-                                        </div>
+                                        class="relative flex items-start gap-3 p-3 rounded-lg border border-slate-200 bg-white cursor-pointer transition hover:border-slate-300 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 has-[:checked]:ring-2 has-[:checked]:ring-blue-600/10">
+                                        <input type="radio" name="methode_constat" id="constat-amiable" value="Amiable" required
+                                            class="mt-0.5 w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-600">
+                                        <span class="min-w-0">
+                                            <span class="block text-[13px] font-semibold text-slate-900">Constat amiable</span>
+                                            <span class="block text-[11px] text-slate-500">Rempli ici avec l'autre partie</span>
+                                        </span>
                                     </label>
                                     <label
-                                        class="relative flex items-center p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-all has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50/30">
-                                        <input type="radio" name="methode_constat" id="constat-police"
-                                            value="Police_Gendarmerie"
-                                            class="w-4 h-4 text-purple-600 focus:ring-purple-500 border-slate-300">
-                                        <div class="ml-3">
-                                            <span class="block text-sm font-bold text-slate-800">Police /
-                                                Gendarmerie</span>
-                                            <span class="block text-[10px] text-slate-500">Procès-verbal établi par les
-                                                autorités</span>
-                                        </div>
+                                        class="relative flex items-start gap-3 p-3 rounded-lg border border-slate-200 bg-white cursor-pointer transition hover:border-slate-300 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 has-[:checked]:ring-2 has-[:checked]:ring-blue-600/10">
+                                        <input type="radio" name="methode_constat" id="constat-police" value="Police_Gendarmerie"
+                                            class="mt-0.5 w-4 h-4 text-blue-600 border-slate-300 focus:ring-blue-600">
+                                        <span class="min-w-0">
+                                            <span class="block text-[13px] font-semibold text-slate-900">Police / Gendarmerie</span>
+                                            <span class="block text-[11px] text-slate-500">Procès-verbal des autorités</span>
+                                        </span>
                                     </label>
                                 </div>
-                                <p id="corporel-warning" class="text-[10px] text-red-600 mt-2 font-bold hidden"><i
-                                        class="fa-solid fa-triangle-exclamation mr-1"></i> Accident corporel : le constat
-                                    amiable est interdit par la loi.</p>
-                                <p id="bris-glace-info" class="text-[10px] text-blue-600 mt-2 font-bold hidden"><i
-                                        class="fa-solid fa-info-circle mr-1"></i> Bris de glace : déclaration directe sans
-                                    alerte des autorités.</p>
+
+                                {{-- Constat amiable rempli --}}
+                                <div id="amiable-done" class="hidden mt-2 flex items-center gap-3 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                                    <i class="fa-solid fa-file-circle-check text-emerald-600"></i>
+                                    <p class="flex-1 text-xs text-emerald-800"><span class="font-semibold">Constat amiable rempli</span> et rattaché à la déclaration.</p>
+                                    <button type="button" onclick="openAmiableModal()" class="text-xs font-semibold text-emerald-700 hover:underline">Modifier</button>
+                                </div>
+
+                                <p id="corporel-warning" class="hidden mt-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> Accident corporel : le constat amiable est interdit par la loi. Les autorités seront alertées.
+                                </p>
+                                <p id="bris-glace-info" class="hidden mt-2 text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                                    <i class="fa-solid fa-circle-info mr-1"></i> Bris de glace seul : déclaration directe, sans alerte des autorités.
+                                </p>
                             </div>
 
-                            @php
-                                $assurances = \App\Models\User::where('role', 'assurance')->get();
-                            @endphp
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                            {{-- Compagnie d'assurance --}}
                             <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <label for="assurance_id" class="block text-sm font-bold text-slate-700">Compagnie
-                                        d'assurance (Optionnel)</label>
-                                    <span id="assurance-linked-badge"
-                                        class="hidden px-2 py-0.5 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-bold border border-blue-100 animate-pulse">
-                                        <i class="fa-solid fa-link mr-1"></i> Liée au véhicule
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label for="assurance_id" class="text-[13px] font-semibold text-slate-700">Compagnie d'assurance <span class="font-normal text-slate-400">(optionnel)</span></label>
+                                    <span id="assurance-linked-badge" class="hidden text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">
+                                        <i class="fa-solid fa-link mr-1"></i>Liée au véhicule
                                     </span>
                                 </div>
                                 <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                        <i class="fa-solid fa-building-shield text-slate-400"></i>
-                                    </div>
-                                    <select name="assurance_id" id="assurance_id"
-                                        class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-medium text-slate-700 appearance-none cursor-pointer text-sm">
-                                        <option value="" selected>Aucune (Transmettre direct à la Police/Gendarmerie)
-                                        </option>
+                                    <select name="assurance_id" id="assurance_id" class="{{ $inputClass }} h-10 appearance-none pr-10 cursor-pointer">
+                                        <option value="" selected>Aucune (transmettre directement aux autorités)</option>
                                         @foreach ($assurances as $assurance)
                                             <option value="{{ $assurance->id }}">{{ $assurance->name }}</option>
                                         @endforeach
                                     </select>
-                                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                                        <i class="fa-solid fa-chevron-down text-slate-400 text-sm"></i>
-                                    </div>
+                                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"></i>
                                 </div>
                                 @error('assurance_id')
-                                    <p class="text-xs text-red-500 mt-1 font-medium"><i
-                                            class="fa-solid fa-circle-exclamation mr-1"></i>{{ $message }}</p>
+                                    <p class="text-xs text-red-600 mt-1.5">{{ $message }}</p>
                                 @enderror
                             </div>
 
-
-                            <div class="flex-1 flex flex-col pt-2">
-                                <label for="description" class="block text-sm font-bold text-slate-700 mb-2">Circonstances
-                                    brèves</label>
-                                <textarea name="description" id="description" placeholder="Ex: Percuté par l'arrière..."
-                                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all resize-none text-slate-700 text-sm h-32"></textarea>
-                                @error('description')
-                                    <p class="text-xs text-red-500 mt-1 font-medium"><i
-                                            class="fa-solid fa-circle-exclamation mr-1"></i>{{ $message }}</p>
-                                @enderror
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- 4. PREUVES VISUELLES --}}
-                <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden relative animate-in flex flex-col"
-                    style="--delay: 0.4s">
-                    <div class="absolute top-0 left-0 w-full h-2 bg-emerald-500"></div>
-                    <div class="p-6 md:p-8 flex-1 flex flex-col">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div
-                                class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
-                                3</div>
-                            <h3 class="text-lg font-bold text-slate-800">Photos (Max 5)</h3>
-                        </div>
-
-                        {{-- Conteneur pour les aperçus des photos --}}
-                        <div id="photos-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 empty:hidden w-full">
-                            {{-- Les photos ajoutées apparaîtront ici --}}
-                        </div>
-
-                        {{-- Bouton d'ajout --}}
-                        <div id="add-photo-btn"
-                            class="group relative bg-slate-50 sm:hover:bg-slate-100 border-2 border-dashed border-slate-300 sm:hover:border-emerald-400 rounded-2xl p-6 text-center transition-all cursor-pointer overflow-hidden flex flex-col items-center justify-center w-full"
-                            onclick="triggerPhotoUpload()">
-                            <div class="relative z-10 flex flex-col items-center justify-center w-full">
-                                <div
-                                    class="w-14 h-14 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-emerald-500 group-hover:scale-110 transition-all duration-300 mb-3">
-                                    <i class="fa-solid fa-camera text-2xl"></i>
-                                </div>
-                                <h4 class="text-sm font-bold text-slate-800 mb-1">Prendre une photo</h4>
-                                <p class="text-xs text-slate-500 mb-4 max-w-xs mx-auto"><span id="photo-count">0</span>/5
-                                    photo(s) ajoutée(s).</p>
-
-                                <span
-                                    class="inline-flex items-center px-4 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl shadow-sm group-hover:bg-emerald-500 group-hover:text-white group-hover:border-emerald-500 transition-colors">
-                                    <i class="fa-solid fa-plus mr-1.5"></i> Ajouter
-                                </span>
-                            </div>
-                        </div>
-
-                        {{-- Conteneur pour stocker les vrais inputs file --}}
-                        <div id="hidden-inputs-container" class="hidden"></div>
-
-                        @error('photos')
-                            <p class="text-xs text-red-500 mt-2 font-medium"><i
-                                    class="fa-solid fa-circle-exclamation mr-1"></i>{{ $message }}</p>
-                        @enderror
-                        @error('photos.*')
-                            <p class="text-xs text-red-500 mt-2 font-medium"><i
-                                    class="fa-solid fa-circle-exclamation mr-1"></i>{{ $message }}</p>
-                        @enderror
-                    </div>
-                </div>
-
-            </div>
-
-            {{-- ACTIONS --}}
-            <div class="flex flex-col-reverse sm:flex-row shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:items-center justify-between gap-4 p-6 bg-white rounded-2xl border border-slate-100 animate-in"
-                style="--delay: 0.5s">
-                <a href="{{ route('assure.dashboard') }}"
-                    class="w-full sm:w-auto px-6 py-3.5 rounded-xl font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors text-center">
-                    Annuler
-                </a>
-
-                <button type="submit" id="btn-submit" disabled
-                    class="w-full sm:w-auto px-10 py-3.5 rounded-xl bg-slate-200 text-slate-400 font-bold flex items-center justify-center transition-all duration-300 cursor-not-allowed">
-                    <span>Transmettre l'alerte</span>
-                    <i class="fa-solid fa-paper-plane ml-3"></i>
-                </button>
-            </div>
-
-            <p class="text-center text-xs font-medium text-slate-400 px-4 mt-6">
-                <i class="fa-solid fa-lock mr-1"></i> Vos informations sont cryptées et transmises directement aux forces
-                de
-                l'ordre.
-            </p>
-
-        </form>
-        <style>
-            /* Impact Selector Styles */
-            .impact-selector {
-                position: relative;
-                width: 140px;
-                height: 220px;
-                background: white;
-                border-radius: 2rem;
-                border: 1px solid #e2e8f0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: 0 auto;
-                box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
-            }
-
-            .car-shape {
-                width: 50px;
-                height: 100px;
-                background: #cbd5e1;
-                border-radius: 12px;
-                position: relative;
-                z-index: 1;
-            }
-
-            .car-shape::after {
-                content: '';
-                position: absolute;
-                top: 10px;
-                left: 5px;
-                right: 5px;
-                height: 20px;
-                background: #94a3b8;
-                border-radius: 4px;
-            }
-
-            .impact-arrow {
-                position: absolute;
-                width: 32px;
-                height: 32px;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #cbd5e1;
-                transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                z-index: 10;
-                background: white;
-                border-radius: 50%;
-                border: 1px solid #e2e8f0;
-                font-size: 14px;
-            }
-
-            .impact-arrow:hover {
-                color: #94a3b8;
-                border-color: #94a3b8;
-                transform: scale(1.1);
-            }
-
-            .impact-arrow.active-a {
-                color: white;
-                background: #2563eb;
-                border-color: #2563eb;
-                transform: scale(1.15);
-                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-            }
-
-            .impact-arrow.active-b {
-                color: white;
-                background: #ea580c;
-                border-color: #ea580c;
-                transform: scale(1.15);
-                box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
-            }
-
-            /* Arrow Positions */
-            .arrow-front {
-                top: 5px;
-                left: 50%;
-                transform: translateX(-50%);
-            }
-
-            .arrow-back {
-                bottom: 5px;
-                left: 50%;
-                transform: translateX(-50%);
-            }
-
-            .arrow-left {
-                left: 5px;
-                top: 50%;
-                transform: translateY(-50%);
-            }
-
-            .arrow-right {
-                right: 5px;
-                top: 50%;
-                transform: translateY(-50%);
-            }
-
-            .arrow-fl {
-                top: 20px;
-                left: 15px;
-            }
-
-            .arrow-fr {
-                top: 20px;
-                right: 15px;
-            }
-
-            .arrow-bl {
-                bottom: 20px;
-                left: 15px;
-            }
-
-            .arrow-br {
-                bottom: 20px;
-                right: 15px;
-            }
-        </style>
-
-        {{-- MODAL CONSTAT AMIABLE --}}
-        <div id="constat-amiable-modal" class="fixed inset-0 z-[100] hidden overflow-y-auto"
-            aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" aria-hidden="true"
-                    onclick="closeAmiableModal()"></div>
-
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-                <div
-                    class="inline-block align-bottom bg-white rounded-[2.5rem] text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle w-full max-w-5xl border border-slate-200">
-                    {{-- Header --}}
-                    <div class="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                        <div class="flex items-center gap-4">
-                            <div
-                                class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20">
-                                <i class="fa-solid fa-file-signature text-xl"></i>
-                            </div>
+                            {{-- Circonstances --}}
                             <div>
-                                <h3 class="text-xl font-black text-slate-800" id="modal-title">Constat Amiable d'Accident
-                                </h3>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Rapport détaillé des
-                                    circonstances</p>
+                                <label for="description" class="{{ $labelClass }}">Circonstances <span class="font-normal text-slate-400">(brèves)</span></label>
+                                <textarea name="description" id="description" rows="2" placeholder="Ex : percuté par l'arrière au feu rouge…"
+                                    class="{{ $inputClass }} py-2.5 resize-y min-h-[40px]"></textarea>
+                                @error('description')
+                                    <p class="text-xs text-red-600 mt-1.5">{{ $message }}</p>
+                                @enderror
+                            </div>
                             </div>
                         </div>
-                        <button type="button" onclick="closeAmiableModal()"
-                            class="w-10 h-10 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 transition-all flex items-center justify-center">
+
+                        {{-- Carte : photos --}}
+                        <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
+                            <div class="flex items-center justify-between gap-2 mb-1">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-camera text-slate-400 text-sm"></i>
+                                    <p class="text-[13px] font-semibold text-slate-900">Photos</p>
+                                </div>
+                                <span class="text-xs font-medium text-slate-500"><span id="photo-count">0</span> / 5</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mb-3">Dégâts, plaques, scène de l'accident.</p>
+
+                            <div class="grid grid-cols-3 gap-2">
+                                <div id="photos-container" class="contents"></div>
+
+                                <button type="button" id="add-photo-btn" onclick="triggerPhotoUpload()"
+                                    class="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-300 bg-white hover:border-blue-500 hover:bg-blue-50/40 text-slate-500 hover:text-blue-600 transition">
+                                    <i class="fa-solid fa-plus"></i>
+                                    <span class="text-[11px] font-semibold">Ajouter</span>
+                                </button>
+                            </div>
+
+                            <div id="hidden-inputs-container" class="hidden"></div>
+
+                            @error('photos')
+                                <p class="text-xs text-red-600 mt-3">{{ $message }}</p>
+                            @enderror
+                            @error('photos.*')
+                                <p class="text-xs text-red-600 mt-3">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            {{-- ═════════ COLONNE LATÉRALE ═════════ --}}
+            <aside class="space-y-6 xl:sticky xl:top-2">
+
+                {{-- Géolocalisation --}}
+                <section class="rounded-2xl bg-white border border-slate-200">
+                    <header class="flex items-center justify-between gap-3 px-5 pt-5 pb-4">
+                        <div>
+                            <h2 class="text-[15px] font-semibold text-slate-900">Votre position</h2>
+                            <p class="text-xs text-slate-500">Pour alerter le poste le plus proche</p>
+                        </div>
+                        <span class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-location-crosshairs"></i></span>
+                    </header>
+
+                    <div class="px-5 pb-5">
+                        <div id="btn-geoloc" class="flex items-center gap-2 h-10 px-3.5 rounded-lg bg-blue-50 text-blue-700 text-[13px] font-semibold">
+                            <i class="fa-solid fa-circle-notch fa-spin"></i> Recherche de votre position…
+                        </div>
+
+                        <p id="geoloc-address" class="hidden mt-3 text-[13px] text-slate-700 leading-snug"></p>
+                        <div id="geoloc-status" class="hidden"></div>
+
+                        <div id="nearest-services-list" class="hidden mt-5 space-y-2"></div>
+                    </div>
+                </section>
+
+                {{-- Récapitulatif & envoi --}}
+                <section class="rounded-2xl bg-white border border-slate-200 p-5">
+                    <h2 class="text-[15px] font-semibold text-slate-900 mb-3">Avant d'envoyer</h2>
+                    <ul class="space-y-2.5 text-[13px]">
+                        @foreach(['check-geo' => 'Position détectée', 'check-vehicle' => 'Véhicule sélectionné', 'check-incident' => "Type d'incident choisi"] as $id => $label)
+                            <li id="{{ $id }}" class="flex items-center gap-2.5 text-slate-500">
+                                <span data-dot class="w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center text-[9px] text-white transition"></span>
+                                {{ $label }}
+                            </li>
+                        @endforeach
+                    </ul>
+
+                    <button type="submit" id="btn-submit" disabled
+                        class="mt-5 w-full h-11 rounded-lg bg-slate-100 text-slate-400 text-sm font-semibold flex items-center justify-center gap-2 cursor-not-allowed transition">
+                        <span>Transmettre l'alerte</span>
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                    </button>
+                    <a href="{{ route('assure.dashboard') }}" class="mt-2 w-full h-10 rounded-lg text-[13px] font-semibold text-slate-500 hover:text-slate-900 hover:bg-slate-50 flex items-center justify-center transition">
+                        Annuler
+                    </a>
+
+                    <p class="mt-4 pt-4 border-t border-slate-100 text-[11px] text-slate-400 flex items-start gap-2">
+                        <i class="fa-solid fa-lock mt-0.5"></i>
+                        Vos informations sont chiffrées et transmises directement aux forces de l'ordre.
+                    </p>
+                </section>
+            </aside>
+        </form>
+
+        {{-- ═════════ MODALE CONSTAT AMIABLE ═════════ --}}
+        <div id="constat-amiable-modal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="absolute inset-0 bg-slate-900/50" aria-hidden="true" onclick="closeAmiableModal()"></div>
+
+            <div class="relative h-full w-full flex items-stretch sm:items-center justify-center sm:p-6">
+                <div class="relative w-full max-w-6xl bg-white sm:rounded-2xl border border-slate-200 shadow-xl flex flex-col max-h-full">
+
+                    {{-- En-tête --}}
+                    <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-200 shrink-0">
+                        <div class="flex items-center gap-3">
+                            <span class="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center"><i class="fa-solid fa-file-signature"></i></span>
+                            <div>
+                                <h3 id="modal-title" class="text-base font-semibold text-slate-900">Constat amiable d'accident</h3>
+                                <p class="text-xs text-slate-500">Rapport détaillé des circonstances</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="closeAmiableModal()" class="w-9 h-9 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition" title="Fermer">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
 
-                    {{-- Body (Scrollable) --}}
-                    <div class="px-8 py-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 relative">
+                    {{-- Corps --}}
+                    <div class="flex-1 overflow-y-auto px-6 py-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-                            {{-- Colonne Véhicule A (Bleu) --}}
-                            <div class="md:col-span-12 lg:col-span-4 space-y-6">
-                                <div class="p-6 rounded-3xl bg-blue-50 border border-blue-100 relative overflow-hidden">
-                                    <div class="absolute top-0 right-0 w-24 h-24 bg-blue-600/5 -mr-8 -mt-8 rounded-full">
+                            {{-- Véhicule A --}}
+                            <div class="lg:col-span-4 space-y-4">
+                                <div class="rounded-xl border border-blue-200 overflow-hidden">
+                                    <div class="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white">
+                                        <span class="w-6 h-6 rounded bg-white/20 text-xs font-bold flex items-center justify-center">A</span>
+                                        <span class="text-[13px] font-semibold">Votre véhicule</span>
                                     </div>
-                                    <h4
-                                        class="text-blue-700 font-black text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
-                                        <span
-                                            class="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center text-[10px]">A</span>
-                                        VÉHICULE & CONDUCTEUR A
-                                    </h4>
-
-                                    <div class="space-y-4">
-                                        {{-- Section Véhicule --}}
-                                        <div class="p-3 bg-white rounded-2xl border border-blue-100 shadow-sm">
-                                            <p
-                                                class="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-1">
-                                                <i class="fa-solid fa-car"></i> Véhicule
-                                            </p>
-                                            <p id="amiable-a-vehicle" class="text-sm font-bold text-slate-800"></p>
-                                            <p id="amiable-a-name" class="text-[10px] text-slate-500 font-medium"></p>
+                                    <div class="p-4 space-y-3">
+                                        <div>
+                                            <p class="text-[11px] text-slate-500">Véhicule</p>
+                                            <p id="amiable-a-vehicle" class="text-[13px] font-semibold text-slate-900"></p>
+                                            <p id="amiable-a-name" class="text-xs text-slate-500"></p>
                                         </div>
-
-                                        {{-- Section Conducteur --}}
-                                        <div class="p-3 bg-white rounded-2xl border border-blue-100 shadow-sm">
-                                            <p
-                                                class="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-1">
-                                                <i class="fa-solid fa-user-tie"></i> Conducteur
-                                            </p>
-                                            <input type="text" id="amiable-a-driver"
-                                                class="w-full text-sm font-bold text-slate-800 bg-transparent border-none p-0 focus:ring-0"
-                                                placeholder="Nom complet du conducteur">
+                                        <div>
+                                            <label for="amiable-a-driver" class="text-[11px] text-slate-500">Conducteur</label>
+                                            <input type="text" id="amiable-a-driver" placeholder="Nom complet du conducteur"
+                                                class="{{ $inputClass }} h-10 mt-1">
                                         </div>
                                     </div>
                                 </div>
 
-                                {{-- Chocs A (Grid visuel simplifié avec diagramme) --}}
-                                <div class="text-center p-6 border border-slate-100 rounded-3xl bg-slate-50/30">
-                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">
-                                        Indiquer le point de choc initial (A)</p>
+                                <div class="rounded-xl border border-slate-200 p-4 text-center">
+                                    <p class="text-xs font-semibold text-slate-600 mb-4">Point de choc initial (A)</p>
                                     <div class="impact-selector" id="impact-a">
                                         <div class="car-shape"></div>
-                                        <button type="button" class="impact-arrow arrow-front" data-point="avant"
-                                            title="Avant"><i class="fa-solid fa-arrow-down"></i></button>
-                                        <button type="button" class="impact-arrow arrow-back" data-point="arriere"
-                                            title="Arrière"><i class="fa-solid fa-arrow-up"></i></button>
-                                        <button type="button" class="impact-arrow arrow-left" data-point="gauche"
-                                            title="Gauche"><i class="fa-solid fa-arrow-right"></i></button>
-                                        <button type="button" class="impact-arrow arrow-right" data-point="droite"
-                                            title="Droite"><i class="fa-solid fa-arrow-left"></i></button>
-                                        <button type="button" class="impact-arrow arrow-fl" data-point="avant-gauche"
-                                            title="Avant Gauche"><i class="fa-solid fa-arrow-down-right"></i></button>
-                                        <button type="button" class="impact-arrow arrow-fr" data-point="avant-droite"
-                                            title="Avant Droite"><i class="fa-solid fa-arrow-down-left"></i></button>
-                                        <button type="button" class="impact-arrow arrow-bl" data-point="arriere-gauche"
-                                            title="Arrière Gauche"><i class="fa-solid fa-arrow-up-right"></i></button>
-                                        <button type="button" class="impact-arrow arrow-br" data-point="arriere-droite"
-                                            title="Arrière Droite"><i class="fa-solid fa-arrow-up-left"></i></button>
+                                        @foreach($impactPoints as $ip)
+                                            <button type="button" class="impact-arrow {{ $ip['pos'] }}" data-point="{{ $ip['point'] }}" title="{{ $ip['title'] }}">
+                                                <i class="fa-solid {{ $ip['icon'] }}" style="transform: rotate({{ $ip['rot'] }}deg)"></i>
+                                            </button>
+                                        @endforeach
                                     </div>
                                     <input type="hidden" id="amiable-a-impact" value="">
                                 </div>
                             </div>
 
-                            {{-- Colonne Circonstances (Milieu) --}}
-                            <div
-                                class="md:col-span-12 lg:col-span-4 bg-slate-50/50 rounded-3xl border border-slate-100 p-6">
-                                <h4 class="text-slate-500 font-black text-sm uppercase tracking-wider mb-6 text-center">12.
-                                    Circonstances</h4>
-
-                                <div class="space-y-3">
-                                    @php
-                                        $circonstances = [
-                                            "En stationnement / à l'arrêt",
-                                            'Quittait un stationnement / ouvrait une portière',
-                                            'Prenait un stationnement',
-                                            "Sortait d'un parking, d'un lieu privé, d'un chemin de terre",
-                                            'S’engageait dans un parking, un lieu privé, un chemin de terre',
-                                            'S’engageait sur une place à sens giratoire',
-                                            'Roulait sur une place à sens giratoire',
-                                            'Heurtait à l’arrière, en roulant dans le même sens et sur une même file',
-                                            'Roulait dans le même sens et sur une file différente',
-                                            'Changeait de file',
-                                            'Doublait',
-                                            'Virait à droite',
-                                            'Virait à gauche',
-                                            'Reculait',
-                                            'Empiétait sur une voie réservée à la circulation en sens inverse',
-                                            'Venait de droite (dans un carrefour)',
-                                            'N’avait pas observé un signal de priorité ou un feu rouge',
-                                        ];
-                                    @endphp
-
-                                    <div class="flex items-center justify-between mb-4 px-2">
-                                        <span class="text-[10px] font-black text-blue-500 uppercase">A</span>
-                                        <span class="text-[10px] font-black text-slate-300 uppercase italic">Cocher si
-                                            concerné</span>
-                                        <span class="text-[10px] font-black text-orange-500 uppercase">B</span>
-                                    </div>
-
+                            {{-- Circonstances --}}
+                            <div class="lg:col-span-4 rounded-xl border border-slate-200 overflow-hidden">
+                                <div class="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+                                    <span class="w-6 h-6 rounded bg-blue-600 text-white text-xs font-bold flex items-center justify-center">A</span>
+                                    <span class="text-[13px] font-semibold text-slate-700">Circonstances</span>
+                                    <span class="w-6 h-6 rounded bg-orange-500 text-white text-xs font-bold flex items-center justify-center">B</span>
+                                </div>
+                                <p class="text-[11px] text-slate-400 text-center pt-2">Cochez les cases concernées pour chaque véhicule</p>
+                                <div class="divide-y divide-slate-100">
                                     @foreach ($circonstances as $index => $label)
-                                        <div class="flex items-center gap-3">
-                                            <input type="checkbox" id="circ-a-{{ $index + 1 }}"
-                                                class="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500">
-                                            <p
-                                                class="flex-1 text-[11px] font-bold text-slate-600 text-center leading-tight">
-                                                {{ $label }}</p>
-                                            <input type="checkbox" id="circ-b-{{ $index + 1 }}"
-                                                class="w-4 h-4 text-orange-600 bg-white border-slate-300 rounded focus:ring-orange-500">
+                                        <div class="flex items-center gap-3 px-4 py-2 hover:bg-slate-50">
+                                            <input type="checkbox" id="circ-a-{{ $index + 1 }}" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600">
+                                            <p class="flex-1 text-xs text-slate-700 text-center leading-snug">
+                                                <span class="text-slate-400 mr-0.5">{{ $index + 1 }}.</span> {{ $label }}
+                                            </p>
+                                            <input type="checkbox" id="circ-b-{{ $index + 1 }}" class="w-4 h-4 rounded border-slate-300 text-orange-500 focus:ring-orange-500">
                                         </div>
                                     @endforeach
                                 </div>
                             </div>
 
-                            {{-- Colonne Véhicule B (Orange/Jaune) --}}
-                            <div class="md:col-span-12 lg:col-span-4 space-y-6">
-                                <div
-                                    class="p-6 rounded-3xl bg-orange-50 border border-orange-100 relative overflow-hidden">
-                                    <div class="absolute top-0 right-0 w-24 h-24 bg-orange-600/5 -mr-8 -mt-8 rounded-full">
+                            {{-- Véhicule B --}}
+                            <div class="lg:col-span-4 space-y-4">
+                                <div class="rounded-xl border border-orange-200 overflow-hidden">
+                                    <div class="flex items-center gap-2 px-4 py-2.5 bg-orange-500 text-white">
+                                        <span class="w-6 h-6 rounded bg-white/20 text-xs font-bold flex items-center justify-center">B</span>
+                                        <span class="text-[13px] font-semibold">Autre véhicule</span>
                                     </div>
-                                    <h4
-                                        class="text-orange-700 font-black text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
-                                        <span
-                                            class="w-6 h-6 rounded-lg bg-orange-600 text-white flex items-center justify-center text-[10px]">B</span>
-                                        VÉHICULE & CONDUCTEUR B
-                                    </h4>
-
-                                    <div class="space-y-4">
-                                        {{-- Section Véhicule --}}
-                                        <div class="p-3 bg-white rounded-2xl border border-orange-100 shadow-sm">
-                                            <p
-                                                class="text-[8px] font-black text-orange-400 uppercase tracking-widest mb-2 flex items-center gap-1">
-                                                <i class="fa-solid fa-car"></i> Véhicule (Marque/Immatriculation)
-                                            </p>
-                                            <input type="text" id="amiable-b-vehicle"
-                                                class="w-full text-sm font-bold text-slate-800 bg-transparent border-none p-0 focus:ring-0"
-                                                placeholder="Marque & Immatriculation (B)">
+                                    <div class="p-4 space-y-3">
+                                        <div>
+                                            <label for="amiable-b-vehicle" class="text-[11px] text-slate-500">Véhicule <span class="text-red-500">*</span></label>
+                                            <input type="text" id="amiable-b-vehicle" placeholder="Marque et immatriculation"
+                                                class="{{ $inputClass }} h-10 mt-1">
                                         </div>
-
-                                        {{-- Section Conducteur --}}
-                                        <div class="p-4 bg-white rounded-2xl border border-orange-100 shadow-sm space-y-3">
-                                            <p
-                                                class="text-[9px] font-black text-orange-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                                <i class="fa-solid fa-user-tie"></i> Conducteur
-                                            </p>
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <input type="text" id="amiable-b-nom"
-                                                    class="w-full text-xs font-bold text-slate-800 bg-slate-50 p-2 rounded-lg border border-orange-100 focus:outline-none focus:ring-1 focus:ring-orange-500/20"
-                                                    placeholder="Nom">
-                                                <input type="text" id="amiable-b-prenom"
-                                                    class="w-full text-xs font-bold text-slate-800 bg-slate-50 p-2 rounded-lg border border-orange-100 focus:outline-none focus:ring-1 focus:ring-orange-500/20"
-                                                    placeholder="Prénom">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <label for="amiable-b-nom" class="text-[11px] text-slate-500">Nom <span class="text-red-500">*</span></label>
+                                                <input type="text" id="amiable-b-nom" placeholder="Nom" class="{{ $inputClass }} h-10 mt-1">
                                             </div>
-                                            <input type="text" id="amiable-b-contact"
-                                                class="w-full text-xs font-bold text-slate-800 bg-slate-50 p-2 rounded-lg border border-orange-100 focus:outline-none focus:ring-1 focus:ring-orange-500/20"
-                                                placeholder="Tél ou email">
+                                            <div>
+                                                <label for="amiable-b-prenom" class="text-[11px] text-slate-500">Prénom</label>
+                                                <input type="text" id="amiable-b-prenom" placeholder="Prénom" class="{{ $inputClass }} h-10 mt-1">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label for="amiable-b-contact" class="text-[11px] text-slate-500">Contact</label>
+                                            <input type="text" id="amiable-b-contact" placeholder="Téléphone ou e-mail" class="{{ $inputClass }} h-10 mt-1">
                                         </div>
                                     </div>
                                 </div>
 
-                                {{-- Chocs B --}}
-                                <div class="text-center p-6 border border-slate-100 rounded-3xl bg-slate-50/30">
-                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">
-                                        Indiquer le point de choc initial (B)</p>
+                                <div class="rounded-xl border border-slate-200 p-4 text-center">
+                                    <p class="text-xs font-semibold text-slate-600 mb-4">Point de choc initial (B)</p>
                                     <div class="impact-selector" id="impact-b">
                                         <div class="car-shape"></div>
-                                        <button type="button" class="impact-arrow arrow-front" data-point="avant"
-                                            title="Avant"><i class="fa-solid fa-arrow-down"></i></button>
-                                        <button type="button" class="impact-arrow arrow-back" data-point="arriere"
-                                            title="Arrière"><i class="fa-solid fa-arrow-up"></i></button>
-                                        <button type="button" class="impact-arrow arrow-left" data-point="gauche"
-                                            title="Gauche"><i class="fa-solid fa-arrow-right"></i></button>
-                                        <button type="button" class="impact-arrow arrow-right" data-point="droite"
-                                            title="Droite"><i class="fa-solid fa-arrow-left"></i></button>
-                                        <button type="button" class="impact-arrow arrow-fl" data-point="avant-gauche"
-                                            title="Avant Gauche"><i class="fa-solid fa-arrow-down-right"></i></button>
-                                        <button type="button" class="impact-arrow arrow-fr" data-point="avant-droite"
-                                            title="Avant Droite"><i class="fa-solid fa-arrow-down-left"></i></button>
-                                        <button type="button" class="impact-arrow arrow-bl" data-point="arriere-gauche"
-                                            title="Arrière Gauche"><i class="fa-solid fa-arrow-up-right"></i></button>
-                                        <button type="button" class="impact-arrow arrow-br" data-point="arriere-droite"
-                                            title="Arrière Droite"><i class="fa-solid fa-arrow-up-left"></i></button>
+                                        @foreach($impactPoints as $ip)
+                                            <button type="button" class="impact-arrow {{ $ip['pos'] }}" data-point="{{ $ip['point'] }}" title="{{ $ip['title'] }}">
+                                                <i class="fa-solid {{ $ip['icon'] }}" style="transform: rotate({{ $ip['rot'] }}deg)"></i>
+                                            </button>
+                                        @endforeach
                                     </div>
                                     <input type="hidden" id="amiable-b-impact" value="">
                                 </div>
                             </div>
 
-                            {{-- Section Témoins (Optionnel) --}}
-                            <div class="md:col-span-12 pt-6 border-t border-slate-100">
-                                <h4
-                                    class="text-slate-500 font-black text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
-                                    <i class="fa-solid fa-users text-blue-500"></i>
-                                    3. Témoins (Noms, Adresses, Tél) - Optionnel
-                                </h4>
-                                <textarea id="amiable-temoins"
-                                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none text-slate-700 text-sm h-20"
-                                    placeholder="Ex: Jean Dupont, 0102030405, Rue des Jardins..."></textarea>
+                            {{-- Témoins --}}
+                            <div class="lg:col-span-12">
+                                <label for="amiable-temoins" class="{{ $labelClass }}">Témoins <span class="font-normal text-slate-400">(noms, adresses, téléphones · optionnel)</span></label>
+                                <textarea id="amiable-temoins" rows="2" placeholder="Ex : Jean Kouassi, 01 02 03 04 05, Cocody…"
+                                    class="{{ $inputClass }} py-2.5 resize-none"></textarea>
                             </div>
 
-                            {{-- Section Signature & Croquis --}}
-                            <div
-                                class="md:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-slate-100">
-                                {{-- Croquis --}}
-                                <div>
-                                    <h4
-                                        class="text-slate-500 font-black text-sm uppercase tracking-wider mb-3 flex items-center justify-between">
-                                        <span>13. Croquis de l'accident</span>
-                                        <div class="flex items-center gap-2">
-                                            <button type="button" id="sketch-draw-btn" onclick="setSketchMode('draw')"
-                                                title="Mode dessin à main levée"
-                                                class="text-[9px] px-2 py-1 rounded-lg bg-blue-600 text-white font-bold transition-all">✏
-                                                Dessiner</button>
-                                            <button type="button" id="sketch-move-btn" onclick="setSketchMode('select')"
-                                                title="Déplacer / Tourner les éléments"
-                                                class="text-[9px] px-2 py-1 rounded-lg bg-slate-200 text-slate-600 font-bold transition-all">↖
-                                                Déplacer</button>
-                                            <button type="button" onclick="clearSketch()"
-                                                class="text-[9px] text-red-500 hover:underline ml-1">Effacer</button>
-                                        </div>
-                                    </h4>
-
-                                    {{-- Palette de symboles --}}
-                                    <div id="sketch-palette"
-                                        class="flex items-center gap-1.5 overflow-x-auto pb-1.5 mb-2.5 select-none"
-                                        style="scrollbar-width:thin;">
-                                        <span
-                                            class="text-[8px] text-slate-400 font-medium whitespace-nowrap shrink-0">Cliquez
-                                            ou glissez :</span>
-
-                                        {{-- Auto --}}
-                                        <div class="sketch-sym-item shrink-0 cursor-grab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-all"
-                                            draggable="true" data-sym="auto" onclick="addSketchSymbol('auto')"
-                                            title="Ajouter une Auto">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 64" width="26"
-                                                height="26">
-                                                <rect x="5" y="12" width="30" height="40" rx="6"
-                                                    fill="#64748b" stroke="#1e293b" stroke-width="1.5" />
-                                                <rect x="9" y="15" width="22" height="10" rx="3"
-                                                    fill="#bfdbfe" />
-                                                <rect x="9" y="40" width="22" height="8" rx="3"
-                                                    fill="#bfdbfe" />
-                                                <rect x="1" y="15" width="5" height="9" rx="2"
-                                                    fill="#1e293b" />
-                                                <rect x="34" y="15" width="5" height="9" rx="2"
-                                                    fill="#1e293b" />
-                                                <rect x="1" y="38" width="5" height="9" rx="2"
-                                                    fill="#1e293b" />
-                                                <rect x="34" y="38" width="5" height="9" rx="2"
-                                                    fill="#1e293b" />
-                                            </svg>
-                                            <span
-                                                class="text-[7px] text-slate-500 font-semibold whitespace-nowrap">Auto</span>
-                                        </div>
-
-                                        {{-- 2 Roues --}}
-                                        <div class="sketch-sym-item shrink-0 cursor-grab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-all"
-                                            draggable="true" data-sym="deux_roues"
-                                            onclick="addSketchSymbol('deux_roues')" title="Ajouter un 2 Roues">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 64" width="14"
-                                                height="26">
-                                                <rect x="5" y="6" width="12" height="52" rx="5"
-                                                    fill="#475569" stroke="#1e293b" stroke-width="1.5" />
-                                                <rect x="1" y="9" width="5" height="12" rx="2.5"
-                                                    fill="#1e293b" />
-                                                <rect x="16" y="9" width="5" height="12" rx="2.5"
-                                                    fill="#1e293b" />
-                                                <rect x="1" y="43" width="5" height="12" rx="2.5"
-                                                    fill="#1e293b" />
-                                                <rect x="16" y="43" width="5" height="12" rx="2.5"
-                                                    fill="#1e293b" />
-                                            </svg>
-                                            <span class="text-[7px] text-slate-500 font-semibold whitespace-nowrap">2
-                                                Roues</span>
-                                        </div>
-
-                                        {{-- Camion --}}
-                                        <div class="sketch-sym-item shrink-0 cursor-grab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-all"
-                                            draggable="true" data-sym="camion" onclick="addSketchSymbol('camion')"
-                                            title="Ajouter un Camion">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 90" width="22"
-                                                height="26">
-                                                <rect x="4" y="4" width="42" height="20" rx="4"
-                                                    fill="#6b7280" stroke="#1e293b" stroke-width="1.5" />
-                                                <rect x="8" y="7" width="34" height="11" rx="3"
-                                                    fill="#bfdbfe" />
-                                                <rect x="3" y="28" width="44" height="58" rx="3"
-                                                    fill="#9ca3af" stroke="#1e293b" stroke-width="1.5" />
-                                                <line x1="9" y1="57" x2="41" y2="57"
-                                                    stroke="#6b7280" stroke-width="1.5" stroke-dasharray="4,3" />
-                                                <rect x="0" y="8" width="5" height="12" rx="2"
-                                                    fill="#1e293b" />
-                                                <rect x="45" y="8" width="5" height="12" rx="2"
-                                                    fill="#1e293b" />
-                                                <rect x="0" y="63" width="5" height="12" rx="2"
-                                                    fill="#1e293b" />
-                                                <rect x="45" y="63" width="5" height="12" rx="2"
-                                                    fill="#1e293b" />
-                                            </svg>
-                                            <span
-                                                class="text-[7px] text-slate-500 font-semibold whitespace-nowrap">Camion</span>
-                                        </div>
-
-                                        {{-- Piéton --}}
-                                        <div class="sketch-sym-item shrink-0 cursor-grab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-all"
-                                            draggable="true" data-sym="pieton" onclick="addSketchSymbol('pieton')"
-                                            title="Ajouter un Piéton">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 46" width="18"
-                                                height="26">
-                                                <circle cx="15" cy="7" r="6" fill="#e2e8f0"
-                                                    stroke="#1e293b" stroke-width="1.5" />
-                                                <line x1="15" y1="13" x2="15" y2="30"
-                                                    stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" />
-                                                <line x1="5" y1="21" x2="25" y2="21"
-                                                    stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" />
-                                                <line x1="15" y1="30" x2="7" y2="44"
-                                                    stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" />
-                                                <line x1="15" y1="30" x2="23" y2="44"
-                                                    stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" />
-                                            </svg>
-                                            <span
-                                                class="text-[7px] text-slate-500 font-semibold whitespace-nowrap">Piéton</span>
-                                        </div>
-
-                                        {{-- Feu tricolore --}}
-                                        <div class="sketch-sym-item shrink-0 cursor-grab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-all"
-                                            draggable="true" data-sym="feu" onclick="addSketchSymbol('feu')"
-                                            title="Ajouter un Feu tricolore">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 58" width="12"
-                                                height="26">
-                                                <rect x="2" y="2" width="20" height="40" rx="4"
-                                                    fill="#1e293b" stroke="#374151" stroke-width="1" />
-                                                <circle cx="12" cy="10" r="5" fill="#ef4444" />
-                                                <circle cx="12" cy="22" r="5" fill="#f59e0b" />
-                                                <circle cx="12" cy="34" r="5" fill="#22c55e" />
-                                                <rect x="10" y="42" width="4" height="12" fill="#374151" />
-                                                <rect x="4" y="52" width="16" height="4" rx="2"
-                                                    fill="#374151" />
-                                            </svg>
-                                            <span
-                                                class="text-[7px] text-slate-500 font-semibold whitespace-nowrap">Feu</span>
-                                        </div>
-
-                                        {{-- Balise de priorité --}}
-                                        <div class="sketch-sym-item shrink-0 cursor-grab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-all"
-                                            draggable="true" data-sym="balise" onclick="addSketchSymbol('balise')"
-                                            title="Ajouter une Balise de priorité">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 60" width="22"
-                                                height="26">
-                                                <polygon points="25,3 47,46 3,46" fill="white" stroke="#1e293b"
-                                                    stroke-width="2" />
-                                                <polygon points="25,11 41,43 9,43" fill="none" stroke="#e11d48"
-                                                    stroke-width="1.5" />
-                                                <line x1="25" y1="46" x2="25" y2="58"
-                                                    stroke="#374151" stroke-width="3" stroke-linecap="round" />
-                                                <circle cx="25" cy="60" r="3" fill="#374151" />
-                                            </svg>
-                                            <span
-                                                class="text-[7px] text-slate-500 font-semibold whitespace-nowrap">Balise</span>
-                                        </div>
-
-                                        {{-- Stop --}}
-                                        <div class="sketch-sym-item shrink-0 cursor-grab flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-all"
-                                            draggable="true" data-sym="stop" onclick="addSketchSymbol('stop')"
-                                            title="Ajouter un Stop">
-                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 60" width="22"
-                                                height="26">
-                                                <polygon points="15,2 35,2 48,15 48,35 35,48 15,48 2,35 2,15"
-                                                    fill="#dc2626" stroke="#1e293b" stroke-width="1.5" />
-                                                <text x="25" y="31" text-anchor="middle" fill="white" font-size="11"
-                                                    font-family="Arial" font-weight="bold">STOP</text>
-                                                <line x1="25" y1="48" x2="25" y2="58"
-                                                    stroke="#374151" stroke-width="3" stroke-linecap="round" />
-                                                <circle cx="25" cy="60" r="3" fill="#374151" />
-                                            </svg>
-                                            <span
-                                                class="text-[7px] text-slate-500 font-semibold whitespace-nowrap">Stop</span>
-                                        </div>
-                                    </div>
-
-                                    {{-- Canvas Croquis --}}
-                                    <div id="sketch-wrapper"
-                                        class="bg-white rounded-[1.5rem] border-2 border-dashed border-slate-200 relative overflow-hidden"
-                                        style="height:260px;">
-                                        <canvas id="sketch-pad"></canvas>
-                                        <p id="sketch-hint"
-                                            class="absolute bottom-3 right-4 text-[8px] text-slate-300 italic pointer-events-none select-none">
-                                            Dessinez ou déposez des symboles</p>
+                            {{-- Croquis --}}
+                            <div class="lg:col-span-7">
+                                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                    <p class="text-[13px] font-semibold text-slate-700">Croquis de l'accident</p>
+                                    <div class="flex items-center gap-1.5">
+                                        <button type="button" id="sketch-draw-btn" onclick="setSketchMode('draw')" title="Dessin à main levée"></button>
+                                        <button type="button" id="sketch-move-btn" onclick="setSketchMode('select')" title="Déplacer / tourner les éléments"></button>
+                                        <button type="button" onclick="clearSketch()" class="h-7 px-2.5 rounded-md text-[11px] font-semibold text-red-600 hover:bg-red-50 transition">Effacer</button>
                                     </div>
                                 </div>
 
-                                {{-- Signatures --}}
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <h4
-                                            class="text-blue-500 font-black text-[10px] uppercase tracking-wider mb-3 flex items-center justify-between">
-                                            <span>Signature A</span>
-                                            <button type="button" onclick="clearSigA()"
-                                                class="text-[8px] text-red-400 hover:underline">Effacer</button>
-                                        </h4>
-                                        <div class="bg-blue-50/50 rounded-2xl border border-blue-100 p-2 h-48 relative">
-                                            <canvas id="sig-a-pad" class="w-full h-full"></canvas>
+                                {{-- Palette de symboles --}}
+                                <div id="sketch-palette" class="flex items-center gap-1.5 overflow-x-auto pb-2 select-none" style="scrollbar-width:thin;">
+                                    <span class="text-[11px] text-slate-400 whitespace-nowrap shrink-0 mr-1">Cliquez ou glissez :</span>
+                                    @foreach([
+                                        'auto' => ['Auto', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 64" width="22" height="24"><rect x="5" y="12" width="30" height="40" rx="6" fill="#64748b" stroke="#1e293b" stroke-width="1.5"/><rect x="9" y="15" width="22" height="10" rx="3" fill="#bfdbfe"/><rect x="9" y="40" width="22" height="8" rx="3" fill="#bfdbfe"/><rect x="1" y="15" width="5" height="9" rx="2" fill="#1e293b"/><rect x="34" y="15" width="5" height="9" rx="2" fill="#1e293b"/><rect x="1" y="38" width="5" height="9" rx="2" fill="#1e293b"/><rect x="34" y="38" width="5" height="9" rx="2" fill="#1e293b"/></svg>'],
+                                        'deux_roues' => ['2 roues', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 64" width="12" height="24"><rect x="5" y="6" width="12" height="52" rx="5" fill="#475569" stroke="#1e293b" stroke-width="1.5"/><rect x="1" y="9" width="5" height="12" rx="2.5" fill="#1e293b"/><rect x="16" y="9" width="5" height="12" rx="2.5" fill="#1e293b"/><rect x="1" y="43" width="5" height="12" rx="2.5" fill="#1e293b"/><rect x="16" y="43" width="5" height="12" rx="2.5" fill="#1e293b"/></svg>'],
+                                        'camion' => ['Camion', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 90" width="18" height="24"><rect x="4" y="4" width="42" height="20" rx="4" fill="#6b7280" stroke="#1e293b" stroke-width="1.5"/><rect x="8" y="7" width="34" height="11" rx="3" fill="#bfdbfe"/><rect x="3" y="28" width="44" height="58" rx="3" fill="#9ca3af" stroke="#1e293b" stroke-width="1.5"/><line x1="9" y1="57" x2="41" y2="57" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="4,3"/></svg>'],
+                                        'pieton' => ['Piéton', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 46" width="16" height="24"><circle cx="15" cy="7" r="6" fill="#e2e8f0" stroke="#1e293b" stroke-width="1.5"/><line x1="15" y1="13" x2="15" y2="30" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="21" x2="25" y2="21" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="30" x2="7" y2="44" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="30" x2="23" y2="44" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/></svg>'],
+                                        'feu' => ['Feu', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 58" width="10" height="24"><rect x="2" y="2" width="20" height="40" rx="4" fill="#1e293b"/><circle cx="12" cy="10" r="5" fill="#ef4444"/><circle cx="12" cy="22" r="5" fill="#f59e0b"/><circle cx="12" cy="34" r="5" fill="#22c55e"/><rect x="10" y="42" width="4" height="12" fill="#374151"/></svg>'],
+                                        'balise' => ['Balise', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 60" width="20" height="24"><polygon points="25,3 47,46 3,46" fill="white" stroke="#1e293b" stroke-width="2"/><polygon points="25,11 41,43 9,43" fill="none" stroke="#e11d48" stroke-width="1.5"/><line x1="25" y1="46" x2="25" y2="58" stroke="#374151" stroke-width="3" stroke-linecap="round"/></svg>'],
+                                        'stop' => ['Stop', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 60" width="20" height="24"><polygon points="15,2 35,2 48,15 48,35 35,48 15,48 2,35 2,15" fill="#dc2626" stroke="#1e293b" stroke-width="1.5"/><text x="25" y="31" text-anchor="middle" fill="white" font-size="11" font-family="Arial" font-weight="bold">STOP</text><line x1="25" y1="48" x2="25" y2="58" stroke="#374151" stroke-width="3" stroke-linecap="round"/></svg>'],
+                                    ] as $sym => [$symLabel, $svg])
+                                        <div class="sketch-sym-item shrink-0 cursor-grab flex flex-col items-center gap-0.5 w-14 py-1.5 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition"
+                                            draggable="true" data-sym="{{ $sym }}" onclick="addSketchSymbol('{{ $sym }}')" title="Ajouter : {{ $symLabel }}">
+                                            {!! $svg !!}
+                                            <span class="text-[10px] text-slate-600 font-medium whitespace-nowrap">{{ $symLabel }}</span>
                                         </div>
+                                    @endforeach
+                                </div>
+
+                                <div id="sketch-wrapper" class="relative rounded-xl border border-dashed border-slate-300 bg-white overflow-hidden" style="height:280px;">
+                                    <canvas id="sketch-pad"></canvas>
+                                    <p id="sketch-hint" class="absolute bottom-3 right-4 text-[11px] text-slate-300 pointer-events-none select-none">Dessinez ou déposez des symboles</p>
+                                </div>
+                                <p class="text-[11px] text-slate-400 mt-1.5">Astuce : en mode « Déplacer », sélectionnez un élément puis appuyez sur Suppr pour l'effacer.</p>
+                            </div>
+
+                            {{-- Signatures --}}
+                            <div class="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <p class="text-[13px] font-semibold text-blue-700">Signature A</p>
+                                        <button type="button" onclick="clearSigA()" class="text-[11px] font-semibold text-red-600 hover:underline">Effacer</button>
                                     </div>
-                                    <div>
-                                        <h4
-                                            class="text-orange-500 font-black text-[10px] uppercase tracking-wider mb-3 flex items-center justify-between">
-                                            <span>Signature B</span>
-                                            <button type="button" onclick="clearSigB()"
-                                                class="text-[8px] text-red-400 hover:underline">Effacer</button>
-                                        </h4>
-                                        <div
-                                            class="bg-orange-50/50 rounded-2xl border border-orange-100 p-2 h-48 relative">
-                                            <canvas id="sig-b-pad" class="w-full h-full"></canvas>
-                                        </div>
+                                    <div class="h-36 rounded-xl border border-blue-200 bg-blue-50/40 p-1.5">
+                                        <canvas id="sig-a-pad" class="w-full h-full"></canvas>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <p class="text-[13px] font-semibold text-orange-600">Signature B</p>
+                                        <button type="button" onclick="clearSigB()" class="text-[11px] font-semibold text-red-600 hover:underline">Effacer</button>
+                                    </div>
+                                    <div class="h-36 rounded-xl border border-orange-200 bg-orange-50/40 p-1.5">
+                                        <canvas id="sig-b-pad" class="w-full h-full"></canvas>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {{-- Footer --}}
-                    <div
-                        class="px-8 py-6 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <p class="text-[10px] text-slate-400 font-medium max-w-sm">
-                            <i class="fa-solid fa-circle-info mr-1 text-blue-500"></i> En validant, vous certifiez
-                            l'exactitude des informations rapportées.
-                        </p>
-                        <div class="flex items-center gap-3 w-full sm:w-auto">
+                    {{-- Pied --}}
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50 sm:rounded-b-2xl shrink-0">
+                        <p class="text-xs text-slate-500"><i class="fa-solid fa-circle-info mr-1 text-blue-600"></i>En validant, vous certifiez l'exactitude des informations.</p>
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
                             <button type="button" onclick="closeAmiableModal()"
-                                class="flex-1 sm:flex-none px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-white transition-all">Annuler</button>
+                                class="flex-1 sm:flex-none h-10 px-4 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-[13px] font-semibold text-slate-700 transition">Annuler</button>
                             <button type="button" onclick="validateAmiableData()"
-                                class="flex-1 sm:flex-none px-10 py-3 rounded-xl bg-blue-600 text-white font-black shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
-                                <span>Valider le constat</span>
-                                <i class="fa-solid fa-check"></i>
+                                class="flex-1 sm:flex-none h-10 px-5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold transition inline-flex items-center justify-center gap-2">
+                                Valider le constat <i class="fa-solid fa-check text-xs"></i>
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        {{-- Styles d'animation locales --}}
-        <style>
-            @keyframes fadeUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(15px);
+    <style>
+        /* Sélecteur de point de choc */
+        .impact-selector {
+            position: relative; width: 140px; height: 210px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: center;
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 1.5rem;
+        }
+        .car-shape { width: 50px; height: 100px; background: #cbd5e1; border-radius: 12px; position: relative; z-index: 1; }
+        .car-shape::after { content: ''; position: absolute; top: 10px; left: 5px; right: 5px; height: 20px; background: #94a3b8; border-radius: 4px; }
+        .impact-arrow {
+            position: absolute; z-index: 10; width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 12px;
+            color: #94a3b8; background: #fff; border: 1px solid #e2e8f0; cursor: pointer;
+            transition: scale .15s, color .15s, background-color .15s, border-color .15s;
+        }
+        .impact-arrow:hover { color: #475569; border-color: #94a3b8; scale: 1.1; }
+        .impact-arrow.active-a { color: #fff; background: #2563eb; border-color: #2563eb; scale: 1.15; }
+        .impact-arrow.active-b { color: #fff; background: #f97316; border-color: #f97316; scale: 1.15; }
+        .arrow-front { top: 6px; left: 50%; transform: translateX(-50%); }
+        .arrow-back { bottom: 6px; left: 50%; transform: translateX(-50%); }
+        .arrow-left { left: 6px; top: 50%; transform: translateY(-50%); }
+        .arrow-right { right: 6px; top: 50%; transform: translateY(-50%); }
+        .arrow-fl { top: 22px; left: 14px; }
+        .arrow-fr { top: 22px; right: 14px; }
+        .arrow-bl { bottom: 22px; left: 14px; }
+        .arrow-br { bottom: 22px; right: 14px; }
+    </style>
+@endsection
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnGeoloc = document.getElementById('btn-geoloc');
+            const geolocStatus = document.getElementById('geoloc-status');
+            const geolocAddress = document.getElementById('geoloc-address');
+            const inputLat = document.getElementById('latitude');
+            const inputLng = document.getElementById('longitude');
+            const btnSubmit = document.getElementById('btn-submit');
+            const hiddenInputsContainer = document.getElementById('hidden-inputs-container');
+            const photosContainer = document.getElementById('photos-container');
+            const addPhotoBtn = document.getElementById('add-photo-btn');
+            const photoCountSpan = document.getElementById('photo-count');
+
+            let photoIndex = 0;
+            let currentPhotoCount = 0;
+
+            /** Échappe une valeur avant insertion dans du HTML. */
+            const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+            window.toggleAssisteurField = function(checkbox) {
+                const field = document.getElementById('assisteur_field');
+                if (!field) return;
+                field.classList.toggle('hidden', !checkbox.checked);
+            };
+
+            /* ═════════ PHOTOS ═════════ */
+            window.triggerPhotoUpload = function() {
+                if (currentPhotoCount >= 5) {
+                    Swal.fire({ icon: 'warning', title: 'Limite atteinte', text: 'Vous ne pouvez pas ajouter plus de 5 photos.', confirmButtonColor: '#2563eb' });
+                    return;
                 }
 
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
+                // Un input file caché par photo
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.name = 'photos[]';
+                input.accept = 'image/*';
+                input.capture = 'environment'; // appareil photo sur mobile
+                input.className = 'hidden';
+                input.id = `photo-input-${photoIndex}`;
+                hiddenInputsContainer.appendChild(input);
 
-            .animate-in {
-                opacity: 0;
-                animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-                animation-delay: var(--delay, 0s);
-            }
-        </style>
-    @endsection
-
-    @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const btnGeoloc = document.getElementById('btn-geoloc');
-                const geolocStatus = document.getElementById('geoloc-status');
-                const inputLat = document.getElementById('latitude');
-                const inputLng = document.getElementById('longitude');
-                const btnSubmit = document.getElementById('btn-submit');
-                const hiddenInputsContainer = document.getElementById('hidden-inputs-container');
-                const photosContainer = document.getElementById('photos-container');
-                const addPhotoBtn = document.getElementById('add-photo-btn');
-                const photoCountSpan = document.getElementById('photo-count');
-
-                let photoIndex = 0;
-                let currentPhotoCount = 0;
-
-                window.toggleAssisteurField = function(checkbox) {
-                    const field = document.getElementById('assisteur_field');
-                    if (checkbox.checked) {
-                        field.classList.remove('hidden');
+                input.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        const file = this.files[0];
+                        const reader = new FileReader();
+                        reader.onload = (e) => addPhotoPreview(e.target.result, file.name, input.id);
+                        reader.readAsDataURL(file);
                     } else {
-                        field.classList.add('hidden');
+                        input.remove();
                     }
-                };
+                });
 
-                window.triggerPhotoUpload = function() {
-                    if (currentPhotoCount >= 5) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Limite atteinte',
-                            text: 'Vous ne pouvez pas ajouter plus de 5 photos.',
-                            confirmButtonColor: '#10b981',
-                            customClass: {
-                                popup: 'rounded-2xl',
-                                confirmButton: 'rounded-xl'
-                            }
-                        });
-                        return;
-                    }
+                input.click();
+            };
 
-                    // Créer un nouvel input file caché
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.name = 'photos[]';
-                    input.accept = 'image/*';
-                    input.capture = 'environment'; // Pour ouvrir l'appareil photo sur mobile
-                    input.className = 'hidden';
-                    input.id = `photo-input-${photoIndex}`;
+            function addPhotoPreview(imgSrc, fileName, inputId) {
+                currentPhotoCount++;
+                photoIndex++;
+                photoCountSpan.innerText = currentPhotoCount;
 
-                    hiddenInputsContainer.appendChild(input);
+                if (currentPhotoCount >= 5) {
+                    addPhotoBtn.classList.add('hidden');
+                    addPhotoBtn.classList.remove('flex');
+                }
 
-                    // Écouter le changement sur cet input
-                    input.addEventListener('change', function() {
-                        if (this.files && this.files[0]) {
-                            const file = this.files[0];
+                const tile = document.createElement('div');
+                tile.className = 'relative aspect-square rounded-xl overflow-hidden border border-slate-200 bg-slate-100 group';
+                tile.id = `preview-${inputId}`;
+                tile.title = fileName;
 
-                            // Créer un aperçu
-                            const reader = new FileReader();
-                            reader.onload = function(e) {
-                                addPhotoPreview(e.target.result, file.name, input.id);
-                            }
-                            reader.readAsDataURL(file);
-                        } else {
-                            // Si l'utilisateur annule, on supprime l'input
-                            input.remove();
-                        }
-                    });
+                const img = document.createElement('div');
+                img.className = 'absolute inset-0 bg-cover bg-center';
+                img.style.backgroundImage = `url('${imgSrc}')`;
 
-                    // Déclencher le clic sur ce nouvel input
-                    input.click();
-                };
-
-                function addPhotoPreview(imgSrc, fileName, inputId) {
-                    currentPhotoCount++;
-                    photoIndex++;
+                const delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.title = 'Retirer la photo';
+                delBtn.className = 'absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-white/90 text-slate-600 hover:bg-red-600 hover:text-white flex items-center justify-center shadow-sm transition';
+                delBtn.innerHTML = '<i class="fa-solid fa-xmark text-xs"></i>';
+                delBtn.onclick = function() {
+                    document.getElementById(inputId).remove();
+                    tile.remove();
+                    currentPhotoCount--;
                     photoCountSpan.innerText = currentPhotoCount;
-
-                    // Masquer le bouton d'ajout si limite atteinte
-                    if (currentPhotoCount >= 5) {
-                        addPhotoBtn.classList.add('hidden');
-                        addPhotoBtn.classList.remove('flex');
-                    }
-
-                    // Afficher le conteneur s'il était vide
-                    photosContainer.classList.remove('hidden');
-
-                    // Créer la carte de prévisualisation
-                    const div = document.createElement('div');
-                    div.className =
-                        'relative group rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm flex items-center p-2 gap-3 animate-in';
-                    div.style.setProperty('--delay', '0s');
-                    div.id = `preview-${inputId}`;
-
-                    // Image miniature
-                    const img = document.createElement('div');
-                    img.className = 'w-12 h-12 rounded-lg bg-cover bg-center bg-slate-100 shrink-0';
-                    img.style.backgroundImage = `url('${imgSrc}')`;
-
-                    // Nom du fichier tronqué
-                    const name = document.createElement('div');
-                    name.className = 'flex-1 min-w-0';
-                    name.innerHTML =
-                        `<p class="text-xs font-semibold text-slate-700 truncate">${fileName}</p><p class="text-[10px] text-emerald-500 font-bold"><i class="fa-solid fa-check"></i> Prête</p>`;
-
-                    // Bouton de suppression
-                    const delBtn = document.createElement('button');
-                    delBtn.type = 'button';
-                    delBtn.className =
-                        'w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors shrink-0';
-                    delBtn.innerHTML = '<i class="fa-solid fa-trash-can text-sm"></i>';
-                    delBtn.onclick = function() {
-                        // Supprimer l'input caché correspondant
-                        document.getElementById(inputId).remove();
-                        // Supprimer l'aperçu
-                        div.remove();
-
-                        currentPhotoCount--;
-                        photoCountSpan.innerText = currentPhotoCount;
-
-                        // Réafficher le bouton d'ajout
-                        addPhotoBtn.classList.remove('hidden');
-                        addPhotoBtn.classList.add('flex');
-                    };
-
-                    div.appendChild(img);
-                    div.appendChild(name);
-                    div.appendChild(delBtn);
-
-                    photosContainer.appendChild(div);
-                }
-
-                const incidentCheckboxes = document.querySelectorAll('.incident-checkbox');
-                const incidentError = document.getElementById('incident-error');
-                const radioAmiable = document.getElementById('constat-amiable');
-                const radioPolice = document.getElementById('constat-police');
-                const labelAmiable = document.getElementById('label-constat-amiable');
-                const labelPolice = radioPolice.closest('label');
-                const corporelWarning = document.getElementById('corporel-warning');
-                const brisGlaceInfo = document.getElementById('bris-glace-info');
-                const contratIdInput = document.getElementById('contrat_id');
-                let isSelectionInProgress = false;
-
-                const userVehicles = @json($contrats);
-                const preselectedContratId = @json($selectedContratId ?? request('contrat_id'));
-
-                window.selectVehicleById = async function(vehicleId, showSuccessToast = false) {
-                    const selectedVehicle = userVehicles.find(v => v.id == vehicleId);
-                    if (!selectedVehicle) return false;
-
-                    contratIdInput.value = vehicleId;
-
-                    // Mise à jour de l'affichage dans la carte 2
-                    const displayContainer = document.getElementById('selected-vehicle-display');
-                    const displayName = document.getElementById('display-vehicle-name');
-                    const displayPlate = document.getElementById('display-vehicle-plate');
-
-                    if (displayContainer && selectedVehicle) {
-                        displayName.textContent = `${selectedVehicle.marque} ${selectedVehicle.modele}`;
-                        displayPlate.textContent = selectedVehicle.immatriculation;
-                        displayContainer.classList.remove('hidden');
-                    }
-
-                    // Auto-sélection de l'assurance
-                    const badge = document.getElementById('assurance-linked-badge');
-                    if (selectedVehicle && selectedVehicle.assurance_id) {
-                        const assuranceSelect = document.getElementById('assurance_id');
-                        if (assuranceSelect) {
-                            assuranceSelect.value = selectedVehicle.assurance_id;
-                            if (badge) badge.classList.remove('hidden');
-
-                            assuranceSelect.disabled = true;
-                            assuranceSelect.classList.add('bg-slate-100', 'cursor-not-allowed', 'opacity-80', 'border-blue-300');
-                        }
-                    } else {
-                        if (badge) badge.classList.add('hidden');
-                    }
-
-                    if (showSuccessToast) {
-                        await Swal.fire({
-                            title: 'Véhicule validé !',
-                            text: `${selectedVehicle.marque} ${selectedVehicle.modele}`,
-                            icon: 'success',
-                            timer: 1500,
-                            showConfirmButton: false,
-                            customClass: {
-                                popup: 'rounded-3xl'
-                            }
-                        });
-                    }
-
-                    checkFormValidity();
-                    return true;
+                    addPhotoBtn.classList.remove('hidden');
+                    addPhotoBtn.classList.add('flex');
                 };
 
-                window.showVehicleSelection = async function() {
-                    if (isSelectionInProgress) return;
-                    isSelectionInProgress = true;
+                tile.appendChild(img);
+                tile.appendChild(delBtn);
+                photosContainer.appendChild(tile);
+            }
 
-                    try {
-                        if (userVehicles.length === 0) {
-                            await Swal.fire({
-                                title: 'Aucun véhicule trouvé',
-                                text: 'Vous devez avoir un contrat d\'assurance valide pour déclarer un sinistre.',
-                                icon: 'warning',
-                                confirmButtonText: 'Ajouter une assurance',
-                                showCancelButton: true,
-                                confirmButtonColor: '#3b82f6'
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    window.location.href = "{{ route('assure.contrats.create') }}";
-                                }
-                            });
-                            return;
-                        }
+            /* ═════════ VÉHICULE, INCIDENT & CONSTAT ═════════ */
+            const incidentCheckboxes = document.querySelectorAll('.incident-checkbox');
+            const incidentError = document.getElementById('incident-error');
+            const radioAmiable = document.getElementById('constat-amiable');
+            const radioPolice = document.getElementById('constat-police');
+            const labelAmiable = document.getElementById('label-constat-amiable');
+            const labelPolice = radioPolice.closest('label');
+            const corporelWarning = document.getElementById('corporel-warning');
+            const brisGlaceInfo = document.getElementById('bris-glace-info');
+            const contratIdInput = document.getElementById('contrat_id');
+            const amiableDone = document.getElementById('amiable-done');
+            const amiableModal = document.getElementById('constat-amiable-modal');
+            const amiableDataInput = document.getElementById('amiable_data');
+            let isSelectionInProgress = false;
 
-                        let vehicleHtml = `
-                            <div id="vehicle-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6 text-center">
-                                ${userVehicles.map(v => `
-                                            <div class="vehicle-card group relative p-5 rounded-2xl border-2 border-slate-100 hover:border-orange-200 hover:bg-orange-50/30 transition-all cursor-pointer flex flex-col items-center gap-3 bg-white shadow-sm h-full"
-                                                 data-id="${v.id}">
-                                                <div class="w-14 h-14 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center shrink-0 group-hover:bg-orange-100 transition-colors">
-                                                    <i class="fa-solid fa-car text-2xl"></i>
-                                                </div>
-                                                <div class="flex-1 overflow-hidden">
-                                                    <h4 class="font-bold text-slate-800 text-sm truncate px-1">${v.marque} ${v.modele}</h4>
-                                                    <div class="mt-1 px-2 py-0.5 rounded-lg bg-slate-50 border border-slate-100 inline-block">
-                                                        <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">${v.immatriculation}</p>
-                                                    </div>
-                                                    ${v.assureur ? `<p class="text-[8px] text-blue-500 font-bold mt-1 uppercase tracking-tighter"><i class="fa-solid fa-shield-halved mr-1"></i>${v.assureur.name}</p>` : ''}
-                                                </div>
-                                                <div class="select-indicator absolute top-3 right-3 w-5 h-5 rounded-full border-2 border-slate-200 flex items-center justify-center transition-all group-hover:border-orange-300 bg-white">
-                                                    <div class="w-2.5 h-2.5 rounded-full bg-orange-500 scale-0 transition-transform"></div>
-                                                </div>
-                                            </div>
-                                        `).join('')}
-                            </div>
-                        `;
+            const userVehicles = @json($contrats);
+            const preselectedContratId = @json($selectedContratId ?? request('contrat_id'));
+            const vehiclePlate = (v) => v.plaque || v.immatriculation || '';
 
-                        let selectedId = contratIdInput.value || null;
+            window.selectVehicleById = async function(vehicleId, showSuccessToast = false) {
+                const selectedVehicle = userVehicles.find(v => v.id == vehicleId);
+                if (!selectedVehicle) return false;
 
-                        const {
-                            value: result
-                        } = await Swal.fire({
-                            title: '<span class="text-xl font-bold text-slate-800">Votre véhicule</span>',
-                            html: `
-                                <p class="text-sm text-slate-500 text-center mb-2">Lequel de vos véhicules a subi l'incident ?</p>
-                                ${vehicleHtml}
-                            `,
-                            showCancelButton: true,
-                            cancelButtonText: 'Annuler',
-                            confirmButtonText: 'Confirmer la sélection',
-                            confirmButtonColor: '#f97316',
-                            allowOutsideClick: false,
-                            width: '900px',
-                            padding: '2.5rem',
-                            customClass: {
-                                popup: 'rounded-[2.5rem]',
-                                confirmButton: 'rounded-xl px-12 shadow-lg shadow-orange-500/20 font-bold py-3.5 disabled:opacity-50 disabled:cursor-not-allowed',
-                                cancelButton: 'rounded-xl px-8 font-bold py-3.5'
-                            },
-                            didRender: () => {
-                                const confirmBtn = Swal.getConfirmButton();
-                                confirmBtn.disabled = !selectedId;
+                contratIdInput.value = vehicleId;
 
-                                const cards = Swal.getHtmlContainer().querySelectorAll(
-                                    '.vehicle-card');
-                                cards.forEach(card => {
-                                    card.addEventListener('click', () => {
-                                        selectedId = card.getAttribute('data-id');
+                document.getElementById('display-vehicle-name').textContent = `${selectedVehicle.marque} ${selectedVehicle.modele}`;
+                document.getElementById('display-vehicle-plate').textContent = vehiclePlate(selectedVehicle);
+                document.getElementById('selected-vehicle-display').classList.remove('hidden');
+                document.getElementById('vehicle-empty').classList.add('hidden');
 
-                                        cards.forEach(c => {
-                                            c.classList.remove('border-orange-500', 'bg-orange-50');
-                                            c.classList.add('border-slate-100');
-                                            const ind = c.querySelector('.select-indicator');
-                                            const dot = ind.querySelector('div');
-                                            ind.classList.remove('border-orange-500');
-                                            dot.classList.remove('scale-100');
-                                            dot.classList.add('scale-0');
-                                        });
-
-                                        card.classList.add('border-orange-500', 'bg-orange-50');
-                                        card.classList.remove('border-slate-100');
-                                        const indicator = card.querySelector('.select-indicator');
-                                        const dot = indicator.querySelector('div');
-                                        indicator.classList.add('border-orange-500');
-                                        dot.classList.add('scale-100');
-                                        dot.classList.remove('scale-0');
-
-                                        confirmBtn.disabled = false;
-                                    });
-
-                                    if (selectedId && card.getAttribute('data-id') == selectedId) {
-                                        card.classList.add('border-orange-500', 'bg-orange-50');
-                                        card.classList.remove('border-slate-100');
-                                        const indicator = card.querySelector('.select-indicator');
-                                        const dot = indicator.querySelector('div');
-                                        indicator.classList.add('border-orange-500');
-                                        dot.classList.add('scale-100');
-                                        dot.classList.remove('scale-0');
-                                    }
-                                });
-                            },
-                            preConfirm: () => {
-                                if (!selectedId) {
-                                    Swal.showValidationMessage('Veuillez choisir un véhicule');
-                                    return false;
-                                }
-                                return selectedId;
-                            }
-                        });
-
-                        if (result) {
-                            await selectVehicleById(result, true);
-                        }
-                    } finally {
-                        isSelectionInProgress = false;
-                    }
-                };
-
-                if (preselectedContratId) {
-                    selectVehicleById(preselectedContratId, false);
-                }
-
-                function updateHospitalVisibility() {
-                    const corporelCheckbox = document.querySelector('input[name="type_sinistre[]"][value="Accident_corporel"]');
-                    const hospitalWrapper = document.getElementById('nearest-hospital-wrapper');
-                    if (hospitalWrapper) {
-                        if (corporelCheckbox && corporelCheckbox.checked) {
-                            hospitalWrapper.classList.remove('hidden');
-                        } else {
-                            hospitalWrapper.classList.add('hidden');
-                        }
+                // Assurance liée automatiquement au véhicule
+                const badge = document.getElementById('assurance-linked-badge');
+                const assuranceSelect = document.getElementById('assurance_id');
+                if (selectedVehicle.assurance_id && assuranceSelect) {
+                    assuranceSelect.value = selectedVehicle.assurance_id;
+                    badge.classList.remove('hidden');
+                    assuranceSelect.disabled = true;
+                    assuranceSelect.classList.add('bg-slate-50', 'cursor-not-allowed', 'text-slate-500');
+                } else {
+                    badge.classList.add('hidden');
+                    if (assuranceSelect) {
+                        assuranceSelect.disabled = false;
+                        assuranceSelect.classList.remove('bg-slate-50', 'cursor-not-allowed', 'text-slate-500');
                     }
                 }
 
-                function checkFormValidity() {
-                    const isGeolocated = inputLat.value !== "" && inputLng.value !== "";
-                    const selectedIncidents = Array.from(incidentCheckboxes).filter(cb => cb.checked).map(cb => cb
-                        .value);
-                    const isIncidentSelected = selectedIncidents.length > 0;
-
-                    const isOnlyBrisDeGlace = selectedIncidents.length === 1 && selectedIncidents.includes(
-                        'Bris_de_glace');
-
-                    // LOGIQUE BRIS DE GLACE SEUL
-                    if (isOnlyBrisDeGlace) {
-                        labelAmiable.classList.add('opacity-40', 'pointer-events-none', 'grayscale');
-                        labelPolice.classList.add('opacity-40', 'pointer-events-none', 'grayscale');
-                        radioAmiable.disabled = true;
-                        radioPolice.disabled = true;
-                        radioAmiable.checked = false;
-                        radioPolice.checked = false;
-                        radioAmiable.required = false;
-                        brisGlaceInfo.classList.remove('hidden');
-                    } else {
-                        labelPolice.classList.remove('opacity-40', 'pointer-events-none', 'grayscale');
-                        radioPolice.disabled = false;
-                        radioAmiable.required = true;
-                        brisGlaceInfo.classList.add('hidden');
-
-                        // LOGIQUE CORPOREL (imbriquée car elle dépend de "pas bris de glace seul")
-                        if (selectedIncidents.includes('Accident_corporel')) {
-                            labelAmiable.classList.add('opacity-40', 'pointer-events-none', 'grayscale');
-                            radioAmiable.disabled = true;
-                            radioAmiable.checked = false;
-                            radioPolice.checked = true;
-                            corporelWarning.classList.remove('hidden');
-                        } else {
-                            labelAmiable.classList.remove('opacity-40', 'pointer-events-none', 'grayscale');
-                            radioAmiable.disabled = false;
-                            corporelWarning.classList.add('hidden');
-                        }
-                    }
-
-                    // Toggling visibility of the nearest hospital block
-                    updateHospitalVisibility();
-
-                    // LOGIQUE VEHICULE (SweetAlert2)
-                    if (isIncidentSelected && !contratIdInput.value) {
-                        showVehicleSelection();
-                    }
-
-                    if (isGeolocated && isIncidentSelected && contratIdInput.value) {
-                        enableSubmitButton();
-                        incidentError.classList.add('hidden');
-                    } else {
-                        disableSubmitButton();
-                        if (!isIncidentSelected && isGeolocated) {
-                            incidentError.classList.remove('hidden');
-                        } else {
-                            incidentError.classList.add('hidden');
-                        }
-                    }
-                }
-
-                incidentCheckboxes.forEach(cb => {
-                    cb.addEventListener('change', checkFormValidity);
-                });
-
-                function fetchNearestServices(lat, lng) {
-                    const listContainer = document.getElementById('nearest-services-list');
-                    listContainer.classList.remove('hidden');
-                    listContainer.innerHTML = `
-                        <div class="flex items-center gap-2 mb-3">
-                            <div class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Postes à proximité</p>
-                        </div>
-                        <div class="flex items-center justify-center py-6 bg-slate-100/50 rounded-2xl border border-slate-200 border-dashed">
-                            <div class="flex flex-col items-center gap-2">
-                                 <i class="fa-solid fa-satellite fa-spin text-blue-500 text-lg"></i>
-                                 <p class="text-[10px] font-bold text-slate-400 animate-pulse">Localisation des postes...</p>
-                            </div>
-                        </div>
-                    `;
-
-                    fetch(`{{ route('assure.sinistres.services-proches') }}?latitude=${lat}&longitude=${lng}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.status === 'success' && data.services.length > 0) {
-                                let html = `
-                                    <div class="flex items-center gap-2 mb-3">
-                                        <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">3 meilleurs postes à proximité</p>
-                                    </div>
-                                `;
-                                data.services.forEach((service, index) => {
-                                    const dist = parseFloat(service.distance).toFixed(1);
-                                    const icon = service.role === 'police' ? 'fa-building-shield' : (service
-                                        .role === 'gendarmerie' ? 'fa-shield-halved' : 'fa-user-shield');
-                                    const color = service.role === 'police' ? 'text-blue-600' : (service
-                                        .role === 'gendarmerie' ? 'text-emerald-600' : 'text-indigo-600'
-                                        );
-                                    const bgColor = service.role === 'police' ? 'bg-blue-100/50' : (service
-                                        .role === 'gendarmerie' ? 'bg-emerald-100/50' :
-                                        'bg-indigo-100/50');
-
-                                    const roleLabel = service.role.charAt(0).toUpperCase() + service.role
-                                        .slice(1);
-                                    const displayName = service.role === 'agent' && service.service ?
-                                        `${service.name} <span class="text-[10px] font-medium text-slate-400">(${service.service.name})</span>` :
-                                        service.name;
-
-                                    html += `
-                                        <div class="flex items-center justify-between p-3 rounded-2xl bg-white border border-slate-100 shadow-sm animate-in" style="--delay: ${index * 0.1}s">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-10 h-10 rounded-xl ${bgColor} ${color} flex items-center justify-center text-sm shadow-sm">
-                                                    <i class="fa-solid ${icon}"></i>
-                                                </div>
-                                                <div class="overflow-hidden">
-                                                    <h5 class="text-xs font-bold text-slate-800 truncate">${displayName}</h5>
-                                                    <div class="flex items-center gap-1.5 mt-0.5">
-                                                        <span class="px-1.5 py-0.5 rounded-md bg-slate-100 text-[8px] font-bold text-slate-500 uppercase tracking-tighter">${roleLabel}</span>
-                                                        <span class="text-[10px] font-bold text-blue-600">${dist} km</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="w-6 h-6 rounded-lg bg-slate-50 flex items-center justify-center text-slate-300">
-                                                <i class="fa-solid fa-chevron-right text-[10px]"></i>
-                                            </div>
-                                        </div>
-                                    `;
-                                });
-
-                                if (data.nearest_hospital) {
-                                    const h = data.nearest_hospital;
-                                    html += `
-                                        <div id="nearest-hospital-wrapper" class="hidden">
-                                            <div class="flex items-center gap-2 mt-4 mb-3">
-                                                <div class="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
-                                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sapeurs-Pompiers (Secours)</p>
-                                            </div>
-                                            <div class="flex items-center justify-between p-3 rounded-2xl bg-rose-50/50 border border-rose-100 shadow-sm animate-in">
-                                                <div class="flex items-center gap-3 w-[80%]">
-                                                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-sm shadow-sm shrink-0">
-                                                        <i class="fa-solid fa-fire-extinguisher"></i>
-                                                    </div>
-                                                    <div class="overflow-hidden">
-                                                        <h5 class="text-xs font-bold text-slate-800 truncate">${h.name}</h5>
-                                                        <div class="flex items-center gap-1.5 mt-0.5">
-                                                            <span class="px-1.5 py-0.5 rounded-md bg-green-100 text-[8px] font-bold text-green-700 uppercase tracking-tighter">Secours</span>
-                                                            <span class="text-[10px] font-bold text-rose-600">${h.distance} km</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <a href="tel:${h.contact}" class="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center hover:bg-rose-200 transition-colors shrink-0">
-                                                    <i class="fa-solid fa-phone text-xs"></i>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    `;
-                                }
-
-                                listContainer.innerHTML = html;
-                                updateHospitalVisibility();
-                            } else {
-                                listContainer.innerHTML =
-                                    '<div class="p-4 bg-orange-50 border border-orange-100 rounded-xl text-center"><p class="text-[10px] font-bold text-orange-600 uppercase">Aucun poste trouvé dans cette zone.</p></div>';
-                            }
-                        })
-                        .catch(err => {
-                            console.error('Erreur AJAX services:', err);
-                            listContainer.innerHTML =
-                                '<div class="p-4 bg-red-50 border border-red-100 rounded-xl text-center"><p class="text-[10px] font-bold text-red-600 uppercase">Erreur de connexion aux services.</p></div>';
-                        });
-                }
-
-                // Fonction automatique
-                function autoLocate() {
-                    if (!navigator.geolocation) {
-                        showGeolocError("API Géolocalisation non supportée.");
-                        return;
-                    }
-
-                    navigator.geolocation.getCurrentPosition(
-                        function(position) {
-                            const lat = position.coords.latitude;
-                            const lng = position.coords.longitude;
-
-                            inputLat.value = lat;
-                            inputLng.value = lng;
-
-                            // Reverse Geocoding pour obtenir le nom du lieu
-                            fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`, {
-                                    headers: {
-                                        'Accept-Language': 'fr'
-                                    }
-                                })
-                                .then(r => r.json())
-                                .then(data => {
-                                    if (data && data.display_name) {
-                                        document.getElementById('lieu_input').value = data.display_name;
-                                        geolocStatus.innerHTML =
-                                            `<i class="fa-solid fa-location-dot mr-1"></i> ${data.display_name}`;
-                                    }
-                                })
-                                .catch(err => console.error("Erreur geocoding:", err));
-
-                            // UI success
-                            btnGeoloc.className =
-                                'inline-flex items-center justify-center md:justify-start w-full md:w-auto px-5 py-2.5 bg-green-50 text-green-700 font-bold rounded-xl text-sm border border-green-200';
-                            btnGeoloc.innerHTML =
-                                '<i class="fa-solid fa-check-circle text-lg mr-2"></i> Localisation acquise';
-
-                            geolocStatus.classList.remove('hidden', 'text-red-500');
-                            geolocStatus.className =
-                                'mt-3 text-xs font-bold text-green-600 bg-white px-3 py-1.5 rounded-lg border border-green-100 inline-block';
-                            geolocStatus.innerHTML =
-                                `📍 LAT: ${lat.toFixed(4)} &nbsp;|&nbsp; LNG: ${lng.toFixed(4)}`;
-
-                            // Récupération des 3 services les plus proches
-                            fetchNearestServices(lat, lng);
-
-                            checkFormValidity();
-                        },
-                        function(error) {
-                            let errorMsg = "Erreur GPS.";
-                            if (error.code === error.PERMISSION_DENIED) errorMsg =
-                                "Autorisation GPS refusée ! Autorisez-la dans la barre d'adresse et rechargez.";
-                            if (error.code === error.POSITION_UNAVAILABLE) errorMsg = "Signal GPS perdu !";
-                            if (error.code === error.TIMEOUT) errorMsg = "Délai d'attente GPS dépassé.";
-                            showGeolocError(errorMsg);
-                        }, {
-                            enableHighAccuracy: true,
-                            timeout: 15000,
-                            maximumAge: 0
-                        }
-                    );
-                }
-
-                // --- LOGIQUE CONSTAT AMIABLE ---
-                const amiableModal = document.getElementById('constat-amiable-modal');
-                const amiableDataInput = document.getElementById('amiable_data');
-
-                let fabricSketch, sigAPad, sigBPad;
-
-                // ---- Définition des symboles SVG pour le croquis ----
-                const SKETCH_SYMBOLS = {
-                    auto: {
-                        label: 'Auto',
-                        scale: 0.75,
-                        svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 64" width="40" height="64">
-                        <rect x="5" y="12" width="30" height="40" rx="6" fill="#64748b" stroke="#1e293b" stroke-width="1.5"/>
-                        <rect x="9" y="15" width="22" height="10" rx="3" fill="#bfdbfe"/>
-                        <rect x="9" y="40" width="22" height="8" rx="3" fill="#bfdbfe"/>
-                        <rect x="1" y="15" width="5" height="9" rx="2" fill="#1e293b"/>
-                        <rect x="34" y="15" width="5" height="9" rx="2" fill="#1e293b"/>
-                        <rect x="1" y="38" width="5" height="9" rx="2" fill="#1e293b"/>
-                        <rect x="34" y="38" width="5" height="9" rx="2" fill="#1e293b"/>
-                    </svg>`
-                    },
-                    deux_roues: {
-                        label: '2 Roues',
-                        scale: 0.75,
-                        svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 64" width="22" height="64">
-                        <rect x="5" y="6" width="12" height="52" rx="5" fill="#475569" stroke="#1e293b" stroke-width="1.5"/>
-                        <rect x="1" y="9" width="5" height="12" rx="2.5" fill="#1e293b"/>
-                        <rect x="16" y="9" width="5" height="12" rx="2.5" fill="#1e293b"/>
-                        <rect x="1" y="43" width="5" height="12" rx="2.5" fill="#1e293b"/>
-                        <rect x="16" y="43" width="5" height="12" rx="2.5" fill="#1e293b"/>
-                    </svg>`
-                    },
-                    camion: {
-                        label: 'Camion',
-                        scale: 0.65,
-                        svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 90" width="50" height="90">
-                        <rect x="4" y="4" width="42" height="20" rx="4" fill="#6b7280" stroke="#1e293b" stroke-width="1.5"/>
-                        <rect x="8" y="7" width="34" height="11" rx="3" fill="#bfdbfe"/>
-                        <rect x="3" y="28" width="44" height="58" rx="3" fill="#9ca3af" stroke="#1e293b" stroke-width="1.5"/>
-                        <line x1="9" y1="57" x2="41" y2="57" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="4,3"/>
-                        <rect x="0" y="8" width="5" height="12" rx="2" fill="#1e293b"/>
-                        <rect x="45" y="8" width="5" height="12" rx="2" fill="#1e293b"/>
-                        <rect x="0" y="63" width="5" height="12" rx="2" fill="#1e293b"/>
-                        <rect x="45" y="63" width="5" height="12" rx="2" fill="#1e293b"/>
-                    </svg>`
-                    },
-                    pieton: {
-                        label: 'Piéton',
-                        scale: 0.9,
-                        svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 46" width="30" height="46">
-                        <circle cx="15" cy="7" r="6" fill="#e2e8f0" stroke="#1e293b" stroke-width="1.5"/>
-                        <line x1="15" y1="13" x2="15" y2="30" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/>
-                        <line x1="5" y1="21" x2="25" y2="21" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/>
-                        <line x1="15" y1="30" x2="7" y2="44" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/>
-                        <line x1="15" y1="30" x2="23" y2="44" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/>
-                    </svg>`
-                    },
-                    feu: {
-                        label: 'Feu tricolore',
-                        scale: 0.9,
-                        svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 58" width="24" height="58">
-                        <rect x="2" y="2" width="20" height="40" rx="4" fill="#1e293b" stroke="#374151" stroke-width="1"/>
-                        <circle cx="12" cy="10" r="5" fill="#ef4444"/>
-                        <circle cx="12" cy="22" r="5" fill="#f59e0b"/>
-                        <circle cx="12" cy="34" r="5" fill="#22c55e"/>
-                        <rect x="10" y="42" width="4" height="12" fill="#374151"/>
-                        <rect x="4" y="52" width="16" height="4" rx="2" fill="#374151"/>
-                    </svg>`
-                    },
-                    balise: {
-                        label: 'Balise priorité',
-                        scale: 0.75,
-                        svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 64" width="50" height="64">
-                        <polygon points="25,3 47,46 3,46" fill="white" stroke="#1e293b" stroke-width="2"/>
-                        <polygon points="25,11 41,43 9,43" fill="none" stroke="#e11d48" stroke-width="1.5"/>
-                        <line x1="25" y1="46" x2="25" y2="60" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
-                        <circle cx="25" cy="63" r="3" fill="#374151"/>
-                    </svg>`
-                    },
-                    stop: {
-                        label: 'Stop',
-                        scale: 0.75,
-                        svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 64" width="50" height="64">
-                        <polygon points="15,2 35,2 48,15 48,35 35,48 15,48 2,35 2,15" fill="#dc2626" stroke="#1e293b" stroke-width="1.5"/>
-                        <text x="25" y="31" text-anchor="middle" fill="white" font-size="12" font-family="Arial" font-weight="bold">STOP</text>
-                        <line x1="25" y1="48" x2="25" y2="60" stroke="#374151" stroke-width="3" stroke-linecap="round"/>
-                        <circle cx="25" cy="63" r="3" fill="#374151"/>
-                    </svg>`
-                    }
-                };
-
-                // Ajouter un symbole sur le canvas Fabric.js
-                window.addSketchSymbol = function(type, dropX, dropY) {
-                    if (!fabricSketch) return;
-                    const sym = SKETCH_SYMBOLS[type];
-                    if (!sym) return;
-                    fabric.loadSVGFromString(sym.svg, function(objects, options) {
-                        const group = fabric.util.groupSVGElements(objects, options);
-                        const cx = dropX !== undefined ? dropX : fabricSketch.width / 2;
-                        const cy = dropY !== undefined ? dropY : fabricSketch.height / 2;
-                        group.set({
-                            left: cx - (group.width * sym.scale) / 2,
-                            top: cy - (group.height * sym.scale) / 2,
-                            scaleX: sym.scale,
-                            scaleY: sym.scale,
-                            hasControls: true,
-                            hasBorders: true,
-                            cornerSize: 8,
-                            cornerColor: '#3b82f6',
-                            borderColor: '#3b82f6',
-                        });
-                        fabricSketch.add(group);
-                        fabricSketch.setActiveObject(group);
-                        // Repasser en mode sélection pour permettre de positionner l'objet ajouté
-                        setSketchMode('select');
-                        fabricSketch.renderAll();
-                        document.getElementById('sketch-hint').classList.add('hidden');
-                    });
-                };
-
-                // Basculer entre mode dessin et mode sélection
-                window.setSketchMode = function(mode) {
-                    if (!fabricSketch) return;
-                    if (mode === 'draw') {
-                        fabricSketch.isDrawingMode = true;
-                        document.getElementById('sketch-draw-btn').className =
-                            'text-[9px] px-2 py-1 rounded-lg bg-blue-600 text-white font-bold transition-all';
-                        document.getElementById('sketch-move-btn').className =
-                            'text-[9px] px-2 py-1 rounded-lg bg-slate-200 text-slate-600 font-bold transition-all';
-                    } else {
-                        fabricSketch.isDrawingMode = false;
-                        document.getElementById('sketch-draw-btn').className =
-                            'text-[9px] px-2 py-1 rounded-lg bg-slate-200 text-slate-600 font-bold transition-all';
-                        document.getElementById('sketch-move-btn').className =
-                            'text-[9px] px-2 py-1 rounded-lg bg-blue-600 text-white font-bold transition-all';
-                    }
-                };
-
-                // Initialisation des canvas
-                function initPads() {
-                    const sigACanvas = document.getElementById('sig-a-pad');
-                    const sigBCanvas = document.getElementById('sig-b-pad');
-
-                    // Resize observer pour gérer le responsive (signatures uniquement)
-                    const resizeCanvas = (canvas) => {
-                        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                        canvas.width = canvas.offsetWidth * ratio;
-                        canvas.height = canvas.offsetHeight * ratio;
-                        canvas.getContext("2d").scale(ratio, ratio);
-                    };
-
-                    resizeCanvas(sigACanvas);
-                    resizeCanvas(sigBCanvas);
-
-                    sigAPad = new SignaturePad(sigACanvas, {
-                        penColor: "rgb(37, 99, 235)",
-                        minWidth: 1,
-                        maxWidth: 2
-                    });
-                    sigBPad = new SignaturePad(sigBCanvas, {
-                        penColor: "rgb(234, 88, 12)",
-                        minWidth: 1,
-                        maxWidth: 2
-                    });
-
-                    // Initialisation Fabric.js pour le croquis
-                    if (fabricSketch) {
-                        fabricSketch.dispose();
-                        fabricSketch = null;
-                    }
-                    const wrapper = document.getElementById('sketch-wrapper');
-                    fabricSketch = new fabric.Canvas('sketch-pad', {
-                        width: wrapper.clientWidth,
-                        height: wrapper.clientHeight,
-                        isDrawingMode: true,
-                        backgroundColor: 'transparent',
-                        selection: true,
-                    });
-                    fabricSketch.freeDrawingBrush.color = '#1e293b';
-                    fabricSketch.freeDrawingBrush.width = 2;
-                    fabricSketch.freeDrawingBrush.decimate = 4;
-
-                    // Supprimer les objets sélectionnés via touche Suppr / Retour Arrière
-                    fabricSketch.on('object:added', () => {
-                        document.getElementById('sketch-hint').classList.add('hidden');
-                    });
-
-                    document.getElementById('sketch-draw-btn').className =
-                        'text-[9px] px-2 py-1 rounded-lg bg-blue-600 text-white font-bold transition-all';
-                    document.getElementById('sketch-move-btn').className =
-                        'text-[9px] px-2 py-1 rounded-lg bg-slate-200 text-slate-600 font-bold transition-all';
-
-                    // Drag-and-drop depuis la palette
-                    const sketchWrapperEl = wrapper;
-                    sketchWrapperEl.addEventListener('dragover', (e) => {
-                        e.preventDefault();
-                    });
-                    sketchWrapperEl.addEventListener('drop', (e) => {
-                        e.preventDefault();
-                        const sym = e.dataTransfer.getData('text/plain');
-                        if (!sym) return;
-                        const rect = sketchWrapperEl.getBoundingClientRect();
-                        const x = e.clientX - rect.left;
-                        const y = e.clientY - rect.top;
-                        addSketchSymbol(sym, x, y);
-                    });
-
-                    document.querySelectorAll('.sketch-sym-item').forEach(item => {
-                        item.addEventListener('dragstart', (e) => {
-                            e.dataTransfer.setData('text/plain', item.dataset.sym);
-                            e.dataTransfer.effectAllowed = 'copy';
-                        });
-                    });
-
-                    // Touche Suppr pour effacer l'objet sélectionné
-                    if (!window._sketchKeyHandlerAttached) {
-                        window._sketchKeyHandlerAttached = true;
-                        document.addEventListener('keydown', (e) => {
-                            if (!fabricSketch) return;
-                            if ((e.key === 'Delete' || e.key === 'Backspace') && !fabricSketch.isDrawingMode) {
-                                const obj = fabricSketch.getActiveObject();
-                                if (obj) {
-                                    fabricSketch.remove(obj);
-                                    fabricSketch.renderAll();
-                                }
-                            }
-                        });
-                    }
-                }
-
-                window.clearSketch = () => {
-                    if (fabricSketch) {
-                        fabricSketch.clear();
-                        fabricSketch.backgroundColor = 'transparent';
-                        fabricSketch.renderAll();
-                        document.getElementById('sketch-hint').classList.remove('hidden');
-                    }
-                };
-                window.clearSigA = () => sigAPad.clear();
-                window.clearSigB = () => sigBPad.clear();
-
-                window.openAmiableModal = function() {
-                    // Pré-remplissage Vehicule A
-                    const selectedId = contratIdInput.value;
-                    const vehicle = userVehicles.find(v => v.id == selectedId);
-                    const user = @json(auth('user')->user());
-
-                    document.getElementById('amiable-a-name').textContent = `${user.name} ${user.prenom || ''}`;
-                    document.getElementById('amiable-a-vehicle').textContent = vehicle ?
-                        `${vehicle.marque} ${vehicle.modele} (${vehicle.immatriculation})` :
-                        'Véhicule non sélectionné';
-                    document.getElementById('amiable-a-driver').value = `${user.name} ${user.prenom || ''}`;
-
-                    amiableModal.classList.remove('hidden');
-                    document.body.style.overflow = 'hidden';
-
-                    // Un petit délai pour s'assurer que le modal est rendu avant d'init les pads
-                    setTimeout(initPads, 100);
-                };
-
-                window.closeAmiableModal = function() {
-                    amiableModal.classList.add('hidden');
-                    document.body.style.overflow = '';
-                    // Si on ferme sans valider, on remet le choix sur Police ?
-                    // radioPolice.checked = true;
-                    // checkFormValidity();
-                };
-
-                window.validateAmiableData = function() {
-                    // Collecte des données
-                    const data = {
-                        partie_a: {
-                            conducteur: document.getElementById('amiable-a-driver').value,
-                            circonstances: []
-                        },
-                        partie_a: {
-                            nom: document.getElementById('amiable-a-name').innerText,
-                            vehicule: document.getElementById('amiable-a-vehicle').innerText,
-                            conducteur: document.getElementById('amiable-a-driver').value,
-                            point_choc: document.getElementById('amiable-a-impact').value,
-                            circonstances: []
-                        },
-                        partie_b: {
-                            nom: document.getElementById('amiable-b-nom').value,
-                            prenom: document.getElementById('amiable-b-prenom').value,
-                            contact: document.getElementById('amiable-b-contact').value,
-                            vehicule: document.getElementById('amiable-b-vehicle').value,
-                            point_choc: document.getElementById('amiable-b-impact').value,
-                            circonstances: []
-                        },
-                        temoins: document.getElementById('amiable-temoins').value,
-                        croquis: (fabricSketch && fabricSketch.getObjects().length > 0) ? fabricSketch
-                            .toDataURL({
-                                format: 'png',
-                                multiplier: 1
-                            }) : null,
-                        signature_a: sigAPad.isEmpty() ? null : sigAPad.toDataURL(),
-                        signature_b: sigBPad.isEmpty() ? null : sigBPad.toDataURL()
-                    };
-
-                    // Checkboxes circonstances
-                    for (let i = 1; i <= 17; i++) {
-                        if (document.getElementById(`circ-a-${i}`).checked) data.partie_a.circonstances.push(i);
-                        if (document.getElementById(`circ-b-${i}`).checked) data.partie_b.circonstances.push(i);
-                    }
-
-                    // Validation minimale
-                    if (!data.partie_b.nom || !data.partie_b.vehicule) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Infos manquantes',
-                            text: 'Veuillez remplir au moins le nom et le véhicule de la partie B.',
-                            customClass: {
-                                popup: 'rounded-2xl'
-                            }
-                        });
-                        return;
-                    }
-
-                    amiableDataInput.value = JSON.stringify(data);
-
-                    Swal.fire({
+                if (showSuccessToast) {
+                    await Swal.fire({
+                        title: 'Véhicule sélectionné',
+                        text: `${selectedVehicle.marque} ${selectedVehicle.modele}`,
                         icon: 'success',
-                        title: 'Constat validé',
-                        text: 'Les informations du constat ont été rattachées à votre déclaration.',
-                        timer: 2000,
-                        showConfirmButton: false,
-                        customClass: {
-                            popup: 'rounded-2xl'
+                        timer: 1400,
+                        showConfirmButton: false
+                    });
+                }
+
+                checkFormValidity();
+                return true;
+            };
+
+            window.showVehicleSelection = async function() {
+                if (isSelectionInProgress) return;
+                isSelectionInProgress = true;
+
+                try {
+                    if (userVehicles.length === 0) {
+                        const r = await Swal.fire({
+                            title: 'Aucun véhicule disponible',
+                            text: "Il faut une assurance active et vérifiée pour déclarer un sinistre.",
+                            icon: 'warning',
+                            confirmButtonText: 'Ajouter une assurance',
+                            cancelButtonText: 'Fermer',
+                            showCancelButton: true,
+                            confirmButtonColor: '#2563eb'
+                        });
+                        if (r.isConfirmed) window.location.href = "{{ route('assure.contrats.create') }}";
+                        return;
+                    }
+
+                    const vehicleHtml = `
+                        <p class="text-sm text-slate-500 mb-4">Quel véhicule a subi l'incident ?</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-left">
+                            ${userVehicles.map(v => `
+                                <button type="button" class="vehicle-card relative flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white transition" data-id="${esc(v.id)}">
+                                    <span class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-car-side"></i></span>
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block text-[13px] font-semibold text-slate-900 truncate">${esc(v.marque)} ${esc(v.modele)}</span>
+                                        <span class="block text-xs font-mono font-semibold text-slate-500 uppercase">${esc(vehiclePlate(v))}</span>
+                                        ${v.assureur ? `<span class="block text-[11px] text-blue-700 truncate mt-0.5">${esc(v.assureur.name)}</span>` : ''}
+                                    </span>
+                                    <span class="select-indicator w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center shrink-0">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-blue-600 scale-0 transition-transform"></span>
+                                    </span>
+                                </button>
+                            `).join('')}
+                        </div>`;
+
+                    let selectedId = contratIdInput.value || null;
+
+                    const markSelected = (cards) => cards.forEach(c => {
+                        const on = c.getAttribute('data-id') == selectedId;
+                        c.classList.toggle('border-blue-600', on);
+                        c.classList.toggle('bg-blue-50', on);
+                        c.classList.toggle('border-slate-200', !on);
+                        c.querySelector('.select-indicator').classList.toggle('border-blue-600', on);
+                        const dot = c.querySelector('.select-indicator span');
+                        dot.classList.toggle('scale-100', on);
+                        dot.classList.toggle('scale-0', !on);
+                    });
+
+                    const { value: result } = await Swal.fire({
+                        title: 'Votre véhicule',
+                        html: vehicleHtml,
+                        showCancelButton: true,
+                        cancelButtonText: 'Annuler',
+                        confirmButtonText: 'Confirmer',
+                        confirmButtonColor: '#2563eb',
+                        allowOutsideClick: false,
+                        width: '860px',
+                        didRender: () => {
+                            const confirmBtn = Swal.getConfirmButton();
+                            confirmBtn.disabled = !selectedId;
+                            const cards = Swal.getHtmlContainer().querySelectorAll('.vehicle-card');
+                            markSelected(cards);
+                            cards.forEach(card => card.addEventListener('click', () => {
+                                selectedId = card.getAttribute('data-id');
+                                markSelected(cards);
+                                confirmBtn.disabled = false;
+                            }));
+                        },
+                        preConfirm: () => {
+                            if (!selectedId) {
+                                Swal.showValidationMessage('Veuillez choisir un véhicule');
+                                return false;
+                            }
+                            return selectedId;
                         }
                     });
 
-                    closeAmiableModal();
+                    if (result) await selectVehicleById(result, true);
+                } finally {
+                    isSelectionInProgress = false;
+                }
+            };
+
+            if (preselectedContratId) {
+                selectVehicleById(preselectedContratId, false);
+            }
+
+            function updateHospitalVisibility() {
+                const corporelCheckbox = document.querySelector('input[name="type_sinistre[]"][value="Accident_corporel"]');
+                const hospitalWrapper = document.getElementById('nearest-hospital-wrapper');
+                if (hospitalWrapper) {
+                    hospitalWrapper.classList.toggle('hidden', !(corporelCheckbox && corporelCheckbox.checked));
+                }
+            }
+
+            function setCheck(id, ok) {
+                const li = document.getElementById(id);
+                if (!li) return;
+                const dot = li.querySelector('[data-dot]');
+                li.classList.toggle('text-slate-900', ok);
+                li.classList.toggle('font-medium', ok);
+                li.classList.toggle('text-slate-500', !ok);
+                dot.className = 'w-5 h-5 rounded-full flex items-center justify-center text-[9px] text-white transition ' + (ok ? 'bg-emerald-500' : 'border border-slate-300');
+                dot.innerHTML = ok ? '<i class="fa-solid fa-check"></i>' : '';
+            }
+
+            function checkFormValidity() {
+                const isGeolocated = inputLat.value !== '' && inputLng.value !== '';
+                const selectedIncidents = Array.from(incidentCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+                const isIncidentSelected = selectedIncidents.length > 0;
+                const isOnlyBrisDeGlace = selectedIncidents.length === 1 && selectedIncidents.includes('Bris_de_glace');
+                const disabledCls = ['opacity-40', 'pointer-events-none', 'grayscale'];
+
+                // Bris de glace seul : ni constat amiable ni autorités
+                if (isOnlyBrisDeGlace) {
+                    labelAmiable.classList.add(...disabledCls);
+                    labelPolice.classList.add(...disabledCls);
+                    radioAmiable.disabled = true;
+                    radioPolice.disabled = true;
+                    radioAmiable.checked = false;
+                    radioPolice.checked = false;
+                    radioAmiable.required = false;
+                    brisGlaceInfo.classList.remove('hidden');
+                } else {
+                    labelPolice.classList.remove(...disabledCls);
+                    radioPolice.disabled = false;
+                    radioAmiable.required = true;
+                    brisGlaceInfo.classList.add('hidden');
+
+                    // Accident corporel : constat amiable interdit
+                    if (selectedIncidents.includes('Accident_corporel')) {
+                        labelAmiable.classList.add(...disabledCls);
+                        radioAmiable.disabled = true;
+                        radioAmiable.checked = false;
+                        radioPolice.checked = true;
+                        corporelWarning.classList.remove('hidden');
+                    } else {
+                        labelAmiable.classList.remove(...disabledCls);
+                        radioAmiable.disabled = false;
+                        corporelWarning.classList.add('hidden');
+                    }
+                }
+
+                // Le badge « constat rempli » n'a de sens que si « Amiable » est coché
+                amiableDone.classList.toggle('hidden', !(radioAmiable.checked && amiableDataInput.value));
+
+                updateHospitalVisibility();
+
+                // Sélection du véhicule proposée dès le premier incident coché
+                if (isIncidentSelected && !contratIdInput.value) {
+                    showVehicleSelection();
+                }
+
+                setCheck('check-geo', isGeolocated);
+                setCheck('check-vehicle', !!contratIdInput.value);
+                setCheck('check-incident', isIncidentSelected);
+
+                if (isGeolocated && isIncidentSelected && contratIdInput.value) {
+                    enableSubmitButton();
+                    incidentError.classList.add('hidden');
+                } else {
+                    disableSubmitButton();
+                    incidentError.classList.toggle('hidden', !(!isIncidentSelected && isGeolocated));
+                }
+            }
+
+            incidentCheckboxes.forEach(cb => cb.addEventListener('change', checkFormValidity));
+            radioPolice.addEventListener('change', checkFormValidity);
+
+            /* ═════════ GÉOLOCALISATION & SERVICES PROCHES ═════════ */
+            function sectionTitle(text, dot) {
+                return `<p class="flex items-center gap-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2"><span class="w-1.5 h-1.5 rounded-full ${dot}"></span>${text}</p>`;
+            }
+
+            function fetchNearestServices(lat, lng) {
+                const listContainer = document.getElementById('nearest-services-list');
+                listContainer.classList.remove('hidden');
+                listContainer.innerHTML = sectionTitle('Postes à proximité', 'bg-blue-500 animate-pulse') + `
+                    <div class="flex items-center justify-center gap-2 py-5 rounded-lg border border-dashed border-slate-200 text-xs text-slate-500">
+                        <i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i> Recherche des postes…
+                    </div>`;
+
+                fetch(`{{ route('assure.sinistres.services-proches') }}?latitude=${lat}&longitude=${lng}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success' && data.services.length > 0) {
+                            let html = sectionTitle('Postes les plus proches', 'bg-emerald-500');
+
+                            data.services.forEach(service => {
+                                const dist = parseFloat(service.distance).toFixed(1);
+                                const styles = {
+                                    police:      { icon: 'fa-building-shield', tone: 'bg-blue-50 text-blue-600' },
+                                    gendarmerie: { icon: 'fa-shield-halved',   tone: 'bg-emerald-50 text-emerald-600' },
+                                };
+                                const st = styles[service.role] || { icon: 'fa-user-shield', tone: 'bg-indigo-50 text-indigo-600' };
+                                const roleLabel = service.role.charAt(0).toUpperCase() + service.role.slice(1);
+                                const subtitle = service.role === 'agent' && service.service ? ` · ${esc(service.service.name)}` : '';
+
+                                html += `
+                                    <div class="flex items-center gap-3 p-2.5 rounded-lg border border-slate-200">
+                                        <span class="w-9 h-9 rounded-lg ${st.tone} flex items-center justify-center text-sm shrink-0"><i class="fa-solid ${st.icon}"></i></span>
+                                        <div class="min-w-0 flex-1">
+                                            <p class="text-[13px] font-semibold text-slate-900 truncate">${esc(service.name)}</p>
+                                            <p class="text-[11px] text-slate-500 truncate">${esc(roleLabel)}${subtitle}</p>
+                                        </div>
+                                        <span class="text-xs font-semibold text-blue-700 shrink-0">${dist} km</span>
+                                    </div>`;
+                            });
+
+                            if (data.nearest_hospital) {
+                                const h = data.nearest_hospital;
+                                html += `
+                                    <div id="nearest-hospital-wrapper" class="hidden pt-3">
+                                        ${sectionTitle('Secours (sapeurs-pompiers)', 'bg-rose-500')}
+                                        <div class="flex items-center gap-3 p-2.5 rounded-lg border border-rose-200 bg-rose-50/60">
+                                            <span class="w-9 h-9 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center text-sm shrink-0"><i class="fa-solid fa-truck-medical"></i></span>
+                                            <div class="min-w-0 flex-1">
+                                                <p class="text-[13px] font-semibold text-slate-900 truncate">${esc(h.name)}</p>
+                                                <p class="text-[11px] text-rose-700">${esc(h.distance)} km</p>
+                                            </div>
+                                            <a href="tel:${esc(h.contact)}" class="h-8 px-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold flex items-center gap-1.5 shrink-0 transition">
+                                                <i class="fa-solid fa-phone text-[10px]"></i> Appeler
+                                            </a>
+                                        </div>
+                                    </div>`;
+                            }
+
+                            listContainer.innerHTML = html;
+                            updateHospitalVisibility();
+                        } else {
+                            listContainer.innerHTML = '<p class="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 text-center">Aucun poste trouvé dans cette zone.</p>';
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Erreur AJAX services:', err);
+                        listContainer.innerHTML = '<p class="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 text-center">Erreur de connexion aux services.</p>';
+                    });
+            }
+
+            function setGeolocButton(state, html) {
+                const tones = {
+                    loading: 'bg-blue-50 text-blue-700',
+                    success: 'bg-emerald-50 text-emerald-700',
+                    error:   'bg-red-50 text-red-700 cursor-pointer hover:bg-red-100',
+                };
+                btnGeoloc.className = 'flex items-center gap-2 h-10 px-3.5 rounded-lg text-[13px] font-semibold transition ' + tones[state];
+                btnGeoloc.innerHTML = html;
+            }
+
+            function autoLocate() {
+                btnGeoloc.onclick = null;
+                setGeolocButton('loading', '<i class="fa-solid fa-circle-notch fa-spin"></i> Recherche de votre position…');
+
+                if (!navigator.geolocation) {
+                    showGeolocError('Géolocalisation non supportée par ce navigateur.');
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        inputLat.value = lat;
+                        inputLng.value = lng;
+
+                        // Adresse lisible (géocodage inverse)
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`, { headers: { 'Accept-Language': 'fr' } })
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data && data.display_name) {
+                                    document.getElementById('lieu_input').value = data.display_name;
+                                    geolocAddress.innerHTML = `<i class="fa-solid fa-location-dot text-blue-600 mr-1.5"></i>${esc(data.display_name)}`;
+                                    geolocAddress.classList.remove('hidden');
+                                }
+                            })
+                            .catch(err => console.error('Erreur geocoding:', err));
+
+                        setGeolocButton('success', '<i class="fa-solid fa-circle-check"></i> Position acquise');
+                        geolocStatus.className = 'mt-2 text-[11px] font-mono text-slate-500';
+                        geolocStatus.textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+                        fetchNearestServices(lat, lng);
+                        checkFormValidity();
+                    },
+                    function(error) {
+                        let errorMsg = 'Erreur GPS.';
+                        if (error.code === error.PERMISSION_DENIED) errorMsg = "Autorisation GPS refusée. Autorisez-la dans la barre d'adresse puis réessayez.";
+                        if (error.code === error.POSITION_UNAVAILABLE) errorMsg = 'Signal GPS indisponible.';
+                        if (error.code === error.TIMEOUT) errorMsg = "Délai d'attente GPS dépassé.";
+                        showGeolocError(errorMsg);
+                    },
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                );
+            }
+
+            function showGeolocError(msg) {
+                setGeolocButton('error', '<i class="fa-solid fa-rotate-right"></i> Réessayer');
+                btnGeoloc.onclick = autoLocate;
+
+                geolocStatus.className = 'mt-2 text-xs text-red-600';
+                geolocStatus.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-1"></i>${esc(msg)}`;
+
+                inputLat.value = '';
+                inputLng.value = '';
+                checkFormValidity();
+            }
+
+            /* ═════════ CONSTAT AMIABLE ═════════ */
+            const currentUser = @json(['name' => $authUser->name, 'prenom' => $authUser->prenom]);
+
+            let fabricSketch, sigAPad, sigBPad;
+
+            const SKETCH_SYMBOLS = {
+                auto: { scale: 0.75, svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 64" width="40" height="64"><rect x="5" y="12" width="30" height="40" rx="6" fill="#64748b" stroke="#1e293b" stroke-width="1.5"/><rect x="9" y="15" width="22" height="10" rx="3" fill="#bfdbfe"/><rect x="9" y="40" width="22" height="8" rx="3" fill="#bfdbfe"/><rect x="1" y="15" width="5" height="9" rx="2" fill="#1e293b"/><rect x="34" y="15" width="5" height="9" rx="2" fill="#1e293b"/><rect x="1" y="38" width="5" height="9" rx="2" fill="#1e293b"/><rect x="34" y="38" width="5" height="9" rx="2" fill="#1e293b"/></svg>` },
+                deux_roues: { scale: 0.75, svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 64" width="22" height="64"><rect x="5" y="6" width="12" height="52" rx="5" fill="#475569" stroke="#1e293b" stroke-width="1.5"/><rect x="1" y="9" width="5" height="12" rx="2.5" fill="#1e293b"/><rect x="16" y="9" width="5" height="12" rx="2.5" fill="#1e293b"/><rect x="1" y="43" width="5" height="12" rx="2.5" fill="#1e293b"/><rect x="16" y="43" width="5" height="12" rx="2.5" fill="#1e293b"/></svg>` },
+                camion: { scale: 0.65, svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 90" width="50" height="90"><rect x="4" y="4" width="42" height="20" rx="4" fill="#6b7280" stroke="#1e293b" stroke-width="1.5"/><rect x="8" y="7" width="34" height="11" rx="3" fill="#bfdbfe"/><rect x="3" y="28" width="44" height="58" rx="3" fill="#9ca3af" stroke="#1e293b" stroke-width="1.5"/><line x1="9" y1="57" x2="41" y2="57" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="4,3"/><rect x="0" y="8" width="5" height="12" rx="2" fill="#1e293b"/><rect x="45" y="8" width="5" height="12" rx="2" fill="#1e293b"/><rect x="0" y="63" width="5" height="12" rx="2" fill="#1e293b"/><rect x="45" y="63" width="5" height="12" rx="2" fill="#1e293b"/></svg>` },
+                pieton: { scale: 0.9, svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 46" width="30" height="46"><circle cx="15" cy="7" r="6" fill="#e2e8f0" stroke="#1e293b" stroke-width="1.5"/><line x1="15" y1="13" x2="15" y2="30" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="21" x2="25" y2="21" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="30" x2="7" y2="44" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="30" x2="23" y2="44" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/></svg>` },
+                feu: { scale: 0.9, svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 58" width="24" height="58"><rect x="2" y="2" width="20" height="40" rx="4" fill="#1e293b" stroke="#374151" stroke-width="1"/><circle cx="12" cy="10" r="5" fill="#ef4444"/><circle cx="12" cy="22" r="5" fill="#f59e0b"/><circle cx="12" cy="34" r="5" fill="#22c55e"/><rect x="10" y="42" width="4" height="12" fill="#374151"/><rect x="4" y="52" width="16" height="4" rx="2" fill="#374151"/></svg>` },
+                balise: { scale: 0.75, svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 64" width="50" height="64"><polygon points="25,3 47,46 3,46" fill="white" stroke="#1e293b" stroke-width="2"/><polygon points="25,11 41,43 9,43" fill="none" stroke="#e11d48" stroke-width="1.5"/><line x1="25" y1="46" x2="25" y2="60" stroke="#374151" stroke-width="3" stroke-linecap="round"/><circle cx="25" cy="63" r="3" fill="#374151"/></svg>` },
+                stop: { scale: 0.75, svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 64" width="50" height="64"><polygon points="15,2 35,2 48,15 48,35 35,48 15,48 2,35 2,15" fill="#dc2626" stroke="#1e293b" stroke-width="1.5"/><text x="25" y="31" text-anchor="middle" fill="white" font-size="12" font-family="Arial" font-weight="bold">STOP</text><line x1="25" y1="48" x2="25" y2="60" stroke="#374151" stroke-width="3" stroke-linecap="round"/><circle cx="25" cy="63" r="3" fill="#374151"/></svg>` }
+            };
+
+            const SKETCH_BTN_ON = 'h-7 px-2.5 rounded-md text-[11px] font-semibold bg-blue-600 text-white transition';
+            const SKETCH_BTN_OFF = 'h-7 px-2.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
+            document.getElementById('sketch-draw-btn').innerHTML = '<i class="fa-solid fa-pen mr-1"></i>Dessiner';
+            document.getElementById('sketch-move-btn').innerHTML = '<i class="fa-solid fa-arrows-up-down-left-right mr-1"></i>Déplacer';
+
+            window.addSketchSymbol = function(type, dropX, dropY) {
+                if (!fabricSketch) return;
+                const sym = SKETCH_SYMBOLS[type];
+                if (!sym) return;
+                fabric.loadSVGFromString(sym.svg, function(objects, options) {
+                    const group = fabric.util.groupSVGElements(objects, options);
+                    const cx = dropX !== undefined ? dropX : fabricSketch.width / 2;
+                    const cy = dropY !== undefined ? dropY : fabricSketch.height / 2;
+                    group.set({
+                        left: cx - (group.width * sym.scale) / 2,
+                        top: cy - (group.height * sym.scale) / 2,
+                        scaleX: sym.scale,
+                        scaleY: sym.scale,
+                        hasControls: true,
+                        hasBorders: true,
+                        cornerSize: 8,
+                        cornerColor: '#2563eb',
+                        borderColor: '#2563eb',
+                    });
+                    fabricSketch.add(group);
+                    fabricSketch.setActiveObject(group);
+                    setSketchMode('select'); // pour positionner l'élément ajouté
+                    fabricSketch.renderAll();
+                    document.getElementById('sketch-hint').classList.add('hidden');
+                });
+            };
+
+            window.setSketchMode = function(mode) {
+                const draw = mode === 'draw';
+                if (fabricSketch) fabricSketch.isDrawingMode = draw;
+                document.getElementById('sketch-draw-btn').className = draw ? SKETCH_BTN_ON : SKETCH_BTN_OFF;
+                document.getElementById('sketch-move-btn').className = draw ? SKETCH_BTN_OFF : SKETCH_BTN_ON;
+            };
+            setSketchMode('draw');
+
+            function initPads() {
+                const sigACanvas = document.getElementById('sig-a-pad');
+                const sigBCanvas = document.getElementById('sig-b-pad');
+
+                const resizeCanvas = (canvas) => {
+                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                    canvas.width = canvas.offsetWidth * ratio;
+                    canvas.height = canvas.offsetHeight * ratio;
+                    canvas.getContext('2d').scale(ratio, ratio);
                 };
 
-                // Trigger modal on radio change
-                radioAmiable.addEventListener('change', function() {
-                    if (this.checked) {
-                        if (!contratIdInput.value) {
-                            Swal.fire({
-                                icon: 'warning',
-                                title: 'Véhicule requis',
-                                text: 'Veuillez d\'abord sélectionner votre véhicule.',
-                                customClass: {
-                                    popup: 'rounded-2xl'
-                                }
-                            });
-                            this.checked = false;
-                            radioPolice.checked = false;
-                            return;
+                // Conserver les signatures déjà faites si on rouvre la modale
+                const prevA = sigAPad && !sigAPad.isEmpty() ? sigAPad.toData() : null;
+                const prevB = sigBPad && !sigBPad.isEmpty() ? sigBPad.toData() : null;
+
+                resizeCanvas(sigACanvas);
+                resizeCanvas(sigBCanvas);
+
+                sigAPad = new SignaturePad(sigACanvas, { penColor: 'rgb(37, 99, 235)', minWidth: 1, maxWidth: 2 });
+                sigBPad = new SignaturePad(sigBCanvas, { penColor: 'rgb(249, 115, 22)', minWidth: 1, maxWidth: 2 });
+                if (prevA) sigAPad.fromData(prevA);
+                if (prevB) sigBPad.fromData(prevB);
+
+                // Croquis Fabric.js (conservé s'il existe déjà)
+                const wrapper = document.getElementById('sketch-wrapper');
+                if (fabricSketch) {
+                    fabricSketch.setDimensions({ width: wrapper.clientWidth, height: wrapper.clientHeight });
+                    return;
+                }
+                fabricSketch = new fabric.Canvas('sketch-pad', {
+                    width: wrapper.clientWidth,
+                    height: wrapper.clientHeight,
+                    isDrawingMode: true,
+                    backgroundColor: 'transparent',
+                    selection: true,
+                });
+                fabricSketch.freeDrawingBrush.color = '#1e293b';
+                fabricSketch.freeDrawingBrush.width = 2;
+                fabricSketch.freeDrawingBrush.decimate = 4;
+                fabricSketch.on('object:added', () => document.getElementById('sketch-hint').classList.add('hidden'));
+                setSketchMode('draw');
+
+                // Glisser-déposer depuis la palette
+                wrapper.addEventListener('dragover', (e) => e.preventDefault());
+                wrapper.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const sym = e.dataTransfer.getData('text/plain');
+                    if (!sym) return;
+                    const rect = wrapper.getBoundingClientRect();
+                    addSketchSymbol(sym, e.clientX - rect.left, e.clientY - rect.top);
+                });
+                document.querySelectorAll('.sketch-sym-item').forEach(item => {
+                    item.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', item.dataset.sym);
+                        e.dataTransfer.effectAllowed = 'copy';
+                    });
+                });
+
+                // Suppr / Retour arrière : effacer l'élément sélectionné (hors saisie de texte)
+                document.addEventListener('keydown', (e) => {
+                    if (!fabricSketch || amiableModal.classList.contains('hidden')) return;
+                    if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+                    if ((e.key === 'Delete' || e.key === 'Backspace') && !fabricSketch.isDrawingMode) {
+                        const obj = fabricSketch.getActiveObject();
+                        if (obj) {
+                            fabricSketch.remove(obj);
+                            fabricSketch.renderAll();
                         }
-                        openAmiableModal();
                     }
                 });
+            }
 
-                // Gestion des points de choc
-                document.querySelectorAll('#impact-a .impact-arrow').forEach(arrow => {
-                    arrow.addEventListener('click', function() {
-                        document.querySelectorAll('#impact-a .impact-arrow').forEach(a => a.classList
-                            .remove('active-a'));
-                        this.classList.add('active-a');
-                        document.getElementById('amiable-a-impact').value = this.dataset.point;
-                    });
-                });
+            window.clearSketch = () => {
+                if (!fabricSketch) return;
+                fabricSketch.clear();
+                fabricSketch.backgroundColor = 'transparent';
+                fabricSketch.renderAll();
+                document.getElementById('sketch-hint').classList.remove('hidden');
+            };
+            window.clearSigA = () => sigAPad && sigAPad.clear();
+            window.clearSigB = () => sigBPad && sigBPad.clear();
 
-                document.querySelectorAll('#impact-b .impact-arrow').forEach(arrow => {
-                    arrow.addEventListener('click', function() {
-                        document.querySelectorAll('#impact-b .impact-arrow').forEach(a => a.classList
-                            .remove('active-b'));
-                        this.classList.add('active-b');
-                        document.getElementById('amiable-b-impact').value = this.dataset.point;
-                    });
-                });
+            window.openAmiableModal = function() {
+                const vehicle = userVehicles.find(v => v.id == contratIdInput.value);
+                const fullName = `${currentUser.name} ${currentUser.prenom || ''}`.trim();
 
-                // --- FIN LOGIQUE CONSTAT AMIABLE ---
+                document.getElementById('amiable-a-name').textContent = fullName;
+                document.getElementById('amiable-a-vehicle').textContent = vehicle
+                    ? `${vehicle.marque} ${vehicle.modele} (${vehiclePlate(vehicle)})`
+                    : 'Véhicule non sélectionné';
+                const driver = document.getElementById('amiable-a-driver');
+                if (!driver.value) driver.value = fullName;
 
-                autoLocate();
+                amiableModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                setTimeout(initPads, 100); // la modale doit être affichée avant de dimensionner les canvas
+            };
 
-                function showGeolocError(msg) {
-                    btnGeoloc.className =
-                        'inline-flex items-center justify-center md:justify-start w-full md:w-auto px-5 py-2.5 bg-red-50 text-red-700 font-bold rounded-xl text-sm border border-red-200 cursor-pointer hover:bg-red-100 transition-colors';
-                    btnGeoloc.innerHTML = '<i class="fa-solid fa-rotate-right mr-2"></i> Réessayer';
-                    btnGeoloc.setAttribute('onclick', 'window.location.reload()');
+            window.closeAmiableModal = function() {
+                amiableModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            };
 
-                    geolocStatus.classList.remove('hidden');
-                    geolocStatus.className = 'mt-3 text-sm font-bold text-red-500';
-                    geolocStatus.innerHTML = `<i class="fa-solid fa-circle-exclamation mr-1"></i> ${msg}`;
-
-                    inputLat.value = "";
-                    inputLng.value = "";
-                    checkFormValidity();
-                }
-
-                // Protection anti-doublon et désactivation du bouton lors de la soumission du formulaire
-                const form = document.getElementById('sinistre-form');
-                if (form) {
-                    form.addEventListener('submit', function(e) {
-                        if (form.dataset.submitting === 'true') {
-                            e.preventDefault();
-                            return false;
-                        }
-                        form.dataset.submitting = 'true';
-
-                        const assuranceSelect = document.getElementById('assurance_id');
-                        if (assuranceSelect) {
-                            assuranceSelect.disabled = false;
-                        }
-
-                        if (typeof btnSubmit !== 'undefined' && btnSubmit) {
-                            btnSubmit.setAttribute('disabled', 'disabled');
-                            btnSubmit.innerHTML = '<span>Transmission en cours...</span><i class="fa-solid fa-spinner fa-spin ml-3"></i>';
-                            btnSubmit.className = 'w-full sm:w-auto px-10 py-3.5 rounded-xl bg-slate-400 text-white font-bold flex items-center justify-center cursor-not-allowed opacity-75';
-                        }
-                    });
-                }
-
-                function enableSubmitButton() {
-                    btnSubmit.removeAttribute('disabled');
-                    btnSubmit.className =
-                        'w-full sm:w-auto px-10 py-3.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold flex items-center justify-center shadow-lg shadow-red-600/30 transition-all duration-300 transform hover:-translate-y-0.5';
-                }
-
-                function disableSubmitButton() {
-                    btnSubmit.setAttribute('disabled', 'disabled');
-                    btnSubmit.className =
-                        'w-full sm:w-auto px-10 py-3.5 rounded-xl bg-slate-200 text-slate-400 font-bold flex items-center justify-center transition-all duration-300 cursor-not-allowed';
-                }
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !amiableModal.classList.contains('hidden')) closeAmiableModal();
             });
-        </script>
-    @endpush
+
+            window.validateAmiableData = function() {
+                const data = {
+                    partie_a: {
+                        nom: document.getElementById('amiable-a-name').innerText,
+                        vehicule: document.getElementById('amiable-a-vehicle').innerText,
+                        conducteur: document.getElementById('amiable-a-driver').value,
+                        point_choc: document.getElementById('amiable-a-impact').value,
+                        circonstances: []
+                    },
+                    partie_b: {
+                        nom: document.getElementById('amiable-b-nom').value,
+                        prenom: document.getElementById('amiable-b-prenom').value,
+                        contact: document.getElementById('amiable-b-contact').value,
+                        vehicule: document.getElementById('amiable-b-vehicle').value,
+                        point_choc: document.getElementById('amiable-b-impact').value,
+                        circonstances: []
+                    },
+                    temoins: document.getElementById('amiable-temoins').value,
+                    croquis: (fabricSketch && fabricSketch.getObjects().length > 0) ? fabricSketch.toDataURL({ format: 'png', multiplier: 1 }) : null,
+                    signature_a: sigAPad && !sigAPad.isEmpty() ? sigAPad.toDataURL() : null,
+                    signature_b: sigBPad && !sigBPad.isEmpty() ? sigBPad.toDataURL() : null
+                };
+
+                for (let i = 1; i <= {{ count($circonstances) }}; i++) {
+                    if (document.getElementById(`circ-a-${i}`).checked) data.partie_a.circonstances.push(i);
+                    if (document.getElementById(`circ-b-${i}`).checked) data.partie_b.circonstances.push(i);
+                }
+
+                if (!data.partie_b.nom || !data.partie_b.vehicule) {
+                    Swal.fire({ icon: 'error', title: 'Informations manquantes', text: 'Renseignez au moins le nom et le véhicule de la partie B.', confirmButtonColor: '#2563eb' });
+                    return;
+                }
+
+                amiableDataInput.value = JSON.stringify(data);
+                amiableDone.classList.remove('hidden');
+
+                Swal.fire({ icon: 'success', title: 'Constat validé', text: 'Le constat est rattaché à votre déclaration.', timer: 1800, showConfirmButton: false });
+                closeAmiableModal();
+            };
+
+            radioAmiable.addEventListener('change', function() {
+                if (!this.checked) return;
+                if (!contratIdInput.value) {
+                    Swal.fire({ icon: 'warning', title: 'Véhicule requis', text: "Sélectionnez d'abord votre véhicule.", confirmButtonColor: '#2563eb' });
+                    this.checked = false;
+                    radioPolice.checked = false;
+                    return;
+                }
+                openAmiableModal();
+                checkFormValidity();
+            });
+
+            // Points de choc
+            ['a', 'b'].forEach(side => {
+                const arrows = document.querySelectorAll(`#impact-${side} .impact-arrow`);
+                arrows.forEach(arrow => arrow.addEventListener('click', function() {
+                    arrows.forEach(a => a.classList.remove(`active-${side}`));
+                    this.classList.add(`active-${side}`);
+                    document.getElementById(`amiable-${side}-impact`).value = this.dataset.point;
+                }));
+            });
+
+            /* ═════════ ENVOI ═════════ */
+            const form = document.getElementById('sinistre-form');
+            form.addEventListener('submit', function(e) {
+                if (form.dataset.submitting === 'true') {
+                    e.preventDefault();
+                    return false;
+                }
+                form.dataset.submitting = 'true';
+
+                // Un select désactivé n'est pas envoyé : on le réactive
+                const assuranceSelect = document.getElementById('assurance_id');
+                if (assuranceSelect) assuranceSelect.disabled = false;
+
+                btnSubmit.setAttribute('disabled', 'disabled');
+                btnSubmit.className = 'mt-5 w-full h-11 rounded-lg bg-slate-400 text-white text-sm font-semibold flex items-center justify-center gap-2 cursor-not-allowed';
+                btnSubmit.innerHTML = '<span>Transmission en cours…</span><i class="fa-solid fa-circle-notch fa-spin text-xs"></i>';
+            });
+
+            function enableSubmitButton() {
+                btnSubmit.removeAttribute('disabled');
+                btnSubmit.className = 'mt-5 w-full h-11 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-semibold flex items-center justify-center gap-2 transition';
+            }
+
+            function disableSubmitButton() {
+                btnSubmit.setAttribute('disabled', 'disabled');
+                btnSubmit.className = 'mt-5 w-full h-11 rounded-lg bg-slate-100 text-slate-400 text-sm font-semibold flex items-center justify-center gap-2 cursor-not-allowed transition';
+            }
+
+            autoLocate();
+            checkFormValidity();
+        });
+    </script>
+@endpush

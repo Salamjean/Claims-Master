@@ -529,6 +529,213 @@ class AIService
     }
 
     /**
+     * Vérifie qu'un document est bien une carte grise (certificat d'immatriculation) et en extrait les informations.
+     */
+    public function extractCarteGriseData(string $imagePath): array
+    {
+        if (!$this->apiKey) {
+            return [
+                'status' => 'error',
+                'message' => 'Clé d\'API IA non configurée.',
+                'data' => []
+            ];
+        }
+
+        try {
+            $imageData = base64_encode(file_get_contents($imagePath));
+            $mimeType = mime_content_type($imagePath);
+
+            $prompt = "Tu es un expert en contrôle documentaire des certificats d'immatriculation (CARTE GRISE) de véhicules, notamment en Côte d'Ivoire (carte grise plastifiée émise par le Ministère des Transports) et en Afrique de l'Ouest.\n";
+            $prompt .= "1. VÉRIFICATION STRICTE : Examine l'image / document transmis. Est-ce bien UNE CARTE GRISE (certificat d'immatriculation de véhicule) ?\n";
+            $prompt .= "Indices attendus : mention 'CARTE GRISE' ou 'Certificat d'immatriculation', numéro d'immatriculation, numéro de carte grise, identité du propriétaire, marque, type commercial, genre, énergie, puissance fiscale, date de 1ère mise en circulation, etc.\n";
+            $prompt .= "Si ce n'est PAS une carte grise (ex: attestation d'assurance, permis de conduire, pièce d'identité, visite technique, reçu, photo de véhicule, document illisible, etc.), réponds strictement {\"is_carte_grise\": false, \"feedback\": \"<explication courte en français de ce qu'est réellement le document>\"}.\n\n";
+            $prompt .= "2. EXTRACTION (Si is_carte_grise est true) :\n";
+            $prompt .= "Extrais les champs suivants au format JSON strict :\n";
+            $prompt .= "- 'is_carte_grise' : true\n";
+            $prompt .= "- 'numero_carte_grise' : Numéro de la carte grise (ex: 'CG10677475'). Null si absent.\n";
+            $prompt .= "- 'numero_chassis' : Numéro de châssis / VIN / N° de série s'il est mentionné. Null si absent.\n";
+            $prompt .= "- 'plaque' : Numéro d'immatriculation (ex: 'AA-665-TQ-01' ou '1234AB01'). Null si absent.\n";
+            $prompt .= "- 'marque' : Marque du véhicule (ex: FORD, TOYOTA). Null si absente.\n";
+            $prompt .= "- 'modele' : Type commercial / modèle (ex: 'CX743MCA 1.8L BVA', 'Corolla'). Null si absent.\n";
+            $prompt .= "- 'proprietaire' : Nom du propriétaire. Null si absent.\n";
+            $prompt .= "- 'type_vehicule' : Catégorie déduite du genre et de la carrosserie (choisir obligatoirement parmi: 'Berline', 'SUV', 'Citadine', 'Camionnette', 'Coupé'). 'Cond Int 4 Pts' (conduite intérieure 4 portes) correspond à 'Berline'. Null si indéterminé.\n";
+            $prompt .= "- 'date_mise_circulation' : Date de 1ère mise en circulation au format 'YYYY-MM-DD'. Null si absente.\n\n";
+            $prompt .= "Réponds UNIQUEMENT au format JSON strict.";
+
+            $result = $this->callGeminiVision($prompt, $imageData, $mimeType);
+
+            if (is_array($result) && array_key_exists('is_carte_grise', $result)) {
+                if ($result['is_carte_grise'] !== true) {
+                    return [
+                        'status' => 'invalid',
+                        'message' => $result['feedback'] ?? 'Le document téléversé n\'est pas une carte grise.',
+                        'data' => []
+                    ];
+                }
+
+                if (empty($result['numero_carte_grise']) && empty($result['numero_chassis']) && empty($result['plaque'])) {
+                    return [
+                        'status' => 'invalid',
+                        'message' => 'Carte grise illisible : numéro de carte grise, châssis et immatriculation introuvables. Veuillez transmettre une photo plus nette.',
+                        'data' => []
+                    ];
+                }
+
+                $allowedTypes = ['Berline', 'SUV', 'Citadine', 'Camionnette', 'Coupé'];
+                $type = $result['type_vehicule'] ?? null;
+
+                return [
+                    'status' => 'success',
+                    'data' => [
+                        'numero_carte_grise'    => $result['numero_carte_grise'] ?? null,
+                        'numero_chassis'        => $result['numero_chassis'] ?? null,
+                        'plaque'                => $result['plaque'] ?? null,
+                        'marque'                => $result['marque'] ?? null,
+                        'modele'                => $result['modele'] ?? null,
+                        'proprietaire'          => $result['proprietaire'] ?? null,
+                        'type_vehicule'         => in_array($type, $allowedTypes, true) ? $type : null,
+                        'date_mise_circulation' => $result['date_mise_circulation'] ?? null,
+                    ]
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('Gemini extractCarteGriseData Exception: ' . $e->getMessage());
+        }
+
+        return [
+            'status' => 'error',
+            'message' => 'Impossible d\'analyser la carte grise pour le moment. Vous pouvez saisir le numéro manuellement.',
+            'data' => []
+        ];
+    }
+
+    /**
+     * Vérifie qu'un document est bien un certificat de visite technique (contrôle technique) et en extrait l'immatriculation et l'échéance.
+     */
+    public function extractVisiteTechniqueData(string $imagePath): array
+    {
+        if (!$this->apiKey) {
+            return ['status' => 'error', 'message' => 'Clé d\'API IA non configurée.', 'data' => []];
+        }
+
+        try {
+            $imageData = base64_encode(file_get_contents($imagePath));
+            $mimeType = mime_content_type($imagePath);
+
+            $prompt = "Tu es un expert en contrôle documentaire des CERTIFICATS DE VISITE TECHNIQUE (contrôle technique automobile), notamment en Côte d'Ivoire (carte 'Certificat de Contrôle Technique' délivrée par un centre agréé comme SICTA, sous l'autorité du Ministère des Transports).\n";
+            $prompt .= "L'image peut être tournée ou photographiée de biais : lis-la dans le bon sens.\n";
+            $prompt .= "1. VÉRIFICATION STRICTE : Est-ce bien un certificat / une carte de visite technique (contrôle technique) d'un véhicule ?\n";
+            $prompt .= "Indices attendus : mention 'Certificat de contrôle technique' ou 'Visite technique', centre de contrôle, immatriculation, date d'expiration / de validité, catégorie, marque, n° de série, etc.\n";
+            $prompt .= "ATTENTION : une carte grise, une attestation d'assurance, un permis de conduire, une vignette seule, une pièce d'identité, un reçu ou une photo de véhicule ne sont PAS des visites techniques.\n";
+            $prompt .= "Si ce n'est PAS une visite technique, réponds strictement {\"is_visite_technique\": false, \"feedback\": \"<explication courte en français de ce qu'est réellement le document>\"}.\n\n";
+            $prompt .= "2. EXTRACTION (Si is_visite_technique est true), au format JSON strict :\n";
+            $prompt .= "- 'is_visite_technique' : true\n";
+            $prompt .= "- 'plaque' : Numéro d'immatriculation du véhicule (ex: 'AA-665-TQ-01'). Null si illisible.\n";
+            $prompt .= "- 'date_expiration' : Date d'expiration / fin de validité du contrôle au format 'YYYY-MM-DD'. Null si absente.\n";
+            $prompt .= "- 'centre' : Nom du centre de contrôle (ex: 'SICTA'). Null si absent.\n\n";
+            $prompt .= "Réponds UNIQUEMENT au format JSON strict.";
+
+            $result = $this->callGeminiVision($prompt, $imageData, $mimeType);
+
+            if (is_array($result) && array_key_exists('is_visite_technique', $result)) {
+                if ($result['is_visite_technique'] !== true) {
+                    return [
+                        'status' => 'invalid',
+                        'message' => $result['feedback'] ?? 'Le document téléversé n\'est pas une visite technique.',
+                        'data' => []
+                    ];
+                }
+
+                $dateExp = null;
+                if (!empty($result['date_expiration'])) {
+                    $parsed = self::parseFlexibleDate($result['date_expiration']);
+                    $dateExp = $parsed ? $parsed->format('Y-m-d') : null;
+                }
+
+                return [
+                    'status' => 'success',
+                    'data' => [
+                        'plaque'          => $result['plaque'] ?? null,
+                        'date_expiration' => $dateExp,
+                        'centre'          => $result['centre'] ?? null,
+                    ]
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('Gemini extractVisiteTechniqueData Exception: ' . $e->getMessage());
+        }
+
+        return [
+            'status' => 'error',
+            'message' => 'Impossible d\'analyser la visite technique pour le moment. Réessayez dans quelques instants.',
+            'data' => []
+        ];
+    }
+
+    /**
+     * Vérifie qu'un document est bien un permis de conduire et en extrait quelques informations.
+     */
+    public function extractPermisData(string $imagePath): array
+    {
+        if (!$this->apiKey) {
+            return ['status' => 'error', 'message' => 'Clé d\'API IA non configurée.', 'data' => []];
+        }
+
+        try {
+            $imageData = base64_encode(file_get_contents($imagePath));
+            $mimeType = mime_content_type($imagePath);
+
+            $prompt = "Tu es un expert en contrôle documentaire des PERMIS DE CONDUIRE, notamment en Côte d'Ivoire (permis biométrique au format carte, ou ancien permis) et en Afrique de l'Ouest. Les permis étrangers et internationaux sont aussi des permis de conduire.\n";
+            $prompt .= "L'image peut être tournée ou photographiée de biais : lis-la dans le bon sens.\n";
+            $prompt .= "1. VÉRIFICATION STRICTE : Est-ce bien un PERMIS DE CONDUIRE ?\n";
+            $prompt .= "Indices attendus : mention 'Permis de conduire' / 'Driving licence', photo du titulaire, nom et prénoms, date de naissance, numéro de permis, catégories (A, B, C, D, E…), dates de délivrance et de validité.\n";
+            $prompt .= "ATTENTION : une carte grise, une visite technique, une attestation d'assurance, une carte nationale d'identité, un passeport, une carte d'électeur, un reçu ou une photo quelconque ne sont PAS des permis de conduire.\n";
+            $prompt .= "Si ce n'est PAS un permis de conduire, réponds strictement {\"is_permis\": false, \"feedback\": \"<explication courte en français de ce qu'est réellement le document>\"}.\n\n";
+            $prompt .= "2. EXTRACTION (Si is_permis est true), au format JSON strict :\n";
+            $prompt .= "- 'is_permis' : true\n";
+            $prompt .= "- 'titulaire' : Nom et prénoms du titulaire. Null si illisible.\n";
+            $prompt .= "- 'categories' : Catégories obtenues, séparées par des virgules (ex: 'B' ou 'A, B'). Null si illisible.\n";
+            $prompt .= "- 'date_expiration' : Date de fin de validité au format 'YYYY-MM-DD'. Null si absente.\n\n";
+            $prompt .= "Réponds UNIQUEMENT au format JSON strict.";
+
+            $result = $this->callGeminiVision($prompt, $imageData, $mimeType);
+
+            if (is_array($result) && array_key_exists('is_permis', $result)) {
+                if ($result['is_permis'] !== true) {
+                    return [
+                        'status' => 'invalid',
+                        'message' => $result['feedback'] ?? 'Le document téléversé n\'est pas un permis de conduire.',
+                        'data' => []
+                    ];
+                }
+
+                $dateExp = null;
+                if (!empty($result['date_expiration'])) {
+                    $parsed = self::parseFlexibleDate($result['date_expiration']);
+                    $dateExp = $parsed ? $parsed->format('Y-m-d') : null;
+                }
+
+                return [
+                    'status' => 'success',
+                    'data' => [
+                        'titulaire'       => $result['titulaire'] ?? null,
+                        'categories'      => $result['categories'] ?? null,
+                        'date_expiration' => $dateExp,
+                    ]
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('Gemini extractPermisData Exception: ' . $e->getMessage());
+        }
+
+        return [
+            'status' => 'error',
+            'message' => 'Impossible d\'analyser le permis de conduire pour le moment. Réessayez dans quelques instants.',
+            'data' => []
+        ];
+    }
+
+    /**
      * Vérifie si l'image téléchargée correspond au modèle de référence.
      */
     public function verifyTemplateMatch(string $uploadedImagePath)
